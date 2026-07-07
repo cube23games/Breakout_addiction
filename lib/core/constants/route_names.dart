@@ -19,4 +19,6 @@ class RouteNames {
   static const privacySettings = '/privacy';
   static const featureControls = '/feature-controls';
   static const aboutBreakout = '/about-breakout';
+  static const privacySafetyCenter = '/privacy-safety-center';
+  static const releaseReadiness = '/release-readiness';
 }

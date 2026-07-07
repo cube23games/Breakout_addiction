@@ -16,7 +16,9 @@ import '../features/onboarding/presentation/onboarding_screen.dart';
 import '../features/premium/presentation/premium_screen.dart';
 import '../features/privacy/domain/lock_scope.dart';
 import '../features/privacy/presentation/privacy_settings_screen.dart';
+import '../features/privacy/presentation/privacy_safety_center_screen.dart';
 import '../features/privacy/presentation/protected_route_gate.dart';
+import '../features/release/presentation/release_readiness_screen.dart';
 import '../features/rescue/presentation/rescue_screen.dart';
 import '../features/risk/presentation/risk_windows_screen.dart';
 import '../features/settings/presentation/feature_controls_screen.dart';
@@ -121,6 +123,20 @@ class AppRouter {
           builder: (_) => const ProtectedRouteGate(
             scope: LockScope.support,
             child: AboutBreakoutScreen(),
+          ),
+        );
+      case RouteNames.privacySafetyCenter:
+        return MaterialPageRoute(
+          builder: (_) => const ProtectedRouteGate(
+            scope: LockScope.support,
+            child: PrivacySafetyCenterScreen(),
+          ),
+        );
+      case RouteNames.releaseReadiness:
+        return MaterialPageRoute(
+          builder: (_) => const ProtectedRouteGate(
+            scope: LockScope.support,
+            child: ReleaseReadinessScreen(),
           ),
         );
       case RouteNames.riskWindows:

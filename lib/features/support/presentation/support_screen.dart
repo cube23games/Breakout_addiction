@@ -368,6 +368,24 @@ class _SupportScreenState extends State<SupportScreen> {
                 ),
                 const SizedBox(height: AppSpacing.sm),
                 PrimaryButton(
+                  label: 'Privacy & Safety Center',
+                  icon: Icons.privacy_tip_outlined,
+                  onPressed: () => Navigator.pushNamed(
+                    context,
+                    RouteNames.privacySafetyCenter,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                PrimaryButton(
+                  label: 'Release Readiness',
+                  icon: Icons.fact_check_outlined,
+                  onPressed: () => Navigator.pushNamed(
+                    context,
+                    RouteNames.releaseReadiness,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                PrimaryButton(
                   label: 'Open AI Recovery Coach',
                   icon: Icons.psychology_outlined,
                   onPressed: () => Navigator.pushNamed(
