@@ -18,6 +18,8 @@ class RouteNames {
   static const cycle = '/cycle';
   static const privacySettings = '/privacy';
   static const accountabilitySettings = '/accountability-settings';
+  static const accountabilityPartnerAccess = '/accountability-partner-access';
+  static const accountabilitySummary = '/accountability-summary';
   static const featureControls = '/feature-controls';
   static const aboutBreakout = '/about-breakout';
   static const privacySafetyCenter = '/privacy-safety-center';

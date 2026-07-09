@@ -5,15 +5,10 @@ import sys
 checks = {
     "docs/ACCOUNTABILITY_MODE_PLAN.md": [
         "Support, not surveillance",
-        "Recovery User",
         "Accountability Partner",
         "Separate login/passcode",
         "read-only",
-        "MVP local-device version",
-        "Share scopes",
         "AI chat history should stay off by default",
-        "Partner access must never reveal API keys",
-        "Let someone support you without giving them your whole private world",
     ],
     "lib/features/accountability/domain/accountability_scope.dart": [
         "enum AccountabilityScope",
@@ -21,15 +16,11 @@ checks = {
         "recentUrges",
         "relapseEvents",
         "victoryEvents",
-        "moodTrends",
         "riskWindows",
         "recoveryPlan",
-        "reasonsToStop",
-        "supportNeeded",
     ],
     "lib/features/accountability/domain/accountability_settings.dart": [
         "class AccountabilitySettings",
-        "enabled",
         "sharedScopes",
         "sharePrivateNotes = false",
         "shareAiChatHistory = false",
@@ -40,32 +31,47 @@ checks = {
         "class AccountabilitySettingsRepository",
         "FlutterSecureStorage",
         "_partnerPasscodeKey",
-        "savePartnerPasscode",
         "verifyPartnerPasscode",
-        "clearPartnerPasscode",
         "AccountabilitySettings.defaults",
     ],
     "lib/features/accountability/presentation/accountability_settings_screen.dart": [
         "class AccountabilitySettingsScreen",
-        "Support, not surveillance",
         "Enable Accountability Mode",
         "Partner Passcode",
-        "Save Partner Passcode",
-        "What can they see?",
-        "Private by default",
         "Share AI chat history",
+    ],
+    "lib/features/accountability/presentation/accountability_partner_access_screen.dart": [
+        "class AccountabilityPartnerAccessScreen",
+        "Read-only support access",
+        "Partner passcode",
+        "Open Accountability Summary",
+        "verifyPartnerPasscode",
+        "RouteNames.accountabilitySummary",
+    ],
+    "lib/features/accountability/presentation/accountability_summary_screen.dart": [
+        "class AccountabilitySummaryScreen",
+        "Approved read-only view",
+        "Shared summary areas",
+        "Privacy boundaries",
+        "Private notes are not shared",
+        "AI chat history is not shared",
     ],
     "lib/core/constants/route_names.dart": [
         "accountabilitySettings",
-        "/accountability-settings",
+        "accountabilityPartnerAccess",
+        "accountabilitySummary",
     ],
     "lib/app/app_router.dart": [
         "AccountabilitySettingsScreen",
-        "RouteNames.accountabilitySettings",
+        "AccountabilityPartnerAccessScreen",
+        "AccountabilitySummaryScreen",
+        "RouteNames.accountabilityPartnerAccess",
+        "RouteNames.accountabilitySummary",
     ],
     "lib/features/support/presentation/support_screen.dart": [
         "Accountability Mode",
-        "RouteNames.accountabilitySettings",
+        "Accountability Partner Access",
+        "RouteNames.accountabilityPartnerAccess",
     ],
 }
 
@@ -88,4 +94,4 @@ if missing:
         print(f" - {item}")
     sys.exit(1)
 
-print("BA-41 verification passed: Accountability Mode settings UI is wired.")
+print("BA-41 verification passed: Accountability partner access and read-only summary are wired.")

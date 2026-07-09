@@ -388,6 +388,18 @@ class _SupportScreenState extends State<SupportScreen> {
                     RouteNames.accountabilitySettings,
                   ),
                 ),
+                const SizedBox(height: AppSpacing.sm),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    icon: const Icon(Icons.visibility_outlined),
+                    label: const Text('Accountability Partner Access'),
+                    onPressed: () => Navigator.pushNamed(
+                      context,
+                      RouteNames.accountabilityPartnerAccess,
+                    ),
+                  ),
+                ),
                 if (InternalSurfaceGate.showDevSurfaces) ...[
                   const SizedBox(height: AppSpacing.sm),
                   PrimaryButton(
