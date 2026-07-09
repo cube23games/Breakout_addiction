@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../app/config/internal_surface_gate.dart';
+
 import '../../../app/theme/app_spacing.dart';
 import '../../../app/theme/app_typography.dart';
 import '../../../core/constants/route_names.dart';
@@ -27,8 +29,6 @@ class PremiumScreen extends StatefulWidget {
 }
 
 class _PremiumScreenState extends State<PremiumScreen> {
-  static const bool _showInternalAiControls = false;
-
   final PremiumAccessRepository _repository = PremiumAccessRepository();
   final AiChatSettingsRepository _chatSettingsRepository =
       AiChatSettingsRepository();
@@ -345,7 +345,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
             style: AppTypography.muted,
           ),
           const SizedBox(height: AppSpacing.lg),
-          if (_showInternalAiControls) ...[
+          if (InternalSurfaceGate.showDevSurfaces) ...[
             InfoCard(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

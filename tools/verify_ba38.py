@@ -8,8 +8,12 @@ checks = {
         "behavior: SnackBarBehavior.floating",
         "backgroundColor: Color(0xFF13212C)",
     ],
+    "lib/app/config/internal_surface_gate.dart": [
+        "class InternalSurfaceGate",
+        "static bool get showDevSurfaces => false",
+    ],
     "lib/features/home/presentation/home_screen.dart": [
-        "if (false) ...[",
+        "InternalSurfaceGate.showDevSurfaces",
         "const DemoReadinessCard()",
         "About Breakout for app details",
     ],
@@ -17,13 +21,13 @@ checks = {
         "String _maskedTrustedContactPhone",
         "_maskedTrustedContactPhone(_trustedContact!.phone)",
         "Choose the support tools, privacy options",
+        "InternalSurfaceGate.showDevSurfaces",
         "label: 'Release Readiness'",
         "label: 'Open Widget Preview'",
         "label: 'Open Feature Controls'",
     ],
     "lib/features/premium/presentation/premium_screen.dart": [
-        "static const bool _showInternalAiControls = false;",
-        "if (_showInternalAiControls) ...[",
+        "InternalSurfaceGate.showDevSurfaces",
         "Breakout Plus adds deeper local guidance",
     ],
 }

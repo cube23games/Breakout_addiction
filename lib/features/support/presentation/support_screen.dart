@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../../../app/config/internal_surface_gate.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../app/theme/app_spacing.dart';
@@ -377,7 +379,7 @@ class _SupportScreenState extends State<SupportScreen> {
                     RouteNames.privacySafetyCenter,
                   ),
                 ),
-                if (false) ...[
+                if (InternalSurfaceGate.showDevSurfaces) ...[
                   const SizedBox(height: AppSpacing.sm),
                   PrimaryButton(
                     label: 'Release Readiness',
@@ -397,7 +399,7 @@ class _SupportScreenState extends State<SupportScreen> {
                     RouteNames.aiChat,
                   ),
                 ),
-                if (false) ...[
+                if (InternalSurfaceGate.showDevSurfaces) ...[
                   const SizedBox(height: AppSpacing.sm),
                   PrimaryButton(
                     label: 'Open Widget Preview',
@@ -417,7 +419,7 @@ class _SupportScreenState extends State<SupportScreen> {
                     RouteNames.riskWindows,
                   ),
                 ),
-                if (false) ...[
+                if (InternalSurfaceGate.showDevSurfaces) ...[
                   const SizedBox(height: AppSpacing.sm),
                   PrimaryButton(
                     label: 'Open Feature Controls',

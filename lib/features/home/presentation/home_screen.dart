@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../app/config/internal_surface_gate.dart';
+
 import '../../../app/theme/app_spacing.dart';
 import '../../../core/constants/route_names.dart';
 import '../../../core/widgets/info_card.dart';
@@ -106,7 +108,7 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: AppSpacing.md),
             const EntryStatusCard(),
             const SizedBox(height: AppSpacing.md),
-            if (false) ...[
+            if (InternalSurfaceGate.showDevSurfaces) ...[
               const DemoReadinessCard(),
               const SizedBox(height: AppSpacing.md),
             ],
@@ -138,7 +140,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       RouteNames.educate,
                     ),
                   ),
-                  if (false) ...[
+                  if (InternalSurfaceGate.showDevSurfaces) ...[
                     const SizedBox(height: AppSpacing.sm),
                     SizedBox(
                       width: double.infinity,
