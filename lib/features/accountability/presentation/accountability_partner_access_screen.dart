@@ -87,7 +87,7 @@ class _AccountabilityPartnerAccessScreenState
                 PrimaryButton(
                   label: _checking ? 'Checking...' : 'Open Accountability Summary',
                   icon: Icons.visibility_outlined,
-                  onPressed: _checking ? null : _verify,
+                  onPressed: _checking ? () {} : _verify,
                 ),
               ],
             ),

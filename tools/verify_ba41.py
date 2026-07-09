@@ -47,6 +47,7 @@ checks = {
         "Open Accountability Summary",
         "verifyPartnerPasscode",
         "RouteNames.accountabilitySummary",
+        "onPressed: _checking ? () {} : _verify",
     ],
     "lib/features/accountability/presentation/accountability_summary_screen.dart": [
         "class AccountabilitySummaryScreen",
