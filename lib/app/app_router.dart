@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../features/accountability/presentation/accountability_settings_screen.dart';
 import '../core/constants/route_names.dart';
 import '../features/about/presentation/about_breakout_screen.dart';
 import '../features/ai_chat/presentation/ai_chat_screen.dart';
@@ -162,6 +163,13 @@ class AppRouter {
           builder: (_) => const ProtectedRouteGate(
             scope: LockScope.support,
             child: WidgetPreviewScreen(),
+          ),
+        );
+      case RouteNames.accountabilitySettings:
+        return MaterialPageRoute(
+          builder: (_) => const ProtectedRouteGate(
+            scope: LockScope.support,
+            child: AccountabilitySettingsScreen(),
           ),
         );
       case RouteNames.support:

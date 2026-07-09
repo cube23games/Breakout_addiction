@@ -379,6 +379,15 @@ class _SupportScreenState extends State<SupportScreen> {
                     RouteNames.privacySafetyCenter,
                   ),
                 ),
+                const SizedBox(height: AppSpacing.sm),
+                PrimaryButton(
+                  label: 'Accountability Mode',
+                  icon: Icons.handshake_outlined,
+                  onPressed: () => Navigator.pushNamed(
+                    context,
+                    RouteNames.accountabilitySettings,
+                  ),
+                ),
                 if (InternalSurfaceGate.showDevSurfaces) ...[
                   const SizedBox(height: AppSpacing.sm),
                   PrimaryButton(

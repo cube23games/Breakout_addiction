@@ -45,6 +45,28 @@ checks = {
         "clearPartnerPasscode",
         "AccountabilitySettings.defaults",
     ],
+    "lib/features/accountability/presentation/accountability_settings_screen.dart": [
+        "class AccountabilitySettingsScreen",
+        "Support, not surveillance",
+        "Enable Accountability Mode",
+        "Partner Passcode",
+        "Save Partner Passcode",
+        "What can they see?",
+        "Private by default",
+        "Share AI chat history",
+    ],
+    "lib/core/constants/route_names.dart": [
+        "accountabilitySettings",
+        "/accountability-settings",
+    ],
+    "lib/app/app_router.dart": [
+        "AccountabilitySettingsScreen",
+        "RouteNames.accountabilitySettings",
+    ],
+    "lib/features/support/presentation/support_screen.dart": [
+        "Accountability Mode",
+        "RouteNames.accountabilitySettings",
+    ],
 }
 
 missing = []
@@ -66,4 +88,4 @@ if missing:
         print(f" - {item}")
     sys.exit(1)
 
-print("BA-41 verification passed: Accountability Mode plan and local settings foundation are wired.")
+print("BA-41 verification passed: Accountability Mode settings UI is wired.")
