@@ -74,6 +74,12 @@ ThemeData buildBreakoutTheme() {
     ),
     snackBarTheme: const SnackBarThemeData(
       behavior: SnackBarBehavior.floating,
+      backgroundColor: Color(0xFF13212C),
+      contentTextStyle: TextStyle(color: AppColors.textPrimary),
+      actionTextColor: AppColors.accent,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.all(Radius.circular(16)),
+      ),
     ),
     bottomNavigationBarTheme: const BottomNavigationBarThemeData(
       backgroundColor: AppColors.surface,
