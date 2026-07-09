@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../../core/constants/route_names.dart';
 import '../../home/presentation/home_screen.dart';
+import '../../privacy/domain/lock_scope.dart';
+import '../../privacy/presentation/protected_route_gate.dart';
 import '../../widget/data/app_entry_repository.dart';
 import '../data/onboarding_repository.dart';
 
@@ -53,7 +55,10 @@ class _HomeEntryScreenState extends State<HomeEntryScreen> {
 
     if (pending == null || pending.routeName == RouteNames.home) {
       setState(() {
-        _child = const HomeScreen();
+        _child = const ProtectedRouteGate(
+          scope: LockScope.app,
+          child: HomeScreen(),
+        );
       });
       return;
     }

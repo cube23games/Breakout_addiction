@@ -14,6 +14,15 @@ class LockSettingsRepository {
 
   final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
 
+  LockScope? _parseScope(String name) {
+    for (final scope in LockScope.values) {
+      if (scope.name == name) {
+        return scope;
+      }
+    }
+    return null;
+  }
+
   Future<LockSettings> getSettings() async {
     final prefs = await SharedPreferences.getInstance();
     final scopeNames = prefs.getStringList(_scopesKey) ?? <String>[];
@@ -22,7 +31,8 @@ class LockSettingsRepository {
     return LockSettings(
       isEnabled: prefs.getBool(_enabledKey) ?? false,
       enabledScopes: scopeNames
-          .map((name) => LockScope.values.byName(name))
+          .map(_parseScope)
+          .whereType<LockScope>()
           .toSet(),
       allowRescueWithoutUnlock: prefs.getBool(_rescueBypassKey) ?? true,
       useBiometrics: prefs.getBool(_biometricKey) ?? false,
