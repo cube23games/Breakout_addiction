@@ -10,6 +10,8 @@ class DelayActionsCard extends StatelessWidget {
   void _announce(BuildContext context, int minutes) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: const Color(0xFF13212C),
         content: Text('Good call. Delay for $minutes minutes and re-check your state.'),
       ),
     );

@@ -11,14 +11,95 @@ import '../data/recovery_event_repository.dart';
 import '../domain/cycle_stage_log_entry.dart';
 import '../domain/recovery_event_entry.dart';
 
-class LogHubScreen extends StatelessWidget {
+class LogHubScreen extends StatefulWidget {
   const LogHubScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final stageRepository = CycleStageLogRepository();
-    final eventRepository = RecoveryEventRepository();
+  State<LogHubScreen> createState() => _LogHubScreenState();
+}
 
+class _LogHubScreenState extends State<LogHubScreen> {
+  final CycleStageLogRepository _stageRepository = CycleStageLogRepository();
+  final RecoveryEventRepository _eventRepository = RecoveryEventRepository();
+
+  late Future<List<CycleStageLogEntry>> _stageEntriesFuture;
+  late Future<List<RecoveryEventEntry>> _eventEntriesFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _reloadEntries();
+  }
+
+  void _reloadEntries() {
+    _stageEntriesFuture = _stageRepository.getEntries();
+    _eventEntriesFuture = _eventRepository.getEntries();
+  }
+
+  void _refresh() {
+    setState(_reloadEntries);
+  }
+
+  Future<void> _confirmDeleteEvent(RecoveryEventEntry entry) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Delete recovery event?'),
+          content: const Text(
+            'This removes the saved log from this device. You can undo immediately after deleting.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Delete'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed != true) {
+      return;
+    }
+
+    await _eventRepository.deleteEntry(entry);
+    if (!mounted) return;
+
+    _refresh();
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: const Color(0xFF13212C),
+        content: const Text('Recovery event deleted.'),
+        action: SnackBarAction(
+          label: 'Undo',
+          onPressed: () async {
+            await _eventRepository.saveEntry(entry);
+            if (mounted) {
+              _refresh();
+            }
+          },
+        ),
+      ),
+    );
+  }
+
+  void _editEvent(RecoveryEventEntry entry) {
+    Navigator.pushNamed(
+      context,
+      RouteNames.recoveryEventLog,
+      arguments: entry,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Log')),
       body: ListView(
@@ -82,13 +163,16 @@ class LogHubScreen extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.md),
           FutureBuilder<List<CycleStageLogEntry>>(
-            future: stageRepository.getEntries(),
+            future: _stageEntriesFuture,
             builder: (context, snapshot) {
               final entries = snapshot.data ?? <CycleStageLogEntry>[];
 
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const InfoCard(
-                  child: Text('Loading recent stage logs...', style: AppTypography.muted),
+                  child: Text(
+                    'Loading recent stage logs...',
+                    style: AppTypography.muted,
+                  ),
                 );
               }
 
@@ -99,7 +183,10 @@ class LogHubScreen extends StatelessWidget {
                     children: [
                       Text('Recent Stage Logs', style: AppTypography.section),
                       SizedBox(height: AppSpacing.sm),
-                      Text('No saved stage logs yet.', style: AppTypography.muted),
+                      Text(
+                        'No saved stage logs yet.',
+                        style: AppTypography.muted,
+                      ),
                     ],
                   ),
                 );
@@ -122,13 +209,16 @@ class LogHubScreen extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.md),
           FutureBuilder<List<RecoveryEventEntry>>(
-            future: eventRepository.getEntries(),
+            future: _eventEntriesFuture,
             builder: (context, snapshot) {
               final entries = snapshot.data ?? <RecoveryEventEntry>[];
 
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const InfoCard(
-                  child: Text('Loading recent recovery events...', style: AppTypography.muted),
+                  child: Text(
+                    'Loading recent recovery events...',
+                    style: AppTypography.muted,
+                  ),
                 );
               }
 
@@ -139,7 +229,10 @@ class LogHubScreen extends StatelessWidget {
                     children: [
                       Text('Recent Recovery Events', style: AppTypography.section),
                       SizedBox(height: AppSpacing.sm),
-                      Text('No urge, relapse, or victory logs yet.', style: AppTypography.muted),
+                      Text(
+                        'No urge, relapse, or victory logs yet.',
+                        style: AppTypography.muted,
+                      ),
                     ],
                   ),
                 );
@@ -152,7 +245,11 @@ class LogHubScreen extends StatelessWidget {
                     Text('Recent Recovery Events', style: AppTypography.section),
                     const SizedBox(height: AppSpacing.sm),
                     for (final entry in entries.take(5)) ...[
-                      _RecoveryEventRow(entry: entry),
+                      _RecoveryEventRow(
+                        entry: entry,
+                        onEdit: () => _editEvent(entry),
+                        onDelete: () => _confirmDeleteEvent(entry),
+                      ),
                       const SizedBox(height: AppSpacing.sm),
                     ],
                   ],
@@ -202,6 +299,7 @@ class _StageRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final note = entry.note.isEmpty ? 'No note added.' : entry.note;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(AppSpacing.md),
@@ -225,13 +323,19 @@ class _StageRow extends StatelessWidget {
 
 class _RecoveryEventRow extends StatelessWidget {
   final RecoveryEventEntry entry;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
 
-  const _RecoveryEventRow({required this.entry});
+  const _RecoveryEventRow({
+    required this.entry,
+    required this.onEdit,
+    required this.onDelete,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final contextLine = entry.context.isEmpty ? 'No context added.' : entry.context;
-    final noteLine = entry.note.isEmpty ? 'No note added.' : entry.note;
+    final contextText = entry.context.isEmpty ? 'No context added.' : entry.context;
+    final noteText = entry.note.isEmpty ? 'No note added.' : entry.note;
 
     return Container(
       width: double.infinity,
@@ -245,11 +349,30 @@ class _RecoveryEventRow extends StatelessWidget {
         children: [
           Text(entry.type.label, style: AppTypography.section),
           const SizedBox(height: 4),
+          Text('Reason: ${entry.displayReason}', style: AppTypography.muted),
+          const SizedBox(height: 4),
           Text('Intensity: ${entry.intensity}/10', style: AppTypography.muted),
+          const SizedBox(height: AppSpacing.sm),
+          Text(contextText, style: AppTypography.body),
           const SizedBox(height: 4),
-          Text(contextLine, style: AppTypography.body),
-          const SizedBox(height: 4),
-          Text(noteLine, style: AppTypography.muted),
+          Text(noteText, style: AppTypography.muted),
+          const SizedBox(height: AppSpacing.sm),
+          Wrap(
+            spacing: AppSpacing.sm,
+            runSpacing: AppSpacing.sm,
+            children: [
+              OutlinedButton.icon(
+                onPressed: onEdit,
+                icon: const Icon(Icons.edit_outlined),
+                label: const Text('Edit'),
+              ),
+              OutlinedButton.icon(
+                onPressed: onDelete,
+                icon: const Icon(Icons.delete_outline),
+                label: const Text('Delete'),
+              ),
+            ],
+          ),
         ],
       ),
     );

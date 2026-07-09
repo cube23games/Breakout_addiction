@@ -11,6 +11,7 @@ import '../features/log/presentation/cycle_stage_log_screen.dart';
 import '../features/log/presentation/log_hub_screen.dart';
 import '../features/log/presentation/mood_log_screen.dart';
 import '../features/log/presentation/recovery_event_log_screen.dart';
+import '../features/log/domain/recovery_event_entry.dart';
 import '../features/onboarding/presentation/home_entry_screen.dart';
 import '../features/onboarding/presentation/onboarding_screen.dart';
 import '../features/premium/presentation/premium_screen.dart';
@@ -77,10 +78,13 @@ class AppRouter {
           ),
         );
       case RouteNames.recoveryEventLog:
+        final entry = settings.arguments is RecoveryEventEntry
+            ? settings.arguments as RecoveryEventEntry
+            : null;
         return MaterialPageRoute(
-          builder: (_) => const ProtectedRouteGate(
+          builder: (_) => ProtectedRouteGate(
             scope: LockScope.logs,
-            child: RecoveryEventLogScreen(),
+            child: RecoveryEventLogScreen(initialEntry: entry),
           ),
         );
       case RouteNames.insights:
