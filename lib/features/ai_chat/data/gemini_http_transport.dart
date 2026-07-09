@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../domain/ai_backend_config.dart';
+import '../domain/ai_recovery_coach_policy.dart';
 import '../domain/chat_message.dart';
 import 'ai_backend_config_repository.dart';
 import 'ai_remote_transport.dart';
@@ -24,8 +25,8 @@ class GeminiHttpTransport implements AiRemoteTransport {
   }
 
   List<Map<String, dynamic>> _buildContents(List<ChatMessage> messages) {
-    final recent = messages.length > 8
-        ? messages.sublist(messages.length - 8)
+    final recent = messages.length > AiRecoveryCoachPolicy.recentMessageLimit
+        ? messages.sublist(messages.length - AiRecoveryCoachPolicy.recentMessageLimit)
         : messages;
 
     return recent
@@ -97,10 +98,15 @@ class GeminiHttpTransport implements AiRemoteTransport {
     );
 
     final body = <String, dynamic>{
+      'systemInstruction': <String, dynamic>{
+        'parts': <Map<String, dynamic>>[
+          <String, dynamic>{'text': AiRecoveryCoachPolicy.systemInstruction},
+        ],
+      },
       'contents': _buildContents(messages),
       'generationConfig': <String, dynamic>{
-        'temperature': 0.6,
-        'maxOutputTokens': 240,
+        'temperature': AiRecoveryCoachPolicy.temperature,
+        'maxOutputTokens': AiRecoveryCoachPolicy.maxOutputTokens,
       },
     };
 
