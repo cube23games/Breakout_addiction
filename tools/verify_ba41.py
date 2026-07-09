@@ -15,6 +15,36 @@ checks = {
         "Partner access must never reveal API keys",
         "Let someone support you without giving them your whole private world",
     ],
+    "lib/features/accountability/domain/accountability_scope.dart": [
+        "enum AccountabilityScope",
+        "progress",
+        "recentUrges",
+        "relapseEvents",
+        "victoryEvents",
+        "moodTrends",
+        "riskWindows",
+        "recoveryPlan",
+        "reasonsToStop",
+        "supportNeeded",
+    ],
+    "lib/features/accountability/domain/accountability_settings.dart": [
+        "class AccountabilitySettings",
+        "enabled",
+        "sharedScopes",
+        "sharePrivateNotes = false",
+        "shareAiChatHistory = false",
+        "canUsePartnerAccess",
+        "_parseScope",
+    ],
+    "lib/features/accountability/data/accountability_settings_repository.dart": [
+        "class AccountabilitySettingsRepository",
+        "FlutterSecureStorage",
+        "_partnerPasscodeKey",
+        "savePartnerPasscode",
+        "verifyPartnerPasscode",
+        "clearPartnerPasscode",
+        "AccountabilitySettings.defaults",
+    ],
 }
 
 missing = []
@@ -36,4 +66,4 @@ if missing:
         print(f" - {item}")
     sys.exit(1)
 
-print("BA-41 verification passed: Accountability Mode plan is documented.")
+print("BA-41 verification passed: Accountability Mode plan and local settings foundation are wired.")
