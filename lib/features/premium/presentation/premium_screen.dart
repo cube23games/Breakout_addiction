@@ -27,6 +27,8 @@ class PremiumScreen extends StatefulWidget {
 }
 
 class _PremiumScreenState extends State<PremiumScreen> {
+  static const bool _showInternalAiControls = false;
+
   final PremiumAccessRepository _repository = PremiumAccessRepository();
   final AiChatSettingsRepository _chatSettingsRepository =
       AiChatSettingsRepository();
@@ -334,7 +336,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
           Text('Breakout Premium', style: AppTypography.title),
           const SizedBox(height: AppSpacing.xs),
           const Text(
-            'You will always be able to see whether AI is local, stubbed, or live prototype. Emergencies should leave chat and go to human support immediately.',
+            'Breakout Plus adds deeper local guidance. Breakout Plus AI is optional and should never replace human support in an emergency.',
             style: AppTypography.muted,
           ),
           const SizedBox(height: AppSpacing.xs),
@@ -343,177 +345,179 @@ class _PremiumScreenState extends State<PremiumScreen> {
             style: AppTypography.muted,
           ),
           const SizedBox(height: AppSpacing.lg),
-          InfoCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Plan', style: AppTypography.section),
-                const SizedBox(height: AppSpacing.sm),
-                DropdownButtonFormField<PremiumPlan>(
-                  initialValue: _status.plan,
-                  decoration: const InputDecoration(
-                    labelText: 'Premium Plan',
+          if (_showInternalAiControls) ...[
+            InfoCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Plan', style: AppTypography.section),
+                  const SizedBox(height: AppSpacing.sm),
+                  DropdownButtonFormField<PremiumPlan>(
+                    initialValue: _status.plan,
+                    decoration: const InputDecoration(
+                        labelText: 'Premium Plan',
+                    ),
+                    items: PremiumPlan.values
+                          .map(
+                            (plan) => DropdownMenuItem<PremiumPlan>(
+                              value: plan,
+                              child: Text(plan.label),
+                            ),
+                          )
+                          .toList(),
+                    onChanged: (value) {
+                        if (value == null) return;
+                        _setPlan(value);
+                    },
                   ),
-                  items: PremiumPlan.values
-                      .map(
-                        (plan) => DropdownMenuItem<PremiumPlan>(
-                          value: plan,
-                          child: Text(plan.label),
-                        ),
-                      )
-                      .toList(),
-                  onChanged: (value) {
-                    if (value == null) return;
-                    _setPlan(value);
-                  },
-                ),
-                const SizedBox(height: AppSpacing.sm),
-                Text(_status.plan.subtitle, style: AppTypography.muted),
-                const SizedBox(height: AppSpacing.md),
-                SwitchListTile(
-                  contentPadding: EdgeInsets.zero,
-                  value: _status.showUpgradePrompts,
-                  onChanged: _togglePrompts,
-                  title: const Text('Show Upgrade Prompts'),
-                  subtitle: const Text(
-                    'Controls whether soft premium prompts appear in the app.',
+                  const SizedBox(height: AppSpacing.sm),
+                  Text(_status.plan.subtitle, style: AppTypography.muted),
+                  const SizedBox(height: AppSpacing.md),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    value: _status.showUpgradePrompts,
+                    onChanged: _togglePrompts,
+                    title: const Text('Show Upgrade Prompts'),
+                    subtitle: const Text(
+                        'Controls whether soft premium prompts appear in the app.',
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          const SizedBox(height: AppSpacing.md),
-          InfoCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Feature Controls', style: AppTypography.section),
-                const SizedBox(height: AppSpacing.sm),
-                Text(
-                  'AI chat: ${_featureSettings.aiChatEnabled ? 'on' : 'off'} • '
-                  'AI guidance: ${_featureSettings.aiGuidanceEnabled ? 'on' : 'off'} • '
-                  'Faith layer: ${_featureSettings.faithLayerEnabled ? 'on' : 'off'}',
-                  style: AppTypography.body,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Startup notice: ${_featureSettings.showStartupNotice ? 'on' : 'off'} • '
-                  'Remote AI features: ${_featureSettings.remoteAiFeaturesEnabled ? 'on' : 'off'}',
-                  style: AppTypography.body,
-                ),
-                const SizedBox(height: AppSpacing.md),
-                PrimaryButton(
-                  label: 'Open Feature Controls',
-                  icon: Icons.tune_outlined,
-                  onPressed: () => Navigator.pushNamed(
-                    context,
-                    RouteNames.featureControls,
+            const SizedBox(height: AppSpacing.md),
+            InfoCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Feature Controls', style: AppTypography.section),
+                  const SizedBox(height: AppSpacing.sm),
+                  Text(
+                    'AI chat: ${_featureSettings.aiChatEnabled ? 'on' : 'off'} • '
+                    'AI guidance: ${_featureSettings.aiGuidanceEnabled ? 'on' : 'off'} • '
+                    'Faith layer: ${_featureSettings.faithLayerEnabled ? 'on' : 'off'}',
+                    style: AppTypography.body,
                   ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: AppSpacing.md),
-          InfoCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('AI Chat Provider Mode', style: AppTypography.section),
-                const SizedBox(height: AppSpacing.sm),
-                const Text(
-                  'Choose the prototype provider path. Gemini Prototype can make a real cloud prototype call only when Plus AI, feature toggles, API key, and the remote gate are all enabled. It is still not confidential.',
-                  style: AppTypography.muted,
-                ),
-                const SizedBox(height: AppSpacing.md),
-                DropdownButtonFormField<ChatProviderMode>(
-                  initialValue: _providerMode,
-                  decoration: const InputDecoration(
-                    labelText: 'Provider Mode',
+                  const SizedBox(height: 8),
+                  Text(
+                    'Startup notice: ${_featureSettings.showStartupNotice ? 'on' : 'off'} • '
+                    'Remote AI features: ${_featureSettings.remoteAiFeaturesEnabled ? 'on' : 'off'}',
+                    style: AppTypography.body,
                   ),
-                  items: ChatProviderMode.values
-                      .map(
-                        (mode) => DropdownMenuItem<ChatProviderMode>(
-                          value: mode,
-                          child: Text(mode.label),
-                        ),
-                      )
-                      .toList(),
-                  onChanged: (value) {
-                    if (value == null) return;
-                    _setProviderMode(value);
-                  },
-                ),
-                const SizedBox(height: AppSpacing.sm),
-                Text(
-                  _providerMode.description,
-                  style: AppTypography.muted,
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: AppSpacing.md),
-          InfoCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Remote Path Kill Switch', style: AppTypography.section),
-                SwitchListTile(
-                  contentPadding: EdgeInsets.zero,
-                  value: _remotePathEnabled,
-                  onChanged: _setRemotePathEnabled,
-                  title: const Text('Enable Remote Backend Path'),
-                  subtitle: const Text(
-                    'This arms the paid backend path only after all preflight checks pass. It still uses a stub transport today.',
+                  const SizedBox(height: AppSpacing.md),
+                  PrimaryButton(
+                    label: 'Open Feature Controls',
+                    icon: Icons.tune_outlined,
+                    onPressed: () => Navigator.pushNamed(
+                        context,
+                        RouteNames.featureControls,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          const SizedBox(height: AppSpacing.md),
-          InfoCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Paid Backend Readiness', style: AppTypography.section),
-                const SizedBox(height: AppSpacing.sm),
-                Text('Model: ${_backendConfig.modelName}', style: AppTypography.body),
-                const SizedBox(height: 4),
-                Text('Base URL: ${_backendConfig.apiBaseUrl}', style: AppTypography.body),
-                const SizedBox(height: 4),
-                Text(
-                  _backendConfig.hasApiKey ? 'API key saved securely' : 'No API key saved',
-                  style: AppTypography.body,
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Grounding, maps grounding, session memory, and file uploads are intentionally forced off.',
-                  style: AppTypography.muted,
-                ),
-                const SizedBox(height: AppSpacing.md),
-                PrimaryButton(
-                  label: 'Open Backend Config',
-                  icon: Icons.admin_panel_settings_outlined,
-                  onPressed: _showBackendSheet,
-                ),
-              ],
+            const SizedBox(height: AppSpacing.md),
+            InfoCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('AI Chat Provider Mode', style: AppTypography.section),
+                  const SizedBox(height: AppSpacing.sm),
+                  const Text(
+                    'Choose the prototype provider path. Gemini Prototype can make a real cloud prototype call only when Plus AI, feature toggles, API key, and the remote gate are all enabled. It is still not confidential.',
+                    style: AppTypography.muted,
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  DropdownButtonFormField<ChatProviderMode>(
+                    initialValue: _providerMode,
+                    decoration: const InputDecoration(
+                        labelText: 'Provider Mode',
+                    ),
+                    items: ChatProviderMode.values
+                          .map(
+                            (mode) => DropdownMenuItem<ChatProviderMode>(
+                              value: mode,
+                              child: Text(mode.label),
+                            ),
+                          )
+                          .toList(),
+                    onChanged: (value) {
+                        if (value == null) return;
+                        _setProviderMode(value);
+                    },
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  Text(
+                    _providerMode.description,
+                    style: AppTypography.muted,
+                  ),
+                ],
+              ),
             ),
-          ),
-          const SizedBox(height: AppSpacing.md),
-          _preflightCard(),
-          const SizedBox(height: AppSpacing.md),
-          const InfoCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Prototype AI Guardrails', style: AppTypography.section),
-                SizedBox(height: AppSpacing.sm),
-                Text(
-                  'The current prototype blocks minor sexual content and imminent self-harm or violence language, and scrubs obvious identifying details before prototype processing.',
-                  style: AppTypography.muted,
-                ),
-              ],
+            const SizedBox(height: AppSpacing.md),
+            InfoCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Remote Path Kill Switch', style: AppTypography.section),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    value: _remotePathEnabled,
+                    onChanged: _setRemotePathEnabled,
+                    title: const Text('Enable Remote Backend Path'),
+                    subtitle: const Text(
+                        'This arms the paid backend path only after all preflight checks pass. It still uses a stub transport today.',
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
+            const SizedBox(height: AppSpacing.md),
+            InfoCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Paid Backend Readiness', style: AppTypography.section),
+                  const SizedBox(height: AppSpacing.sm),
+                  Text('Model: ${_backendConfig.modelName}', style: AppTypography.body),
+                  const SizedBox(height: 4),
+                  Text('Base URL: ${_backendConfig.apiBaseUrl}', style: AppTypography.body),
+                  const SizedBox(height: 4),
+                  Text(
+                    _backendConfig.hasApiKey ? 'API key saved securely' : 'No API key saved',
+                    style: AppTypography.body,
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Grounding, maps grounding, session memory, and file uploads are intentionally forced off.',
+                    style: AppTypography.muted,
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  PrimaryButton(
+                    label: 'Open Backend Config',
+                    icon: Icons.admin_panel_settings_outlined,
+                    onPressed: _showBackendSheet,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            _preflightCard(),
+            const SizedBox(height: AppSpacing.md),
+            const InfoCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Prototype AI Guardrails', style: AppTypography.section),
+                  SizedBox(height: AppSpacing.sm),
+                  Text(
+                    'The current prototype blocks minor sexual content and imminent self-harm or violence language, and scrubs obvious identifying details before prototype processing.',
+                    style: AppTypography.muted,
+                  ),
+                ],
+              ),
+            ),
+          ],
           const SizedBox(height: AppSpacing.md),
           _featureCard(
             title: 'Breakout Plus',

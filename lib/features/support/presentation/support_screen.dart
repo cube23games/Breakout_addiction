@@ -35,6 +35,14 @@ class _SupportScreenState extends State<SupportScreen> {
     'Secular',
   ];
 
+  String _maskedTrustedContactPhone(String phone) {
+    final digits = phone.replaceAll(RegExp(r'[^0-9]'), '');
+    if (digits.length < 4) {
+      return 'saved privately';
+    }
+    return '•••-•••-${digits.substring(digits.length - 4)}';
+  }
+
   @override
   void initState() {
     super.initState();
@@ -260,13 +268,7 @@ class _SupportScreenState extends State<SupportScreen> {
                 Text('Emergency Help', style: AppTypography.section),
                 const SizedBox(height: AppSpacing.sm),
                 const Text(
-                  'If AI ever feels confusing, inadequate, or too slow for the moment, leave chat and use human support instead.',
-                  style: AppTypography.muted,
-                ),
-                const SizedBox(height: AppSpacing.sm),
-                const SizedBox(height: AppSpacing.sm),
-                const Text(
-                  'Fast access to crisis support and trusted people.',
+                  'Fast access to crisis support and trusted people when a moment feels too heavy to handle alone.',
                   style: AppTypography.muted,
                 ),
                 const SizedBox(height: AppSpacing.md),
@@ -297,7 +299,7 @@ class _SupportScreenState extends State<SupportScreen> {
                 Text(
                   _trustedContact == null
                       ? 'No trusted contact saved yet.'
-                      : 'Saved contact: ${_trustedContact!.name} • ${_trustedContact!.phone}',
+                      : 'Saved contact: ${_trustedContact!.name} • ${_maskedTrustedContactPhone(_trustedContact!.phone)}',
                   style: AppTypography.muted,
                 ),
                 const SizedBox(height: AppSpacing.md),
@@ -348,7 +350,7 @@ class _SupportScreenState extends State<SupportScreen> {
                 Text('Feature Choices', style: AppTypography.section),
                 const SizedBox(height: AppSpacing.sm),
                 const Text(
-                  'These controls make it easy to demo local-only behavior, reminders, widget entry, or the optional AI layer without guessing what is turned on.',
+                  'Choose the support tools, privacy options, and optional features that fit your recovery path.',
                   style: AppTypography.muted,
                 ),
                 const SizedBox(height: AppSpacing.sm),
@@ -375,15 +377,17 @@ class _SupportScreenState extends State<SupportScreen> {
                     RouteNames.privacySafetyCenter,
                   ),
                 ),
-                const SizedBox(height: AppSpacing.sm),
-                PrimaryButton(
-                  label: 'Release Readiness',
-                  icon: Icons.fact_check_outlined,
-                  onPressed: () => Navigator.pushNamed(
-                    context,
-                    RouteNames.releaseReadiness,
+                if (false) ...[
+                  const SizedBox(height: AppSpacing.sm),
+                  PrimaryButton(
+                    label: 'Release Readiness',
+                    icon: Icons.fact_check_outlined,
+                    onPressed: () => Navigator.pushNamed(
+                      context,
+                      RouteNames.releaseReadiness,
+                    ),
                   ),
-                ),
+                ],
                 const SizedBox(height: AppSpacing.sm),
                 PrimaryButton(
                   label: 'Open AI Recovery Coach',
@@ -393,15 +397,17 @@ class _SupportScreenState extends State<SupportScreen> {
                     RouteNames.aiChat,
                   ),
                 ),
-                const SizedBox(height: AppSpacing.sm),
-                PrimaryButton(
-                  label: 'Open Widget Preview',
-                  icon: Icons.widgets_outlined,
-                  onPressed: () => Navigator.pushNamed(
-                    context,
-                    RouteNames.widgetPreview,
+                if (false) ...[
+                  const SizedBox(height: AppSpacing.sm),
+                  PrimaryButton(
+                    label: 'Open Widget Preview',
+                    icon: Icons.widgets_outlined,
+                    onPressed: () => Navigator.pushNamed(
+                      context,
+                      RouteNames.widgetPreview,
+                    ),
                   ),
-                ),
+                ],
                 const SizedBox(height: AppSpacing.sm),
                 PrimaryButton(
                   label: 'Open Risk Windows',
@@ -411,15 +417,17 @@ class _SupportScreenState extends State<SupportScreen> {
                     RouteNames.riskWindows,
                   ),
                 ),
-                const SizedBox(height: AppSpacing.sm),
-                PrimaryButton(
-                  label: 'Open Feature Controls',
-                  icon: Icons.tune_outlined,
-                  onPressed: () => Navigator.pushNamed(
-                    context,
-                    RouteNames.featureControls,
+                if (false) ...[
+                  const SizedBox(height: AppSpacing.sm),
+                  PrimaryButton(
+                    label: 'Open Feature Controls',
+                    icon: Icons.tune_outlined,
+                    onPressed: () => Navigator.pushNamed(
+                      context,
+                      RouteNames.featureControls,
+                    ),
                   ),
-                ),
+                ],
               ],
             ),
           ),

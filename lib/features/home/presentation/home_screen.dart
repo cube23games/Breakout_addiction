@@ -106,8 +106,10 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: AppSpacing.md),
             const EntryStatusCard(),
             const SizedBox(height: AppSpacing.md),
-            const DemoReadinessCard(),
-            const SizedBox(height: AppSpacing.md),
+            if (false) ...[
+              const DemoReadinessCard(),
+              const SizedBox(height: AppSpacing.md),
+            ],
             const DailyQuoteCard(),
             const SizedBox(height: AppSpacing.md),
             const PremiumGuidanceCard(),
@@ -125,7 +127,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   const Text('Keep Building'),
                   const SizedBox(height: AppSpacing.sm),
                   const Text(
-                    'Use Learn for deeper understanding, Support for your plan, and Widget Preview for quick-entry demo flows.',
+                    'Use Learn for deeper understanding, Support for your plan, and About Breakout for app details.',
                   ),
                   const SizedBox(height: AppSpacing.md),
                   PrimaryButton(
@@ -136,18 +138,20 @@ class _HomeScreenState extends State<HomeScreen> {
                       RouteNames.educate,
                     ),
                   ),
-                  const SizedBox(height: AppSpacing.sm),
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton.icon(
-                      onPressed: () => Navigator.pushNamed(
-                        context,
-                        RouteNames.widgetPreview,
+                  if (false) ...[
+                    const SizedBox(height: AppSpacing.sm),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: () => Navigator.pushNamed(
+                          context,
+                          RouteNames.widgetPreview,
+                        ),
+                        icon: const Icon(Icons.widgets_outlined),
+                        label: const Text('Open Widget Preview'),
                       ),
-                      icon: const Icon(Icons.widgets_outlined),
-                      label: const Text('Open Widget Preview'),
                     ),
-                  ),
+                  ],
                   const SizedBox(height: AppSpacing.sm),
                   SizedBox(
                     width: double.infinity,
