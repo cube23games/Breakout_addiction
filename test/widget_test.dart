@@ -66,7 +66,7 @@ void main() {
 
     expect(find.text('Breakout Addiction'), findsOneWidget);
     expect(find.text('Break the cycle earlier.'), findsOneWidget);
-    expect(find.text('Demo Readiness'), findsOneWidget);
+    expect(find.text('Demo Readiness'), findsNothing);
     expect(find.byType(BottomNavigationBar), findsOneWidget);
   });
 }

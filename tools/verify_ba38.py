@@ -30,6 +30,9 @@ checks = {
         "InternalSurfaceGate.showDevSurfaces",
         "Breakout Plus adds deeper local guidance",
     ],
+    "test/widget_test.dart": [
+        "expect(find.text('Demo Readiness'), findsNothing)",
+    ],
 }
 
 missing = []
