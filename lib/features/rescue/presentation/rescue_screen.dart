@@ -35,7 +35,7 @@ class RescueScreen extends StatelessWidget {
                   Text('Urge Intensity', style: AppTypography.section),
                   SizedBox(height: AppSpacing.sm),
                   Slider(value: 4, min: 0, max: 10, onChanged: null),
-                  Text('A live slider will be wired in next.', style: AppTypography.muted),
+                  Text('Use this as a quick gut-check. If the number is high, change location, breathe, or contact support now.', style: AppTypography.muted),
                 ],
               ),
             ),

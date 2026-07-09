@@ -8,6 +8,7 @@ class ReasonsToStopRepository {
     'Mental clarity',
     'Relationships',
     'Peace',
+    'Other',
   ];
 
   Future<List<String>> getReasons() async {

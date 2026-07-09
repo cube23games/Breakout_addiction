@@ -29,7 +29,7 @@ class DemoReadinessCard extends StatelessWidget {
               children: [
                 Text('Demo Readiness', style: AppTypography.section),
                 SizedBox(height: AppSpacing.sm),
-                Text('Loading app state...', style: AppTypography.muted),
+                Text('Checking demo readiness...', style: AppTypography.muted),
               ],
             ),
           );
