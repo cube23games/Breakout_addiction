@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../core/storage/local_data_safety.dart';
 import '../domain/recovery_event_entry.dart';
 
 class RecoveryEventRepository {
@@ -11,19 +12,13 @@ class RecoveryEventRepository {
   Future<List<RecoveryEventEntry>> getEntries() async {
     final prefs = await SharedPreferences.getInstance();
     final raw = prefs.getString(_storageKey);
-    if (raw == null || raw.isEmpty) {
-      return <RecoveryEventEntry>[];
-    }
 
-    final decoded = jsonDecode(raw) as List<dynamic>;
-    return decoded
-        .map(
-          (item) => RecoveryEventEntry.fromMap(
-            Map<String, dynamic>.from(item as Map),
-          ),
-        )
-        .toList()
-      ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
+    final entries = LocalDataSafety.decodeMappedList<RecoveryEventEntry>(
+      raw,
+      (map) => RecoveryEventEntry.fromMap(map),
+    );
+
+    return entries..sort((a, b) => b.timestamp.compareTo(a.timestamp));
   }
 
   Future<void> saveEntry(RecoveryEventEntry entry) async {

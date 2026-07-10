@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../core/storage/local_data_safety.dart';
 import '../domain/recovery_plan.dart';
 
 class RecoveryPlanRepository {
@@ -9,13 +10,17 @@ class RecoveryPlanRepository {
 
   Future<RecoveryPlan> getPlan() async {
     final prefs = await SharedPreferences.getInstance();
-    final raw = prefs.getString(_storageKey);
-    if (raw == null || raw.isEmpty) {
+    final decoded = LocalDataSafety.decodeMap(prefs.getString(_storageKey));
+
+    if (decoded.isEmpty) {
       return RecoveryPlan.defaults();
     }
 
-    final decoded = jsonDecode(raw) as Map<String, dynamic>;
-    return RecoveryPlan.fromMap(decoded);
+    try {
+      return RecoveryPlan.fromMap(decoded);
+    } catch (_) {
+      return RecoveryPlan.defaults();
+    }
   }
 
   Future<void> savePlan(RecoveryPlan plan) async {

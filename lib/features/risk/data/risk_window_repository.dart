@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../core/storage/local_data_safety.dart';
 import '../domain/reminder_settings.dart';
 import '../domain/risk_window.dart';
 
@@ -13,14 +14,11 @@ class RiskWindowRepository {
   Future<List<RiskWindow>> getRiskWindows() async {
     final prefs = await SharedPreferences.getInstance();
     final raw = prefs.getString(_riskWindowsKey);
-    if (raw == null || raw.isEmpty) {
-      return <RiskWindow>[];
-    }
 
-    final decoded = jsonDecode(raw) as List<dynamic>;
-    return decoded
-        .map((item) => RiskWindow.fromMap(Map<String, dynamic>.from(item as Map)))
-        .toList();
+    return LocalDataSafety.decodeMappedList<RiskWindow>(
+      raw,
+      (map) => RiskWindow.fromMap(map),
+    );
   }
 
   Future<void> saveRiskWindows(List<RiskWindow> windows) async {

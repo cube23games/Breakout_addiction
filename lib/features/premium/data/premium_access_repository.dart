@@ -1,5 +1,6 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../core/storage/local_data_safety.dart';
 import '../domain/premium_plan.dart';
 import '../domain/premium_status.dart';
 
@@ -13,12 +14,12 @@ class PremiumAccessRepository {
     final rawPlan = prefs.getString(_premiumPlanKey);
     final legacyUnlocked = prefs.getBool(_legacyPremiumUnlockedKey) ?? false;
 
-    final PremiumPlan plan;
-    if (rawPlan == null || rawPlan.isEmpty) {
-      plan = legacyUnlocked ? PremiumPlan.plus : PremiumPlan.none;
-    } else {
-      plan = PremiumPlan.values.byName(rawPlan);
-    }
+    final fallbackPlan = legacyUnlocked ? PremiumPlan.plus : PremiumPlan.none;
+    final plan = LocalDataSafety.enumByName(
+      PremiumPlan.values,
+      rawPlan,
+      fallbackPlan,
+    );
 
     return PremiumStatus(
       plan: plan,

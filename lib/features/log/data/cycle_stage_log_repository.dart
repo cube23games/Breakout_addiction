@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../core/storage/local_data_safety.dart';
 import '../domain/cycle_stage_log_entry.dart';
 
 class CycleStageLogRepository {
@@ -10,19 +11,13 @@ class CycleStageLogRepository {
   Future<List<CycleStageLogEntry>> getEntries() async {
     final prefs = await SharedPreferences.getInstance();
     final raw = prefs.getString(_storageKey);
-    if (raw == null || raw.isEmpty) {
-      return <CycleStageLogEntry>[];
-    }
 
-    final decoded = jsonDecode(raw) as List<dynamic>;
-    return decoded
-        .map(
-          (item) => CycleStageLogEntry.fromMap(
-            Map<String, dynamic>.from(item as Map),
-          ),
-        )
-        .toList()
-      ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
+    final entries = LocalDataSafety.decodeMappedList<CycleStageLogEntry>(
+      raw,
+      (map) => CycleStageLogEntry.fromMap(map),
+    );
+
+    return entries..sort((a, b) => b.timestamp.compareTo(a.timestamp));
   }
 
   Future<void> saveEntry(CycleStageLogEntry entry) async {

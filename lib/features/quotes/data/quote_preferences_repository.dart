@@ -1,5 +1,6 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../core/storage/local_data_safety.dart';
 import '../domain/daily_quote.dart';
 
 class QuotePreferencesRepository {
@@ -8,11 +9,11 @@ class QuotePreferencesRepository {
 
   Future<QuoteMode> getMode() async {
     final prefs = await SharedPreferences.getInstance();
-    final raw = prefs.getString(_modeKey);
-    if (raw == null || raw.isEmpty) {
-      return QuoteMode.recovery;
-    }
-    return QuoteMode.values.byName(raw);
+    return LocalDataSafety.enumByName(
+      QuoteMode.values,
+      prefs.getString(_modeKey),
+      QuoteMode.recovery,
+    );
   }
 
   Future<void> saveMode(QuoteMode mode) async {

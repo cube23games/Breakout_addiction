@@ -1,5 +1,6 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../core/storage/local_data_safety.dart';
 import '../domain/ai_chat_settings.dart';
 import '../domain/chat_provider_mode.dart';
 
@@ -10,9 +11,11 @@ class AiChatSettingsRepository {
     final prefs = await SharedPreferences.getInstance();
     final raw = prefs.getString(_providerModeKey);
 
-    final mode = raw == null || raw.isEmpty
-        ? ChatProviderMode.mock
-        : ChatProviderMode.values.byName(raw);
+    final mode = LocalDataSafety.enumByName(
+      ChatProviderMode.values,
+      raw,
+      ChatProviderMode.mock,
+    );
 
     return AiChatSettings(providerMode: mode);
   }

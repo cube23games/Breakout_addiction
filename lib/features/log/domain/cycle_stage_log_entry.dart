@@ -1,3 +1,4 @@
+import '../../../core/storage/local_data_safety.dart';
 import '../../cycle/domain/cycle_stage.dart';
 
 class CycleStageLogEntry {
@@ -24,9 +25,16 @@ class CycleStageLogEntry {
 
   factory CycleStageLogEntry.fromMap(Map<String, dynamic> map) {
     return CycleStageLogEntry(
-      timestamp: DateTime.parse(map['timestamp'] as String),
-      stage: CycleStage.values.byName(map['stage'] as String),
-      intensity: (map['intensity'] as num).toInt(),
+      timestamp: LocalDataSafety.dateTime(
+        map['timestamp'],
+        DateTime.now(),
+      ),
+      stage: LocalDataSafety.enumByName(
+        CycleStage.values,
+        map['stage'] as String?,
+        CycleStage.triggers,
+      ),
+      intensity: LocalDataSafety.intValue(map['intensity'], 5),
       note: (map['note'] as String?) ?? '',
     );
   }

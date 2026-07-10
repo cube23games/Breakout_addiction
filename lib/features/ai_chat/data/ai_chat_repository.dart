@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../core/storage/local_data_safety.dart';
 import '../domain/chat_message.dart';
 
 class AiChatRepository {
@@ -10,19 +11,13 @@ class AiChatRepository {
   Future<List<ChatMessage>> getMessages() async {
     final prefs = await SharedPreferences.getInstance();
     final raw = prefs.getString(_storageKey);
-    if (raw == null || raw.isEmpty) {
-      return <ChatMessage>[];
-    }
 
-    final decoded = jsonDecode(raw) as List<dynamic>;
-    return decoded
-        .map(
-          (item) => ChatMessage.fromMap(
-            Map<String, dynamic>.from(item as Map),
-          ),
-        )
-        .toList()
-      ..sort((a, b) => a.timestamp.compareTo(b.timestamp));
+    final messages = LocalDataSafety.decodeMappedList<ChatMessage>(
+      raw,
+      (map) => ChatMessage.fromMap(map),
+    );
+
+    return messages..sort((a, b) => a.timestamp.compareTo(b.timestamp));
   }
 
   Future<void> saveMessages(List<ChatMessage> messages) async {

@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../core/storage/local_data_safety.dart';
 import '../domain/support_contact.dart';
 
 class SupportContactRepository {
@@ -9,14 +10,18 @@ class SupportContactRepository {
 
   Future<SupportContact?> getContact() async {
     final prefs = await SharedPreferences.getInstance();
-    final raw = prefs.getString(_storageKey);
-    if (raw == null || raw.isEmpty) {
+    final decoded = LocalDataSafety.decodeMap(prefs.getString(_storageKey));
+
+    if (decoded.isEmpty) {
       return null;
     }
 
-    final decoded = jsonDecode(raw) as Map<String, dynamic>;
-    final contact = SupportContact.fromMap(decoded);
-    return contact.isValid ? contact : null;
+    try {
+      final contact = SupportContact.fromMap(decoded);
+      return contact.isValid ? contact : null;
+    } catch (_) {
+      return null;
+    }
   }
 
   Future<void> saveContact(SupportContact contact) async {

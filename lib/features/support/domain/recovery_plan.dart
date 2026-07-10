@@ -1,3 +1,5 @@
+import '../../../core/storage/local_data_safety.dart';
+
 class RecoveryPlan {
   final List<String> riskyPlaces;
   final String firstAction;
@@ -57,9 +59,7 @@ class RecoveryPlan {
 
   factory RecoveryPlan.fromMap(Map<String, dynamic> map) {
     return RecoveryPlan(
-      riskyPlaces: (map['riskyPlaces'] as List<dynamic>? ?? <dynamic>[])
-          .map((item) => item.toString())
-          .toList(),
+      riskyPlaces: LocalDataSafety.stringList(map['riskyPlaces']),
       firstAction: (map['firstAction'] as String?) ?? '',
       secondAction: (map['secondAction'] as String?) ?? '',
       groundingAction: (map['groundingAction'] as String?) ?? '',

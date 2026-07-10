@@ -1,3 +1,5 @@
+import '../../../core/storage/local_data_safety.dart';
+
 enum ChatRole {
   user,
   assistant,
@@ -24,12 +26,16 @@ class ChatMessage {
 
   factory ChatMessage.fromMap(Map<String, dynamic> map) {
     return ChatMessage(
-      role: (map['role'] as String?) != null
-          ? ChatRole.values.byName(map['role'] as String)
-          : ChatRole.assistant,
+      role: LocalDataSafety.enumByName(
+        ChatRole.values,
+        map['role'] as String?,
+        ChatRole.assistant,
+      ),
       text: (map['text'] as String?) ?? '',
-      timestamp: DateTime.tryParse((map['timestamp'] as String?) ?? '') ??
-          DateTime.now(),
+      timestamp: LocalDataSafety.dateTime(
+        map['timestamp'],
+        DateTime.now(),
+      ),
     );
   }
 }

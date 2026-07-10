@@ -1,5 +1,6 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../core/storage/local_data_safety.dart';
 import '../../quotes/domain/daily_quote.dart';
 import '../domain/onboarding_state.dart';
 
@@ -16,10 +17,11 @@ class OnboardingRepository {
   Future<OnboardingState> getState() async {
     final prefs = await SharedPreferences.getInstance();
 
-    final rawMode = prefs.getString(_quoteModeKey);
-    final QuoteMode mode = rawMode == null || rawMode.isEmpty
-        ? QuoteMode.recovery
-        : QuoteMode.values.byName(rawMode);
+    final mode = LocalDataSafety.enumByName(
+      QuoteMode.values,
+      prefs.getString(_quoteModeKey),
+      QuoteMode.recovery,
+    );
 
     return OnboardingState(
       completed: prefs.getBool(_completedKey) ?? false,

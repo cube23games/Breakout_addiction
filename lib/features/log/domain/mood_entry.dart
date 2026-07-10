@@ -1,3 +1,5 @@
+import '../../../core/storage/local_data_safety.dart';
+
 class MoodEntry {
   final DateTime timestamp;
   final String moodLabel;
@@ -31,12 +33,15 @@ class MoodEntry {
 
   factory MoodEntry.fromMap(Map<String, dynamic> map) {
     return MoodEntry(
-      timestamp: DateTime.parse(map['timestamp'] as String),
+      timestamp: LocalDataSafety.dateTime(
+        map['timestamp'],
+        DateTime.now(),
+      ),
       moodLabel: (map['moodLabel'] as String?) ?? 'Neutral',
-      stress: (map['stress'] as num).toInt(),
-      loneliness: (map['loneliness'] as num).toInt(),
-      boredom: (map['boredom'] as num).toInt(),
-      energy: (map['energy'] as num).toInt(),
+      stress: LocalDataSafety.intValue(map['stress'], 5),
+      loneliness: LocalDataSafety.intValue(map['loneliness'], 5),
+      boredom: LocalDataSafety.intValue(map['boredom'], 5),
+      energy: LocalDataSafety.intValue(map['energy'], 5),
       note: (map['note'] as String?) ?? '',
     );
   }

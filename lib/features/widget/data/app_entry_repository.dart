@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/constants/route_names.dart';
+import '../../../core/storage/local_data_safety.dart';
 import '../domain/app_entry_record.dart';
 import '../domain/widget_entry_action.dart';
 
@@ -47,29 +48,37 @@ class AppEntryRepository {
 
   Future<AppEntryRecord?> consumePendingEntry() async {
     final prefs = await SharedPreferences.getInstance();
-    final raw = prefs.getString(_pendingKey);
-    if (raw == null || raw.isEmpty) {
+    final decoded = LocalDataSafety.decodeMap(prefs.getString(_pendingKey));
+
+    if (decoded.isEmpty) {
+      await prefs.remove(_pendingKey);
       return null;
     }
 
-    final decoded = jsonDecode(raw) as Map<String, dynamic>;
-    final record = AppEntryRecord.fromMap(decoded);
-
-    await prefs.remove(_pendingKey);
-    await prefs.setString(_lastKey, jsonEncode(record.toMap()));
-
-    return record;
+    try {
+      final record = AppEntryRecord.fromMap(decoded);
+      await prefs.remove(_pendingKey);
+      await prefs.setString(_lastKey, jsonEncode(record.toMap()));
+      return record;
+    } catch (_) {
+      await prefs.remove(_pendingKey);
+      return null;
+    }
   }
 
   Future<AppEntryRecord?> getLastEntry() async {
     final prefs = await SharedPreferences.getInstance();
-    final raw = prefs.getString(_lastKey);
-    if (raw == null || raw.isEmpty) {
+    final decoded = LocalDataSafety.decodeMap(prefs.getString(_lastKey));
+
+    if (decoded.isEmpty) {
       return null;
     }
 
-    final decoded = jsonDecode(raw) as Map<String, dynamic>;
-    return AppEntryRecord.fromMap(decoded);
+    try {
+      return AppEntryRecord.fromMap(decoded);
+    } catch (_) {
+      return null;
+    }
   }
 
   Future<void> clearLastEntry() async {
