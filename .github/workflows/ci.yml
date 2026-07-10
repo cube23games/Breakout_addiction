@@ -58,7 +58,7 @@ jobs:
               if 'coreLibraryDesugaringEnabled true' not in text:
                   if 'compileOptions {' in text:
                       text = text.replace(
-                          'compileOptions {\n',
+                          'compileOptions \{\n',
                           'compileOptions {\n        coreLibraryDesugaringEnabled true\n',
                           1,
                       )
@@ -121,6 +121,9 @@ jobs:
       - name: Build APK
         run: flutter build apk --release
 
+      - name: Build AAB
+        run: flutter build appbundle --release
+
       - name: List build outputs
         run: find build -maxdepth 7 -type f | sort
 
@@ -129,5 +132,13 @@ jobs:
         with:
           name: breakout-addiction-apk
           path: build/app/outputs/**/*.apk
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Upload AAB artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: breakout-addiction-aab
+          path: build/app/outputs/**/*.aab
           if-no-files-found: error
           retention-days: 7
