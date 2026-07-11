@@ -1,51 +1,38 @@
+#!/usr/bin/env python3
 from pathlib import Path
 import sys
 
-REQUIRED = [
-    'lib/core/constants/route_names.dart',
-    'lib/features/risk/domain/risk_window.dart',
-    'lib/features/risk/domain/reminder_settings.dart',
-    'lib/features/risk/data/risk_window_repository.dart',
-    'lib/features/risk/presentation/risk_windows_screen.dart',
-    'lib/features/support/presentation/support_screen.dart',
-    'lib/app/app_router.dart',
-]
+CHECKS = {'lib/core/constants/route_names.dart': ["static const riskWindows = '/risk-windows';"],
+ 'lib/features/risk/domain/risk_window.dart': ['class RiskWindow'],
+ 'lib/features/risk/domain/reminder_settings.dart': ['class ReminderSettings'],
+ 'lib/features/risk/data/risk_window_repository.dart': ['class RiskWindowRepository'],
+ 'lib/features/risk/presentation/risk_windows_screen.dart': ['Add Risk Window'],
+ 'lib/features/support/presentation/support_screen.dart': ['Open Risk Windows'],
+ 'lib/app/app_router.dart': ['case RouteNames.riskWindows:']}
 
-REQUIRED_TEXT = {
-    'lib/core/constants/route_names.dart': "static const riskWindows = '/risk-windows';",
-    'lib/features/risk/domain/risk_window.dart': 'class RiskWindow',
-    'lib/features/risk/domain/reminder_settings.dart': 'class ReminderSettings',
-    'lib/features/risk/data/risk_window_repository.dart': 'class RiskWindowRepository',
-    'lib/features/risk/presentation/risk_windows_screen.dart': 'Add Risk Window',
-    'lib/features/support/presentation/support_screen.dart': 'Risk Windows & Reminders',
-    'lib/app/app_router.dart': 'case RouteNames.riskWindows:',
-}
+failures = []
 
-def main() -> int:
-    root = Path.cwd()
+for filename, needles in CHECKS.items():
+    path = Path(filename)
 
-    missing = [path for path in REQUIRED if not (root / path).exists()]
-    if missing:
-        print('Missing files:')
-        for item in missing:
-            print(f' - {item}')
-        return 1
+    if not path.exists():
+        failures.append(f'missing file: {filename}')
+        continue
 
-    bad = []
-    for path, needle in REQUIRED_TEXT.items():
-        text = (root / path).read_text(encoding='utf-8')
+    text = path.read_text(encoding='utf-8')
+
+    for needle in needles:
         if needle not in text:
-            bad.append((path, needle))
+            failures.append(
+                f'{filename} missing: {needle}'
+            )
 
-    if bad:
-        print('Content checks failed:')
-        for path, needle in bad:
-            print(f' - {path} missing: {needle}')
-        return 1
+if failures:
+    print('BA15 verification failed:')
 
-    print('Breakout Addiction BA-15 risk windows verification passed.')
-    print(f'Checked {len(REQUIRED)} files and {len(REQUIRED_TEXT)} content rules.')
-    return 0
+    for failure in failures:
+        print(f' - {failure}')
 
-if __name__ == '__main__':
-    sys.exit(main())
+    sys.exit(1)
+
+print('BA-15 risk windows verification passed.')

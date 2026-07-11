@@ -24,41 +24,89 @@ class HomeHeroCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Break the cycle earlier.', style: AppTypography.title),
+              const Text(
+                'Break the cycle earlier.',
+                style: AppTypography.title,
+              ),
               const SizedBox(height: AppSpacing.sm),
               const Text(
-                'The goal is not perfection. The goal is to recognize the pattern sooner and interrupt it faster.',
+                'The goal is not perfection. Recognize '
+                'the pattern sooner and interrupt it faster.',
                 style: AppTypography.muted,
               ),
               const SizedBox(height: AppSpacing.md),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: const [
-                  Chip(label: Text('Private')),
-                  Chip(label: Text('Action-focused')),
-                  Chip(label: Text('Recovery-first')),
+              const Wrap(
+                spacing: AppSpacing.md,
+                runSpacing: AppSpacing.sm,
+                children: [
+                  _HeroMetadata(
+                    icon: Icons.lock_outline,
+                    label: 'Private by design',
+                  ),
+                  _HeroMetadata(
+                    icon: Icons.bolt_outlined,
+                    label: 'Built for action',
+                  ),
                 ],
               ),
               const SizedBox(height: AppSpacing.lg),
               PrimaryButton(
-                label: NeutralLabels.rescuePrimary(neutralMode),
+                label: NeutralLabels.rescuePrimary(
+                  neutralMode,
+                ),
                 icon: Icons.health_and_safety_outlined,
-                onPressed: () => Navigator.pushNamed(context, RouteNames.rescue),
+                onPressed: () => Navigator.pushNamed(
+                  context,
+                  RouteNames.rescue,
+                ),
               ),
               const SizedBox(height: AppSpacing.sm),
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton.icon(
-                  onPressed: () => Navigator.pushNamed(context, RouteNames.cycle),
-                  icon: const Icon(Icons.donut_large_outlined),
-                  label: const Text('Open Cycle Wheel'),
+                  onPressed: () => Navigator.pushNamed(
+                    context,
+                    RouteNames.cycle,
+                  ),
+                  icon: const Icon(
+                    Icons.donut_large_outlined,
+                  ),
+                  label: Text(
+                    NeutralLabels.cycleWheelTitle(
+                      neutralMode,
+                    ),
+                  ),
                 ),
               ),
             ],
           ),
         );
       },
+    );
+  }
+}
+
+class _HeroMetadata extends StatelessWidget {
+  const _HeroMetadata({
+    required this.icon,
+    required this.label,
+  });
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 16),
+        const SizedBox(width: 6),
+        Text(
+          label,
+          style: AppTypography.muted,
+        ),
+      ],
     );
   }
 }

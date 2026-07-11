@@ -3,304 +3,225 @@ import 'package:flutter/material.dart';
 import '../../../app/theme/app_spacing.dart';
 import '../../../app/theme/app_typography.dart';
 import '../../../core/constants/route_names.dart';
-import '../../../core/widgets/info_card.dart';
-import '../../../core/widgets/primary_button.dart';
-import '../../quotes/data/quote_preferences_repository.dart';
 import '../../quotes/domain/daily_quote.dart';
-import '../../support/data/support_contact_repository.dart';
-import '../../support/domain/support_contact.dart';
-import '../data/onboarding_repository.dart';
+import '../data/onboarding_completion_service.dart';
 import '../domain/onboarding_state.dart';
+import 'widgets/onboarding_navigation_controls.dart';
+import 'widgets/onboarding_options.dart';
+import 'widgets/onboarding_step_content.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
 
   @override
-  State<OnboardingScreen> createState() => _OnboardingScreenState();
+  State<OnboardingScreen> createState() =>
+      _OnboardingScreenState();
 }
 
 class _OnboardingScreenState extends State<OnboardingScreen> {
-  final OnboardingRepository _repository = OnboardingRepository();
-  final QuotePreferencesRepository _quotePrefs = QuotePreferencesRepository();
-  final SupportContactRepository _contactRepository = SupportContactRepository();
+  final OnboardingCompletionService _completionService =
+      OnboardingCompletionService();
 
-  final TextEditingController _contactNameController = TextEditingController();
-  final TextEditingController _contactPhoneController = TextEditingController();
+  final TextEditingController _contactNameController =
+      TextEditingController();
+  final TextEditingController _contactPhoneController =
+      TextEditingController();
+  final TextEditingController _customGoalController =
+      TextEditingController();
+  final TextEditingController _customTriggerController =
+      TextEditingController();
+  final TextEditingController _customRiskController =
+      TextEditingController();
+
+  final Set<String> _selectedTriggers = <String>{};
+  final Set<String> _selectedRiskSituations = <String>{};
 
   int _stepIndex = 0;
-  bool _isSaving = false;
+  bool _saving = false;
+  bool _customTriggerEnabled = false;
+  bool _customRiskEnabled = false;
+  bool _triggersUnknown = false;
+  bool _riskTimesUnknown = false;
 
   String _goal = 'Break the cycle earlier';
   QuoteMode _quoteMode = QuoteMode.recovery;
   String _religion = 'Christian';
 
-  final Set<String> _selectedTriggers = <String>{};
-  final Set<String> _selectedRiskTimes = <String>{};
-
-  static const List<String> _goals = <String>[
-    'Break the cycle earlier',
-    'Reduce secrecy and shame',
-    'Strengthen self-control',
-    'Protect my relationships',
-  ];
-
-  static const List<String> _triggers = <String>[
-    'Stress',
-    'Loneliness',
-    'Boredom',
-    'Late-night phone use',
-    'Arguments',
-    'Scrolling social apps',
-  ];
-
-  static const List<String> _riskTimes = <String>[
-    'Late night',
-    'Right after waking up',
-    'After work',
-    'When home alone',
-    'Weekends',
-    'After conflict',
-  ];
-
-  static const List<String> _religions = <String>[
-    'Christian',
-    'General Faith',
-    'Secular',
-  ];
-
   @override
   void dispose() {
     _contactNameController.dispose();
     _contactPhoneController.dispose();
+    _customGoalController.dispose();
+    _customTriggerController.dispose();
+    _customRiskController.dispose();
     super.dispose();
   }
 
-  void _nextStep() {
-    if (_stepIndex < 5) {
-      setState(() => _stepIndex += 1);
+  String _effectiveGoal() {
+    if (_goal != OnboardingOptions.customGoal) {
+      return _goal;
     }
+
+    final custom = _customGoalController.text.trim();
+    return custom.isEmpty ? 'My personal reason' : custom;
   }
 
-  void _previousStep() {
-    if (_stepIndex > 0) {
-      setState(() => _stepIndex -= 1);
+  List<String> _effectiveTriggers() {
+    if (_triggersUnknown) {
+      return <String>[];
     }
+
+    final values = _selectedTriggers.toList();
+    final custom = _customTriggerController.text.trim();
+
+    if (_customTriggerEnabled && custom.isNotEmpty) {
+      values.add(custom);
+    }
+
+    return values;
+  }
+
+  List<String> _effectiveRiskSituations() {
+    if (_riskTimesUnknown) {
+      return <String>[];
+    }
+
+    final values = _selectedRiskSituations.toList();
+    final custom = _customRiskController.text.trim();
+
+    if (_customRiskEnabled && custom.isNotEmpty) {
+      values.add(custom);
+    }
+
+    return values;
+  }
+
+  void _toggleTrigger(String item) {
+    setState(() {
+      _triggersUnknown = false;
+
+      if (!_selectedTriggers.add(item)) {
+        _selectedTriggers.remove(item);
+      }
+    });
+  }
+
+  void _toggleRiskSituation(String item) {
+    setState(() {
+      _riskTimesUnknown = false;
+
+      if (!_selectedRiskSituations.add(item)) {
+        _selectedRiskSituations.remove(item);
+      }
+    });
+  }
+
+  void _setTriggersUnknown(bool value) {
+    setState(() {
+      _triggersUnknown = value;
+
+      if (value) {
+        _selectedTriggers.clear();
+        _customTriggerEnabled = false;
+      }
+    });
+  }
+
+  void _setRiskUnknown(bool value) {
+    setState(() {
+      _riskTimesUnknown = value;
+
+      if (value) {
+        _selectedRiskSituations.clear();
+        _customRiskEnabled = false;
+      }
+    });
   }
 
   Future<void> _finish() async {
-    setState(() => _isSaving = true);
+    setState(() => _saving = true);
 
     final state = OnboardingState(
       completed: true,
-      primaryGoal: _goal,
+      primaryGoal: _effectiveGoal(),
       quoteMode: _quoteMode,
       religionPreference: _religion,
-      topTriggers: _selectedTriggers.toList(),
-      riskyTimes: _selectedRiskTimes.toList(),
+      topTriggers: _effectiveTriggers(),
+      riskyTimes: _effectiveRiskSituations(),
+      triggersUnknown: _triggersUnknown,
+      riskTimesUnknown: _riskTimesUnknown,
       trustedContactName: _contactNameController.text.trim(),
-      trustedContactPhone: _contactPhoneController.text.trim(),
+      trustedContactPhone:
+          _contactPhoneController.text.trim(),
     );
 
-    await _repository.saveState(state);
-    await _quotePrefs.saveMode(_quoteMode);
-    await _quotePrefs.saveReligionTag(_religion);
-
-    final contact = SupportContact(
-      name: _contactNameController.text.trim(),
-      phone: _contactPhoneController.text.trim(),
-    );
-
-    if (contact.isValid) {
-      await _contactRepository.saveContact(contact);
-    }
+    await _completionService.complete(state);
 
     if (!mounted) {
       return;
     }
 
-    setState(() => _isSaving = false);
-
     Navigator.pushNamedAndRemoveUntil(
       context,
       RouteNames.home,
-      (route) => false,
+      (_) => false,
     );
   }
 
-  Widget _buildChipSet({
-    required List<String> options,
-    required Set<String> selected,
-  }) {
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: options.map((item) {
-        final active = selected.contains(item);
-        return FilterChip(
-          selected: active,
-          label: Text(item),
-          onSelected: (value) {
-            setState(() {
-              if (value) {
-                selected.add(item);
-              } else {
-                selected.remove(item);
-              }
-            });
-          },
-        );
-      }).toList(),
-    );
-  }
+  Widget _stepContent() {
+    return OnboardingStepContent(
+      stepIndex: _stepIndex,
+      goal: _goal,
+      customGoalController: _customGoalController,
+      onGoalChanged: (value) {
+        setState(() => _goal = value);
+      },
+      quoteMode: _quoteMode,
+      religion: _religion,
+      onQuoteModeChanged: (value) {
+        setState(() => _quoteMode = value);
+      },
+      onReligionChanged: (value) {
+        setState(() => _religion = value);
+      },
+      selectedTriggers: _selectedTriggers,
+      customTriggerEnabled: _customTriggerEnabled,
+      triggersUnknown: _triggersUnknown,
+      customTriggerController: _customTriggerController,
+      onTriggerToggled: _toggleTrigger,
+      onCustomTriggerChanged: (value) {
+        setState(() {
+          _customTriggerEnabled = value;
 
-  Widget _stepBody() {
-    switch (_stepIndex) {
-      case 0:
-        return InfoCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Welcome to Breakout Addiction', style: AppTypography.title),
-              const SizedBox(height: AppSpacing.sm),
-              const Text(
-                'This short setup helps tailor support, privacy, and encouragement to you.',
-                style: AppTypography.muted,
-              ),
-            ],
-          ),
-        );
-      case 1:
-        return InfoCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('What is your main goal?', style: AppTypography.section),
-              const SizedBox(height: AppSpacing.sm),
-              DropdownButtonFormField<String>(
-                initialValue: _goal,
-                decoration: const InputDecoration(
-                  border: OutlineInputBorder(),
-                ),
-                items: _goals
-                    .map((item) => DropdownMenuItem<String>(
-                          value: item,
-                          child: Text(item),
-                        ))
-                    .toList(),
-                onChanged: (value) {
-                  if (value == null) return;
-                  setState(() => _goal = value);
-                },
-              ),
-            ],
-          ),
-        );
-      case 2:
-        return InfoCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Choose your encouragement style', style: AppTypography.section),
-              const SizedBox(height: AppSpacing.sm),
-              DropdownButtonFormField<QuoteMode>(
-                initialValue: _quoteMode,
-                decoration: const InputDecoration(
-                  border: OutlineInputBorder(),
-                ),
-                items: QuoteMode.values
-                    .map((item) => DropdownMenuItem<QuoteMode>(
-                          value: item,
-                          child: Text(item.name),
-                        ))
-                    .toList(),
-                onChanged: (value) {
-                  if (value == null) return;
-                  setState(() => _quoteMode = value);
-                },
-              ),
-              const SizedBox(height: AppSpacing.md),
-              DropdownButtonFormField<String>(
-                initialValue: _religion,
-                decoration: const InputDecoration(
-                  labelText: 'Faith / Religion',
-                  border: OutlineInputBorder(),
-                ),
-                items: _religions
-                    .map((item) => DropdownMenuItem<String>(
-                          value: item,
-                          child: Text(item),
-                        ))
-                    .toList(),
-                onChanged: (value) {
-                  if (value == null) return;
-                  setState(() => _religion = value);
-                },
-              ),
-            ],
-          ),
-        );
-      case 3:
-        return InfoCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('What tends to trigger you?', style: AppTypography.section),
-              const SizedBox(height: AppSpacing.sm),
-              _buildChipSet(
-                options: _triggers,
-                selected: _selectedTriggers,
-              ),
-            ],
-          ),
-        );
-      case 4:
-        return InfoCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('When are you most at risk?', style: AppTypography.section),
-              const SizedBox(height: AppSpacing.sm),
-              _buildChipSet(
-                options: _riskTimes,
-                selected: _selectedRiskTimes,
-              ),
-            ],
-          ),
-        );
-      case 5:
-        return InfoCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Optional trusted contact', style: AppTypography.section),
-              const SizedBox(height: AppSpacing.sm),
-              TextField(
-                controller: _contactNameController,
-                decoration: const InputDecoration(
-                  labelText: 'Name',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: AppSpacing.md),
-              TextField(
-                controller: _contactPhoneController,
-                keyboardType: TextInputType.phone,
-                decoration: const InputDecoration(
-                  labelText: 'Phone',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-            ],
-          ),
-        );
-      default:
-        return const SizedBox.shrink();
-    }
+          if (value) {
+            _triggersUnknown = false;
+          }
+        });
+      },
+      onTriggersUnknownChanged: _setTriggersUnknown,
+      selectedRiskSituations: _selectedRiskSituations,
+      customRiskEnabled: _customRiskEnabled,
+      riskTimesUnknown: _riskTimesUnknown,
+      customRiskController: _customRiskController,
+      onRiskSituationToggled: _toggleRiskSituation,
+      onCustomRiskChanged: (value) {
+        setState(() {
+          _customRiskEnabled = value;
+
+          if (value) {
+            _riskTimesUnknown = false;
+          }
+        });
+      },
+      onRiskUnknownChanged: _setRiskUnknown,
+      contactNameController: _contactNameController,
+      contactPhoneController: _contactPhoneController,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final isLastStep = _stepIndex == 5;
+    final lastStep = _stepIndex == 5;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Get Started')),
@@ -308,35 +229,25 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         child: ListView(
           padding: const EdgeInsets.all(AppSpacing.lg),
           children: [
-            Text('Step ${_stepIndex + 1} of 6', style: AppTypography.muted),
+            Text(
+              'Step ${_stepIndex + 1} of 6',
+              style: AppTypography.muted,
+            ),
             const SizedBox(height: AppSpacing.sm),
-            _stepBody(),
+            _stepContent(),
             const SizedBox(height: AppSpacing.lg),
-            Row(
-              children: [
-                if (_stepIndex > 0)
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: _previousStep,
-                      icon: const Icon(Icons.arrow_back),
-                      label: const Text('Back'),
-                    ),
-                  ),
-                if (_stepIndex > 0) const SizedBox(width: 12),
-                Expanded(
-                  child: PrimaryButton(
-                    label: isLastStep
-                        ? (_isSaving ? 'Saving...' : 'Finish Setup')
-                        : 'Next',
-                    icon: isLastStep
-                        ? Icons.check_circle_outline
-                        : Icons.arrow_forward,
-                    onPressed: isLastStep
-                        ? (_isSaving ? () {} : _finish)
-                        : _nextStep,
-                  ),
-                ),
-              ],
+            OnboardingNavigationControls(
+              showBack: _stepIndex > 0,
+              lastStep: lastStep,
+              saving: _saving,
+              onBack: () {
+                setState(() => _stepIndex -= 1);
+              },
+              onNext: lastStep
+                  ? _finish
+                  : () {
+                      setState(() => _stepIndex += 1);
+                    },
             ),
           ],
         ),

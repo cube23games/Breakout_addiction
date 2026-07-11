@@ -8,7 +8,7 @@ REQUIRED = [
     'lib/features/privacy/data/privacy_label_repository.dart',
     'lib/features/home/presentation/widgets/quick_actions_row.dart',
     'lib/features/home/presentation/widgets/risk_status_card.dart',
-    'lib/features/home/presentation/home_screen.dart',
+    'lib/features/home/presentation/widgets/home_hero_card.dart',
 ]
 
 REQUIRED_TEXT = {
@@ -18,7 +18,7 @@ REQUIRED_TEXT = {
     'lib/features/privacy/data/privacy_label_repository.dart': 'class PrivacyLabelRepository',
     'lib/features/home/presentation/widgets/quick_actions_row.dart': 'NeutralLabels.rescuePrimary',
     'lib/features/home/presentation/widgets/risk_status_card.dart': 'NeutralLabels.riskCardAction',
-    'lib/features/home/presentation/home_screen.dart': 'NeutralLabels.cycleWheelTitle',
+    'lib/features/home/presentation/widgets/home_hero_card.dart': 'NeutralLabels.cycleWheelTitle',
 }
 
 def main() -> int:

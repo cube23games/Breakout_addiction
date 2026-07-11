@@ -2,6 +2,7 @@ from pathlib import Path
 import sys
 
 REQUIRED = [
+    'lib/features/log/presentation/widgets/log_hub/log_hub_quick_actions_card.dart',
     'lib/core/constants/route_names.dart',
     'lib/app/app_router.dart',
     'lib/features/log/domain/cycle_stage_log_entry.dart',
@@ -15,7 +16,7 @@ REQUIRED_TEXT = {
     'lib/app/app_router.dart': 'case RouteNames.cycleStageLog:',
     'lib/features/log/domain/cycle_stage_log_entry.dart': 'class CycleStageLogEntry',
     'lib/features/log/presentation/cycle_stage_log_screen.dart': 'class CycleStageLogScreen extends StatefulWidget',
-    'lib/features/log/presentation/log_hub_screen.dart': 'Log Cycle Stage',
+    'lib/features/log/presentation/widgets/log_hub/log_hub_quick_actions_card.dart': 'Log Cycle Stage',
     'lib/features/cycle/presentation/cycle_screen.dart': 'RouteNames.cycleStageLog',
 }
 

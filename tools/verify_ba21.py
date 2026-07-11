@@ -1,53 +1,41 @@
+#!/usr/bin/env python3
 from pathlib import Path
 import sys
 
-REQUIRED = [
-    'lib/core/constants/route_names.dart',
-    'lib/features/premium/domain/premium_status.dart',
-    'lib/features/premium/data/premium_access_repository.dart',
-    'lib/features/premium/presentation/widgets/premium_badge.dart',
-    'lib/features/premium/presentation/premium_screen.dart',
-    'lib/features/educate/presentation/educate_screen.dart',
-    'lib/features/support/presentation/support_screen.dart',
-    'lib/app/app_router.dart',
-]
+CHECKS = {'lib/core/constants/route_names.dart': ["static const premium = '/premium';"],
+ 'lib/features/premium/domain/premium_status.dart': ['class PremiumStatus'],
+ 'lib/features/premium/data/premium_access_repository.dart': ['class '
+                                                              'PremiumAccessRepository'],
+ 'lib/features/premium/presentation/widgets/premium_badge.dart': ['class PremiumBadge'],
+ 'lib/features/premium/presentation/premium_screen.dart': ['Breakout Plus',
+                                                           'Breakout Plus AI'],
+ 'lib/features/educate/presentation/educate_screen.dart': ['Educate Me Plus'],
+ 'lib/features/support/presentation/support_screen.dart': ['Open Premium'],
+ 'lib/app/app_router.dart': ['case RouteNames.premium:']}
 
-REQUIRED_TEXT = {
-    'lib/core/constants/route_names.dart': "static const premium = '/premium';",
-    'lib/features/premium/domain/premium_status.dart': 'class PremiumStatus',
-    'lib/features/premium/data/premium_access_repository.dart': 'class PremiumAccessRepository',
-    'lib/features/premium/presentation/widgets/premium_badge.dart': 'class PremiumBadge',
-    'lib/features/premium/presentation/premium_screen.dart': 'Local Demo Unlock',
-    'lib/features/educate/presentation/educate_screen.dart': 'Educate Me Plus',
-    'lib/features/support/presentation/support_screen.dart': "Text('Premium'",
-    'lib/app/app_router.dart': 'case RouteNames.premium:',
-}
+failures = []
 
-def main() -> int:
-    root = Path.cwd()
+for filename, needles in CHECKS.items():
+    path = Path(filename)
 
-    missing = [path for path in REQUIRED if not (root / path).exists()]
-    if missing:
-        print('Missing files:')
-        for item in missing:
-            print(f' - {item}')
-        return 1
+    if not path.exists():
+        failures.append(f'missing file: {filename}')
+        continue
 
-    bad = []
-    for path, needle in REQUIRED_TEXT.items():
-        text = (root / path).read_text(encoding='utf-8')
+    text = path.read_text(encoding='utf-8')
+
+    for needle in needles:
         if needle not in text:
-            bad.append((path, needle))
+            failures.append(
+                f'{filename} missing: {needle}'
+            )
 
-    if bad:
-        print('Content checks failed:')
-        for path, needle in bad:
-            print(f' - {path} missing: {needle}')
-        return 1
+if failures:
+    print('BA21 verification failed:')
 
-    print('Breakout Addiction BA-21 premium hooks verification passed.')
-    print(f'Checked {len(REQUIRED)} files and {len(REQUIRED_TEXT)} content rules.')
-    return 0
+    for failure in failures:
+        print(f' - {failure}')
 
-if __name__ == '__main__':
-    sys.exit(main())
+    sys.exit(1)
+
+print('BA-21 premium hooks verification passed.')

@@ -34,8 +34,8 @@ class DailyQuoteRepository {
 
   static const List<DailyQuote> _recoveryQuotes = <DailyQuote>[
     DailyQuote(
-      text: 'A craving is a wave, not a command.',
-      focusLine: 'Catch the cycle before it speeds up.',
+      text: 'Pause before the pattern chooses for you.',
+      focusLine: 'Change rooms, open Rescue, or contact someone safe.',
       mode: QuoteMode.recovery,
     ),
     DailyQuote(

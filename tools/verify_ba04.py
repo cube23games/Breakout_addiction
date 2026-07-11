@@ -2,6 +2,7 @@ from pathlib import Path
 import sys
 
 REQUIRED = [
+    'lib/features/log/presentation/widgets/log_hub/recent_stage_logs_card.dart',
     'pubspec.yaml',
     'lib/features/log/domain/cycle_stage_log_entry.dart',
     'lib/features/log/data/cycle_stage_log_repository.dart',
@@ -14,7 +15,7 @@ REQUIRED_TEXT = {
     'lib/features/log/domain/cycle_stage_log_entry.dart': 'factory CycleStageLogEntry.fromMap',
     'lib/features/log/data/cycle_stage_log_repository.dart': 'class CycleStageLogRepository',
     'lib/features/log/presentation/cycle_stage_log_screen.dart': 'await _repository.saveEntry(entry);',
-    'lib/features/log/presentation/log_hub_screen.dart': 'FutureBuilder<List<CycleStageLogEntry>>',
+    'lib/features/log/presentation/widgets/log_hub/recent_stage_logs_card.dart': 'FutureBuilder<List<CycleStageLogEntry>>',
 }
 
 def main() -> int:

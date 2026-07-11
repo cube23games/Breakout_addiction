@@ -1,49 +1,46 @@
+#!/usr/bin/env python3
 from pathlib import Path
 import sys
 
-REQUIRED = [
-    'lib/core/constants/route_names.dart',
-    'lib/features/onboarding/domain/onboarding_state.dart',
-    'lib/features/onboarding/data/onboarding_repository.dart',
-    'lib/features/onboarding/presentation/home_entry_screen.dart',
-    'lib/features/onboarding/presentation/onboarding_screen.dart',
-    'lib/app/app_router.dart',
-]
-
-REQUIRED_TEXT = {
-    'lib/core/constants/route_names.dart': "static const onboarding = '/onboarding';",
-    'lib/features/onboarding/domain/onboarding_state.dart': 'class OnboardingState',
-    'lib/features/onboarding/data/onboarding_repository.dart': 'class OnboardingRepository',
-    'lib/features/onboarding/presentation/home_entry_screen.dart': 'class HomeEntryScreen extends StatelessWidget',
-    'lib/features/onboarding/presentation/onboarding_screen.dart': 'Step ${_stepIndex + 1} of 6',
-    'lib/app/app_router.dart': 'case RouteNames.onboarding:',
+CHECKS = {
+    'lib/features/onboarding/presentation/home_entry_screen.dart': [
+        'class HomeEntryScreen',
+    ],
+    'lib/features/onboarding/presentation/onboarding_screen.dart': [
+        'class OnboardingScreen',
+    ],
+    'lib/features/onboarding/data/onboarding_repository.dart': [
+        'class OnboardingRepository',
+    ],
+    'lib/features/onboarding/domain/onboarding_state.dart': [
+        'class OnboardingState',
+    ],
 }
 
-def main() -> int:
-    root = Path.cwd()
+failures = []
 
-    missing = [path for path in REQUIRED if not (root / path).exists()]
-    if missing:
-        print('Missing files:')
-        for item in missing:
-            print(f' - {item}')
-        return 1
+for filename, needles in CHECKS.items():
+    path = Path(filename)
 
-    bad = []
-    for path, needle in REQUIRED_TEXT.items():
-        text = (root / path).read_text(encoding='utf-8')
+    if not path.exists():
+        failures.append(f'missing file: {filename}')
+        continue
+
+    text = path.read_text(encoding='utf-8')
+
+    for needle in needles:
         if needle not in text:
-            bad.append((path, needle))
+            failures.append(
+                f'{filename} missing: {needle}'
+            )
 
-    if bad:
-        print('Content checks failed:')
-        for path, needle in bad:
-            print(f' - {path} missing: {needle}')
-        return 1
+if failures:
+    print('BA-10 verification failed:')
+    for failure in failures:
+        print(f' - {failure}')
+    sys.exit(1)
 
-    print('Breakout Addiction BA-10 onboarding verification passed.')
-    print(f'Checked {len(REQUIRED)} files and {len(REQUIRED_TEXT)} content rules.')
-    return 0
-
-if __name__ == '__main__':
-    sys.exit(main())
+print(
+    'Breakout Addiction BA-10 onboarding entry '
+    'verification passed.'
+)

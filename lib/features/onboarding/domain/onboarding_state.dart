@@ -7,6 +7,8 @@ class OnboardingState {
   final String religionPreference;
   final List<String> topTriggers;
   final List<String> riskyTimes;
+  final bool triggersUnknown;
+  final bool riskTimesUnknown;
   final String trustedContactName;
   final String trustedContactPhone;
 
@@ -17,6 +19,8 @@ class OnboardingState {
     required this.religionPreference,
     required this.topTriggers,
     required this.riskyTimes,
+    required this.triggersUnknown,
+    required this.riskTimesUnknown,
     required this.trustedContactName,
     required this.trustedContactPhone,
   });
@@ -29,6 +33,8 @@ class OnboardingState {
       religionPreference: 'Christian',
       topTriggers: <String>[],
       riskyTimes: <String>[],
+      triggersUnknown: false,
+      riskTimesUnknown: false,
       trustedContactName: '',
       trustedContactPhone: '',
     );

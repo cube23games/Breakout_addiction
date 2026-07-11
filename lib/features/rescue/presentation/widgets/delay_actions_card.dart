@@ -1,165 +1,168 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 
 import '../../../../app/theme/app_spacing.dart';
 import '../../../../app/theme/app_typography.dart';
 import '../../../../core/constants/route_names.dart';
 import '../../../../core/widgets/info_card.dart';
-import 'animated_delay_ring.dart';
+import '../../../log/domain/recovery_event_save_result.dart';
+import '../../../quotes/data/quote_preferences_repository.dart';
+import '../../../quotes/domain/daily_quote.dart';
+import 'active_delay_content.dart';
+import 'completed_delay_content.dart';
+import 'delay_check_in_result.dart';
+import 'delay_guidance_content.dart';
+import 'delay_timer_controller.dart';
 
 class DelayActionsCard extends StatefulWidget {
-  const DelayActionsCard({super.key});
+  const DelayActionsCard({
+    required this.onOpenBreathing,
+    required this.onReviewReasons,
+    super.key,
+  });
+
+  final VoidCallback onOpenBreathing;
+  final VoidCallback onReviewReasons;
 
   @override
-  State<DelayActionsCard> createState() => _DelayActionsCardState();
+  State<DelayActionsCard> createState() =>
+      _DelayActionsCardState();
 }
 
 class _DelayActionsCardState extends State<DelayActionsCard> {
-  Timer? _timer;
-  Duration? _selectedDuration;
-  Duration _remaining = Duration.zero;
-  bool _completed = false;
+  late final DelayTimerController _timerController;
 
-  bool get _isActive => _timer != null && _remaining.inSeconds > 0;
+  QuoteMode _quoteMode = QuoteMode.recovery;
+  DelayCheckInResult? _checkInResult;
 
   @override
-  void dispose() {
-    _timer?.cancel();
-    super.dispose();
+  void initState() {
+    super.initState();
+
+    _timerController = DelayTimerController()
+      ..addListener(_handleTimerChange);
+
+    _loadPreferences();
+  }
+
+  Future<void> _loadPreferences() async {
+    final mode = await QuotePreferencesRepository().getMode();
+
+    if (mounted) {
+      setState(() => _quoteMode = mode);
+    }
+  }
+
+  void _handleTimerChange() {
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   void _startDelay(int minutes) {
-    final duration = Duration(minutes: minutes);
-    _timer?.cancel();
-
-    setState(() {
-      _selectedDuration = duration;
-      _remaining = duration;
-      _completed = false;
-    });
+    _checkInResult = null;
+    _timerController.start(Duration(minutes: minutes));
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         behavior: SnackBarBehavior.floating,
         backgroundColor: const Color(0xFF13212C),
-        content: Text('Good call. Delay for $minutes minutes and stay with the plan.'),
+        content: Text(
+          'Good call. Delay for $minutes minutes and stay with the plan.',
+        ),
       ),
     );
-
-    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (!mounted) {
-        timer.cancel();
-        return;
-      }
-
-      if (_remaining.inSeconds <= 1) {
-        timer.cancel();
-        setState(() {
-          _timer = null;
-          _remaining = Duration.zero;
-          _completed = true;
-        });
-        return;
-      }
-
-      setState(() {
-        _remaining = Duration(seconds: _remaining.inSeconds - 1);
-      });
-    });
   }
 
-  void _cancelDelay() {
-    _timer?.cancel();
-    setState(() {
-      _timer = null;
-      _selectedDuration = null;
-      _remaining = Duration.zero;
-      _completed = false;
-    });
+  void _resetDelay() {
+    _checkInResult = null;
+    _timerController.reset();
   }
 
-  String _formatRemaining(Duration duration) {
-    final minutes = duration.inMinutes;
-    final seconds = duration.inSeconds.remainder(60).toString().padLeft(2, '0');
-    return '$minutes:$seconds';
+  void _openSupport() {
+    Navigator.pushNamed(context, RouteNames.support);
   }
 
-  double _progressValue() {
-    final selected = _selectedDuration;
-    if (selected == null || selected.inSeconds == 0) {
-      return 0;
+  void _openLog() {
+    _openRecoveryEventLog();
+  }
+
+  Future<void> _openRecoveryEventLog() async {
+    final result = await Navigator.pushNamed(
+      context,
+      RouteNames.recoveryEventLog,
+    );
+
+    if (!mounted ||
+        result is! RecoveryEventSaveResult) {
+      return;
     }
 
-    final elapsed = selected.inSeconds - _remaining.inSeconds;
-    return (elapsed / selected.inSeconds).clamp(0.0, 1.0).toDouble();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(result.message),
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _timerController
+      ..removeListener(_handleTimerChange)
+      ..dispose();
+
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final deadline = _timerController.deadline;
+    final selectedDuration = _timerController.selectedDuration;
+
+    final title = _timerController.isActive
+        ? 'Delay Active'
+        : _timerController.completed
+            ? 'Delay Complete'
+            : 'Delay Actions';
+
     return InfoCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(_isActive ? 'Delay Active' : 'Delay Actions', style: AppTypography.section),
+          Text(title, style: AppTypography.section),
           const SizedBox(height: AppSpacing.sm),
-          if (_isActive) ...[
-            Center(
-              child: AnimatedDelayRing(
-                progress: _progressValue(),
-                remainingLabel: _formatRemaining(_remaining),
+          if (_timerController.isActive &&
+              deadline != null &&
+              selectedDuration != null)
+            ActiveDelayContent(
+              deadline: deadline,
+              totalDuration: selectedDuration,
+              remainingLabel: _timerController.remainingLabel,
+              guidance: DelayGuidanceContent.tipFor(
+                _quoteMode,
+                _timerController.elapsed,
               ),
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            Text(
-              'You are creating space between the urge and the action.',
-              style: AppTypography.muted,
-            ),
-            const SizedBox(height: AppSpacing.sm),
+              onOpenBreathing: widget.onOpenBreathing,
+              onReviewReasons: widget.onReviewReasons,
+              onOpenSupport: _openSupport,
+              onCancel: _resetDelay,
+            )
+          else if (_timerController.completed)
+            CompletedDelayContent(
+              result: _checkInResult,
+              onResultSelected: (result) {
+                setState(() => _checkInResult = result);
+              },
+              onDelayAgain: () => _startDelay(3),
+              onOpenBreathing: widget.onOpenBreathing,
+              onReviewReasons: widget.onReviewReasons,
+              onOpenSupport: _openSupport,
+              onLog: _openLog,
+              onFinish: _resetDelay,
+            )
+          else
             Wrap(
               spacing: AppSpacing.sm,
               runSpacing: AppSpacing.sm,
-              children: [
-                OutlinedButton(
-                  onPressed: _cancelDelay,
-                  child: const Text('Cancel timer'),
-                ),
-                OutlinedButton(
-                  onPressed: () => Navigator.pushNamed(context, RouteNames.support),
-                  child: const Text('Open Support'),
-                ),
-              ],
-            ),
-          ] else if (_completed) ...[
-            Text('Delay complete.', style: AppTypography.section),
-            const SizedBox(height: AppSpacing.sm),
-            Text(
-              'Check in. If the urge is still strong, breathe, read your reasons, log this moment, or contact support.',
-              style: AppTypography.muted,
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            Wrap(
-              spacing: AppSpacing.sm,
-              runSpacing: AppSpacing.sm,
-              children: [
-                OutlinedButton(
-                  onPressed: () => _startDelay(3),
-                  child: const Text('Delay 3 more'),
-                ),
-                OutlinedButton(
-                  onPressed: () => Navigator.pushNamed(context, RouteNames.recoveryEventLog),
-                  child: const Text('Log this'),
-                ),
-                OutlinedButton(
-                  onPressed: _cancelDelay,
-                  child: const Text('Reset'),
-                ),
-              ],
-            ),
-          ] else ...[
-            Wrap(
-              spacing: 12,
-              runSpacing: 12,
               children: [
                 OutlinedButton(
                   onPressed: () => _startDelay(3),
@@ -175,7 +178,6 @@ class _DelayActionsCardState extends State<DelayActionsCard> {
                 ),
               ],
             ),
-          ],
         ],
       ),
     );

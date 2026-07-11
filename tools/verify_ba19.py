@@ -5,39 +5,67 @@ REQUIRED = [
     'lib/features/insights/domain/insight_summary.dart',
     'lib/features/insights/data/insights_repository.dart',
     'lib/features/insights/presentation/insights_screen.dart',
+    'lib/features/insights/presentation/widgets/insight_next_action_card.dart',
 ]
 
 REQUIRED_TEXT = {
-    'lib/features/insights/domain/insight_summary.dart': 'final int victoryCount;',
-    'lib/features/insights/data/insights_repository.dart': 'String _nextBestAction',
-    'lib/features/insights/presentation/insights_screen.dart': 'Next Best Action',
+    'lib/features/insights/domain/insight_summary.dart':
+        'final int victoryCount;',
+    'lib/features/insights/data/insights_repository.dart':
+        'String _nextBestAction',
+    'lib/features/insights/presentation/insights_screen.dart':
+        'InsightsBottomNavigation',
+    'lib/features/insights/presentation/widgets/insight_next_action_card.dart':
+        'Next Best Action',
 }
+
 
 def main() -> int:
     root = Path.cwd()
 
-    missing = [path for path in REQUIRED if not (root / path).exists()]
+    missing = [
+        path
+        for path in REQUIRED
+        if not (root / path).exists()
+    ]
+
     if missing:
         print('Missing files:')
+
         for item in missing:
             print(f' - {item}')
+
         return 1
 
     bad = []
+
     for path, needle in REQUIRED_TEXT.items():
-        text = (root / path).read_text(encoding='utf-8')
+        text = (root / path).read_text(
+            encoding='utf-8'
+        )
+
         if needle not in text:
             bad.append((path, needle))
 
     if bad:
         print('Content checks failed:')
+
         for path, needle in bad:
             print(f' - {path} missing: {needle}')
+
         return 1
 
-    print('Breakout Addiction BA-19 insights polish verification passed.')
-    print(f'Checked {len(REQUIRED)} files and {len(REQUIRED_TEXT)} content rules.')
+    print(
+        'Breakout Addiction BA-19 insights '
+        'polish verification passed.'
+    )
+    print(
+        f'Checked {len(REQUIRED)} files and '
+        f'{len(REQUIRED_TEXT)} content rules.'
+    )
+
     return 0
+
 
 if __name__ == '__main__':
     sys.exit(main())

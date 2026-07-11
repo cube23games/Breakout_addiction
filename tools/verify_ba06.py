@@ -2,6 +2,7 @@ from pathlib import Path
 import sys
 
 REQUIRED = [
+    'lib/features/log/presentation/widgets/log_hub/log_hub_quick_actions_card.dart',
     'lib/core/constants/route_names.dart',
     'lib/features/log/domain/mood_entry.dart',
     'lib/features/log/data/mood_log_repository.dart',
@@ -20,7 +21,7 @@ REQUIRED_TEXT = {
     'lib/features/home/presentation/widgets/risk_status_card.dart': 'MoodLogRepository',
     'lib/app/app_router.dart': 'case RouteNames.moodLog:',
     'lib/features/home/presentation/widgets/quick_actions_row.dart': 'RouteNames.moodLog',
-    'lib/features/log/presentation/log_hub_screen.dart': "label: 'Log Mood'",
+    'lib/features/log/presentation/widgets/log_hub/log_hub_quick_actions_card.dart': "Text('Log Mood')",
 }
 
 def main() -> int:

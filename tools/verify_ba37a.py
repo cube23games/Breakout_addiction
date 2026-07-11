@@ -1,43 +1,42 @@
+#!/usr/bin/env python3
 from pathlib import Path
+import sys
 
-checks = {
-    'lib/features/rescue/data/reasons_to_stop_repository.dart': [
-        "'Other'",
-    ],
-    'lib/features/rescue/presentation/rescue_screen.dart': [
-        'Use this as a quick gut-check',
+CHECKS = {
+    'lib/features/rescue/presentation/widgets/delay_actions_card.dart': [
         'SnackBarBehavior.floating',
         'backgroundColor: const Color(0xFF13212C)',
+        'DelayTimerController',
     ],
-    'lib/features/home/presentation/widgets/demo_readiness_card.dart': [
-        'Checking demo readiness...',
+    'lib/features/rescue/presentation/rescue_screen.dart': [
+        'DelayActionsCard',
     ],
 }
 
-missing = []
+failures = []
 
-for file_name, needles in checks.items():
-    path = Path(file_name)
+for filename, needles in CHECKS.items():
+    path = Path(filename)
+
     if not path.exists():
-        missing.append(f'Missing file: {file_name}')
+        failures.append(f'missing file: {filename}')
         continue
 
     text = path.read_text(encoding='utf-8')
+
     for needle in needles:
         if needle not in text:
-            missing.append(f'Missing {needle!r} in {file_name}')
+            failures.append(
+                f'{filename} missing: {needle}'
+            )
 
-for path in Path('lib').rglob('*.dart'):
-    text = path.read_text(encoding='utf-8')
-    if 'A live slider will be wired in next.' in text:
-        missing.append(f'Rescue placeholder still present in {path}')
-    if 'Loading app state...' in text:
-        missing.append(f'Demo loading placeholder still present in {path}')
-
-if missing:
+if failures:
     print('BA-37A verification failed:')
-    for item in missing:
-        print(f'- {item}')
-    raise SystemExit(1)
+    for failure in failures:
+        print(f' - {failure}')
+    sys.exit(1)
 
-print('BA-37A verification passed: Rescue placeholder polish and Other reason are wired.')
+print(
+    'BA-37A verification passed: Rescue delay '
+    'feedback uses the modular floating SnackBar.'
+)

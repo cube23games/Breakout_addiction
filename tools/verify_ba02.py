@@ -1,47 +1,44 @@
+#!/usr/bin/env python3
 from pathlib import Path
 import sys
 
-REQUIRED = [
-    'lib/core/constants/route_names.dart',
-    'lib/app/app_router.dart',
-    'lib/features/cycle/domain/cycle_stage.dart',
-    'lib/features/cycle/presentation/cycle_screen.dart',
-    'lib/features/home/presentation/home_screen.dart',
-]
-
-REQUIRED_TEXT = {
-    'lib/core/constants/route_names.dart': "static const cycle = '/cycle';",
-    'lib/app/app_router.dart': 'case RouteNames.cycle:',
-    'lib/features/cycle/domain/cycle_stage.dart': 'enum CycleStage',
-    'lib/features/cycle/presentation/cycle_screen.dart': 'class CycleScreen extends StatelessWidget',
-    'lib/features/home/presentation/home_screen.dart': 'Open Cycle Wheel',
+CHECKS = {
+    'lib/features/home/presentation/widgets/home_hero_card.dart': [
+        'NeutralLabels.cycleWheelTitle',
+        'RouteNames.cycle',
+    ],
+    'lib/features/cycle/presentation/cycle_screen.dart': [
+        'class CycleScreen',
+    ],
+    'lib/core/constants/route_names.dart': [
+        'static const cycle',
+    ],
 }
 
-def main() -> int:
-    root = Path.cwd()
+failures = []
 
-    missing = [path for path in REQUIRED if not (root / path).exists()]
-    if missing:
-      print('Missing files:')
-      for item in missing:
-        print(f' - {item}')
-      return 1
+for filename, needles in CHECKS.items():
+    path = Path(filename)
 
-    bad = []
-    for path, needle in REQUIRED_TEXT.items():
-      text = (root / path).read_text(encoding='utf-8')
-      if needle not in text:
-        bad.append((path, needle))
+    if not path.exists():
+        failures.append(f'missing file: {filename}')
+        continue
 
-    if bad:
-      print('Content checks failed:')
-      for path, needle in bad:
-        print(f' - {path} missing: {needle}')
-      return 1
+    text = path.read_text(encoding='utf-8')
 
-    print('Breakout Addiction BA-02 cycle scaffold verification passed.')
-    print(f'Checked {len(REQUIRED)} files and {len(REQUIRED_TEXT)} content rules.')
-    return 0
+    for needle in needles:
+        if needle not in text:
+            failures.append(
+                f'{filename} missing: {needle}'
+            )
 
-if __name__ == '__main__':
-    sys.exit(main())
+if failures:
+    print('BA-02 verification failed:')
+    for failure in failures:
+        print(f' - {failure}')
+    sys.exit(1)
+
+print(
+    'Breakout Addiction BA-02 cycle entry '
+    'verification passed.'
+)

@@ -97,7 +97,11 @@ class _RescueScreenState extends State<RescueScreen> {
               ),
             ],
             const SizedBox(height: AppSpacing.md),
-            DelayActionsCard(key: _delayActionsKey),
+            DelayActionsCard(
+              key: _delayActionsKey,
+              onOpenBreathing: () => _scrollTo(_breathingKey),
+              onReviewReasons: () => _scrollTo(_reasonsKey),
+            ),
             const SizedBox(height: AppSpacing.md),
             BreathingCard(key: _breathingKey),
             const SizedBox(height: AppSpacing.md),

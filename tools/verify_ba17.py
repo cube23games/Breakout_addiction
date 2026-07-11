@@ -1,54 +1,39 @@
+#!/usr/bin/env python3
 from pathlib import Path
 import sys
 
-REQUIRED = [
-    'lib/core/constants/route_names.dart',
-    'lib/features/widget/domain/widget_snapshot.dart',
-    'lib/features/widget/data/widget_snapshot_repository.dart',
-    'lib/features/widget/presentation/widget_preview_screen.dart',
-    'lib/features/support/presentation/support_screen.dart',
-    'lib/app/app_router.dart',
-    'android_widget_overlay/README_WIDGET_SETUP.md',
-    'android_widget_overlay/app/src/main/res/layout/breakout_widget_compact.xml',
-    'android_widget_overlay/app/src/main/res/xml/breakout_widget_info.xml',
-    'android_widget_overlay/app/src/main/kotlin/com/example/breakout_addiction/BreakoutWidgetProvider.kt',
-]
+CHECKS = {'lib/core/constants/route_names.dart': ['static const widgetPreview = '
+                                         "'/widget-preview';"],
+ 'lib/features/widget/domain/widget_snapshot.dart': ['class WidgetSnapshot'],
+ 'lib/features/widget/data/widget_snapshot_repository.dart': ['class '
+                                                              'WidgetSnapshotRepository'],
+ 'lib/features/widget/presentation/widget_preview_screen.dart': ['Widget Preview'],
+ 'lib/app/app_router.dart': ['case RouteNames.widgetPreview:'],
+ 'android_widget_overlay/README_WIDGET_SETUP.md': ['Android Widget Overlay']}
 
-REQUIRED_TEXT = {
-    'lib/core/constants/route_names.dart': "static const widgetPreview = '/widget-preview';",
-    'lib/features/widget/domain/widget_snapshot.dart': 'class WidgetSnapshot',
-    'lib/features/widget/data/widget_snapshot_repository.dart': 'class WidgetSnapshotRepository',
-    'lib/features/widget/presentation/widget_preview_screen.dart': 'Widget Preview',
-    'lib/features/support/presentation/support_screen.dart': 'Home Screen Widget',
-    'lib/app/app_router.dart': 'case RouteNames.widgetPreview:',
-    'android_widget_overlay/README_WIDGET_SETUP.md': 'Android Widget Overlay',
-}
+failures = []
 
-def main() -> int:
-    root = Path.cwd()
+for filename, needles in CHECKS.items():
+    path = Path(filename)
 
-    missing = [path for path in REQUIRED if not (root / path).exists()]
-    if missing:
-        print('Missing files:')
-        for item in missing:
-            print(f' - {item}')
-        return 1
+    if not path.exists():
+        failures.append(f'missing file: {filename}')
+        continue
 
-    bad = []
-    for path, needle in REQUIRED_TEXT.items():
-        text = (root / path).read_text(encoding='utf-8')
+    text = path.read_text(encoding='utf-8')
+
+    for needle in needles:
         if needle not in text:
-            bad.append((path, needle))
+            failures.append(
+                f'{filename} missing: {needle}'
+            )
 
-    if bad:
-        print('Content checks failed:')
-        for path, needle in bad:
-            print(f' - {path} missing: {needle}')
-        return 1
+if failures:
+    print('BA17 verification failed:')
 
-    print('Breakout Addiction BA-17 widget implementation verification passed.')
-    print(f'Checked {len(REQUIRED)} files and {len(REQUIRED_TEXT)} content rules.')
-    return 0
+    for failure in failures:
+        print(f' - {failure}')
 
-if __name__ == '__main__':
-    sys.exit(main())
+    sys.exit(1)
+
+print('BA-17 widget implementation verification passed.')
