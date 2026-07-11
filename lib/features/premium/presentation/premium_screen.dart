@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../app/config/internal_surface_gate.dart';
+import '../../../app/config/qa_entitlement_gate.dart';
 
 import '../../../app/theme/app_spacing.dart';
 import '../../../app/theme/app_typography.dart';
@@ -277,6 +278,60 @@ class _PremiumScreenState extends State<PremiumScreen> {
     );
   }
 
+  Widget _qaEntitlementCard() {
+    return InfoCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'QA Entitlement Override',
+                  style: AppTypography.section,
+                ),
+              ),
+              const PremiumBadge(label: 'QA only'),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          const Text(
+            'Switch between Standard, Breakout Plus, and Breakout Plus AI for local testing. This does not simulate billing or a purchase.',
+            style: AppTypography.muted,
+          ),
+          const SizedBox(height: AppSpacing.md),
+          Text(
+            'Current test tier: ${_status.plan.label}',
+            style: AppTypography.body,
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Wrap(
+            spacing: AppSpacing.sm,
+            runSpacing: AppSpacing.sm,
+            children: PremiumPlan.values.map((plan) {
+              final label = plan == PremiumPlan.none
+                  ? 'Standard (Free)'
+                  : plan.label;
+
+              return ChoiceChip(
+                label: Text(label),
+                selected: _status.plan == plan,
+                onSelected: (_) {
+                  _setPlan(plan);
+                },
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          const Text(
+            'Normal release builds hide this entire card and default new installs to Standard.',
+            style: AppTypography.muted,
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _preflightCard() {
     return InfoCard(
       child: Column(
@@ -345,6 +400,10 @@ class _PremiumScreenState extends State<PremiumScreen> {
             style: AppTypography.muted,
           ),
           const SizedBox(height: AppSpacing.lg),
+          if (QaEntitlementGate.enabled) ...[
+            _qaEntitlementCard(),
+            const SizedBox(height: AppSpacing.md),
+          ],
           if (InternalSurfaceGate.showDevSurfaces) ...[
             InfoCard(
               child: Column(

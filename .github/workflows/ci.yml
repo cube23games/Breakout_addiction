@@ -118,6 +118,11 @@ jobs:
 
           grep -n "coreLibraryDesugaring\|desugar_jdk_libs\|compileOptions" android/app/build.gradle android/app/build.gradle.kts 2>/dev/null || true
 
+      - name: Build QA entitlement APK
+        run: |
+          flutter build apk --release --dart-define=BREAKOUT_QA_ENTITLEMENTS=true
+          mkdir -p build/qa-artifacts
+          cp build/app/outputs/flutter-apk/app-release.apk build/qa-artifacts/breakout-addiction-qa-entitlements.apk
       - name: Build APK
         run: flutter build apk --release
 
@@ -132,6 +137,14 @@ jobs:
         with:
           name: breakout-addiction-apk
           path: build/app/outputs/**/*.apk
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Upload QA entitlement APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: breakout-addiction-qa-apk
+          path: build/qa-artifacts/breakout-addiction-qa-entitlements.apk
           if-no-files-found: error
           retention-days: 7
 
