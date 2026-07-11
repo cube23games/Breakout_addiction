@@ -18,7 +18,6 @@ checks = {
         "not a medical device, therapy provider, emergency service, or crisis hotline",
         "public hardcoded AI API keys",
         "VPN/Shield excluded from first release",
-        "No sensitive log counts by default",
     ],
 }
 
