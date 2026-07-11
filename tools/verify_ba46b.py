@@ -3,7 +3,6 @@ from pathlib import Path
 import sys
 
 path = Path("lib/features/rescue/presentation/rescue_screen.dart")
-
 failures = []
 
 if not path.exists():
@@ -36,10 +35,23 @@ else:
         if needle in text:
             failures.append(f"rescue_screen.dart still contains disabled placeholder: {needle}")
 
+    urge_index = text.find("Urge Intensity")
+    if urge_index == -1:
+        failures.append("rescue_screen.dart missing Urge Intensity section")
+    else:
+        window = text[max(0, urge_index - 500):min(len(text), urge_index + 1200)]
+
+        if "const InfoCard(" in window:
+            failures.append("Urge Intensity slider is still inside const InfoCard")
+        if "children: const [" in window:
+            failures.append("Urge Intensity slider is still inside const children list")
+        if "child: const Column(" in window:
+            failures.append("Urge Intensity slider is still inside const Column")
+
 if failures:
     print("BA-46B verification failed:")
     for failure in failures:
         print(f" - {failure}")
     sys.exit(1)
 
-print("BA-46B verification passed: Rescue urge intensity slider is interactive.")
+print("BA-46B verification passed: Rescue urge intensity slider is interactive and not wrapped in const.")

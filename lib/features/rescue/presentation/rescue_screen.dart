@@ -35,7 +35,7 @@ class _RescueScreenState extends State<RescueScreen> {
               style: AppTypography.muted,
             ),
             const SizedBox(height: AppSpacing.lg),
-            const InfoCard(
+            InfoCard(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
