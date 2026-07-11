@@ -47,8 +47,8 @@ checks = {
         "_CosmicOrbPainter",
     ],
     "lib/features/rescue/presentation/rescue_screen.dart": [
-        "const DelayActionsCard()",
-        "const BreathingCard()",
+        "DelayActionsCard(key: _delayActionsKey)",
+        "BreathingCard(key: _breathingKey)",
     ],
 }
 

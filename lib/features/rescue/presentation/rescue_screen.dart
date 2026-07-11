@@ -9,6 +9,7 @@ import 'widgets/breathing_card.dart';
 import 'widgets/delay_actions_card.dart';
 import 'widgets/reasons_to_stop_card.dart';
 import 'widgets/stage_aware_suggestion_card.dart';
+import 'widgets/urge_support_guidance_card.dart';
 
 class RescueScreen extends StatefulWidget {
   const RescueScreen({super.key});
@@ -19,6 +20,24 @@ class RescueScreen extends StatefulWidget {
 
 class _RescueScreenState extends State<RescueScreen> {
   double _urgeIntensity = 4;
+
+  final GlobalKey _delayActionsKey = GlobalKey();
+  final GlobalKey _breathingKey = GlobalKey();
+  final GlobalKey _reasonsKey = GlobalKey();
+
+  void _scrollTo(GlobalKey key) {
+    final targetContext = key.currentContext;
+    if (targetContext == null) {
+      return;
+    }
+
+    Scrollable.ensureVisible(
+      targetContext,
+      duration: const Duration(milliseconds: 450),
+      curve: Curves.easeInOut,
+      alignment: 0.08,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -57,18 +76,34 @@ class _RescueScreenState extends State<RescueScreen> {
                     'Current intensity: ${_urgeIntensity.round()}/10',
                     style: AppTypography.muted,
                   ),
-                  Text('Use this as a quick gut-check. If the number is high, change location, breathe, or contact support now.', style: AppTypography.muted),
+                  Text(
+                    'Use this as a quick gut-check. Breakout will suggest stronger next steps when the number reaches 7 or higher.',
+                    style: AppTypography.muted,
+                  ),
                 ],
               ),
             ),
+            if (_urgeIntensity >= 7) ...[
+              const SizedBox(height: AppSpacing.md),
+              UrgeSupportGuidanceCard(
+                intensity: _urgeIntensity.round(),
+                onChooseDelay: () => _scrollTo(_delayActionsKey),
+                onBreathe: () => _scrollTo(_breathingKey),
+                onReviewReasons: () => _scrollTo(_reasonsKey),
+                onOpenSupport: () => Navigator.pushNamed(
+                  context,
+                  RouteNames.support,
+                ),
+              ),
+            ],
             const SizedBox(height: AppSpacing.md),
-            const DelayActionsCard(),
+            DelayActionsCard(key: _delayActionsKey),
             const SizedBox(height: AppSpacing.md),
-            const BreathingCard(),
+            BreathingCard(key: _breathingKey),
             const SizedBox(height: AppSpacing.md),
             const StageAwareSuggestionCard(),
             const SizedBox(height: AppSpacing.md),
-            const ReasonsToStopCard(),
+            ReasonsToStopCard(key: _reasonsKey),
             const SizedBox(height: AppSpacing.md),
             InfoCard(
               child: Column(
