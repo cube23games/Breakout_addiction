@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../../app/theme/app_spacing.dart';
 import '../../../../../app/theme/app_typography.dart';
+import '../../../../cycle/domain/cycle_stage.dart';
 import '../../../domain/cycle_stage_log_entry.dart';
 
 class StageLogRow extends StatelessWidget {
