@@ -10,8 +10,15 @@ import 'widgets/delay_actions_card.dart';
 import 'widgets/reasons_to_stop_card.dart';
 import 'widgets/stage_aware_suggestion_card.dart';
 
-class RescueScreen extends StatelessWidget {
+class RescueScreen extends StatefulWidget {
   const RescueScreen({super.key});
+
+  @override
+  State<RescueScreen> createState() => _RescueScreenState();
+}
+
+class _RescueScreenState extends State<RescueScreen> {
+  double _urgeIntensity = 4;
 
   @override
   Widget build(BuildContext context) {
@@ -34,7 +41,22 @@ class RescueScreen extends StatelessWidget {
                 children: [
                   Text('Urge Intensity', style: AppTypography.section),
                   SizedBox(height: AppSpacing.sm),
-                  Slider(value: 4, min: 0, max: 10, onChanged: null),
+                  Slider(
+                    value: _urgeIntensity,
+                    min: 0,
+                    max: 10,
+                    divisions: 10,
+                    label: _urgeIntensity.round().toString(),
+                    onChanged: (value) {
+                      setState(() {
+                        _urgeIntensity = value;
+                      });
+                    },
+                  ),
+                  Text(
+                    'Current intensity: ${_urgeIntensity.round()}/10',
+                    style: AppTypography.muted,
+                  ),
                   Text('Use this as a quick gut-check. If the number is high, change location, breathe, or contact support now.', style: AppTypography.muted),
                 ],
               ),
