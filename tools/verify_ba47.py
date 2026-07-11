@@ -11,7 +11,6 @@ checks = {
         "Timer.periodic(const Duration(seconds: 1)",
         "Delay Active",
         "_formatRemaining(_remaining)",
-        "LinearProgressIndicator(value: _progressValue())",
         "Delay complete.",
         "Delay 3 more",
         "Log this",

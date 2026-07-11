@@ -6,6 +6,7 @@ import '../../../../app/theme/app_spacing.dart';
 import '../../../../app/theme/app_typography.dart';
 import '../../../../core/constants/route_names.dart';
 import '../../../../core/widgets/info_card.dart';
+import 'animated_delay_ring.dart';
 
 class DelayActionsCard extends StatefulWidget {
   const DelayActionsCard({super.key});
@@ -103,9 +104,12 @@ class _DelayActionsCardState extends State<DelayActionsCard> {
           Text(_isActive ? 'Delay Active' : 'Delay Actions', style: AppTypography.section),
           const SizedBox(height: AppSpacing.sm),
           if (_isActive) ...[
-            Text('${_formatRemaining(_remaining)} remaining', style: AppTypography.title),
-            const SizedBox(height: AppSpacing.sm),
-            LinearProgressIndicator(value: _progressValue()),
+            Center(
+              child: AnimatedDelayRing(
+                progress: _progressValue(),
+                remainingLabel: _formatRemaining(_remaining),
+              ),
+            ),
             const SizedBox(height: AppSpacing.sm),
             Text(
               'You are creating space between the urge and the action.',
