@@ -45,7 +45,7 @@ checks = {
         "CosmicBreathingOrb(",
         "onTap: running ? null : onOrbTap",
         "semanticLabel:",
-        "Stop breathing",
+        "End exercise",
         "Tap the orb to begin.",
     ],
 }

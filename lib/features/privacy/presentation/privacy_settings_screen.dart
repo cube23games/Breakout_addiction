@@ -8,7 +8,9 @@ import '../data/lock_settings_repository.dart';
 import '../domain/lock_scope.dart';
 import '../domain/lock_settings.dart';
 import 'widgets/neutral_mode_preview_card.dart';
+import 'lock_session_controller.dart';
 import 'widgets/privacy_status_card.dart';
+import 'widgets/relock_timing_card.dart';
 
 class PrivacySettingsScreen extends StatefulWidget {
   const PrivacySettingsScreen({super.key});
@@ -42,9 +44,14 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
 
   Future<void> _saveSettings(LockSettings updated) async {
     await _repository.saveSettings(updated);
+    LockSessionController.instance.updateGraceMinutes(
+      updated.backgroundGraceMinutes,
+    );
+
     if (!mounted) {
       return;
     }
+
     setState(() => _settings = updated);
   }
 
@@ -156,6 +163,9 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
 
   Future<void> _resetDefaults() async {
     await _repository.resetToSafeDefaults();
+    LockSessionController.instance
+      ..updateGraceMinutes(0)
+      ..lockNow();
     await _load();
     if (!mounted) {
       return;
@@ -297,6 +307,16 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
                   ),
                 ),
               ],
+            ),
+          ),
+          const SizedBox(height: AppSpacing.md),
+          RelockTimingCard(
+            selectedMinutes: _settings.backgroundGraceMinutes,
+            enabled: _settings.hasPasscode,
+            onSelected: (minutes) => _saveSettings(
+              _settings.copyWith(
+                backgroundGraceMinutes: minutes,
+              ),
             ),
           ),
           const SizedBox(height: AppSpacing.md),

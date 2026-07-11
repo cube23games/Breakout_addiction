@@ -46,7 +46,7 @@ checks = {
     "lib/features/rescue/presentation/widgets/breathing_session_content.dart": [
         "class BreathingSessionContent",
         "CosmicBreathingOrb",
-        "Stop breathing",
+        "End exercise",
     ],
     "lib/features/rescue/presentation/widgets/cosmic_orb_painter.dart": [
         "class CosmicOrbPainter extends CustomPainter",

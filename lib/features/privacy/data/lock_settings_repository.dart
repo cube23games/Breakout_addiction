@@ -11,6 +11,7 @@ class LockSettingsRepository {
   static const String _biometricKey = 'privacy_biometrics';
   static const String _neutralModeKey = 'privacy_neutral_mode';
   static const String _passcodeKey = 'privacy_passcode';
+  static const String _backgroundGraceKey = 'privacy_background_grace_minutes';
 
   final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
 
@@ -27,6 +28,9 @@ class LockSettingsRepository {
     final prefs = await SharedPreferences.getInstance();
     final scopeNames = prefs.getStringList(_scopesKey) ?? <String>[];
     final hasPasscode = await _secureStorage.read(key: _passcodeKey) != null;
+    final graceMinutes = LockSettings.normalizeGraceMinutes(
+      prefs.getInt(_backgroundGraceKey) ?? 0,
+    );
 
     return LockSettings(
       isEnabled: prefs.getBool(_enabledKey) ?? false,
@@ -38,6 +42,7 @@ class LockSettingsRepository {
       useBiometrics: prefs.getBool(_biometricKey) ?? false,
       hasPasscode: hasPasscode,
       neutralPrivacyMode: prefs.getBool(_neutralModeKey) ?? true,
+      backgroundGraceMinutes: graceMinutes,
     );
   }
 
@@ -51,6 +56,10 @@ class LockSettingsRepository {
     await prefs.setBool(_rescueBypassKey, settings.allowRescueWithoutUnlock);
     await prefs.setBool(_biometricKey, settings.useBiometrics);
     await prefs.setBool(_neutralModeKey, settings.neutralPrivacyMode);
+    await prefs.setInt(
+      _backgroundGraceKey,
+      LockSettings.normalizeGraceMinutes(settings.backgroundGraceMinutes),
+    );
   }
 
   Future<void> savePasscode(String passcode) async {
@@ -73,5 +82,6 @@ class LockSettingsRepository {
     await prefs.setBool(_rescueBypassKey, true);
     await prefs.setBool(_biometricKey, false);
     await prefs.setBool(_neutralModeKey, true);
+    await prefs.setInt(_backgroundGraceKey, 0);
   }
 }

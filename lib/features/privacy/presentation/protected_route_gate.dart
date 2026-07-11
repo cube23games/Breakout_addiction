@@ -5,6 +5,7 @@ import '../data/lock_settings_repository.dart';
 import '../domain/lock_scope.dart';
 import '../domain/lock_settings.dart';
 import 'lock_gate_screen.dart';
+import 'lock_session_controller.dart';
 
 class ProtectedRouteGate extends StatefulWidget {
   final LockScope scope;
@@ -19,27 +20,49 @@ class ProtectedRouteGate extends StatefulWidget {
   });
 
   @override
-  State<ProtectedRouteGate> createState() => _ProtectedRouteGateState();
+  State<ProtectedRouteGate> createState() =>
+      _ProtectedRouteGateState();
 }
 
 class _ProtectedRouteGateState extends State<ProtectedRouteGate> {
-  final LockSettingsRepository _repository = LockSettingsRepository();
+  final LockSettingsRepository _repository =
+      LockSettingsRepository();
+  final LockSessionController _session =
+      LockSessionController.instance;
 
   LockSettings? _settings;
   bool _loading = true;
-  bool _sessionUnlocked = false;
 
   @override
   void initState() {
     super.initState();
+    _session.addListener(_handleSessionChange);
     _load();
+  }
+
+  @override
+  void dispose() {
+    _session.removeListener(_handleSessionChange);
+    super.dispose();
+  }
+
+  void _handleSessionChange() {
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   Future<void> _load() async {
     final settings = await _repository.getSettings();
+
     if (!mounted) {
       return;
     }
+
+    _session.updateGraceMinutes(
+      settings.backgroundGraceMinutes,
+    );
+
     setState(() {
       _settings = settings;
       _loading = false;
@@ -60,21 +83,23 @@ class _ProtectedRouteGateState extends State<ProtectedRouteGate> {
     }
 
     final settings = _settings!;
-
-    final rescueBypass = widget.isRescueRoute && settings.allowRescueWithoutUnlock;
+    final rescueBypass =
+        widget.isRescueRoute && settings.allowRescueWithoutUnlock;
     final shouldLock = settings.shouldLock(widget.scope);
 
-    if (_sessionUnlocked || rescueBypass || !shouldLock || !settings.hasPasscode) {
+    if (_session.isUnlocked ||
+        rescueBypass ||
+        !shouldLock ||
+        !settings.hasPasscode) {
       return widget.child;
     }
 
     return LockGateScreen(
       title: 'Protected Content',
-      subtitle: 'Unlock to continue.',
+      subtitle:
+          'Unlock once to use protected areas until the app is left or your relock timer expires.',
       onUnlockAttempt: _repository.verifyPasscode,
-      onUnlockSuccess: () {
-        setState(() => _sessionUnlocked = true);
-      },
+      onUnlockSuccess: _session.unlock,
     );
   }
 }

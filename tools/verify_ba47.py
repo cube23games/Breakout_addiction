@@ -24,7 +24,7 @@ checks = {
     ],
     "lib/features/rescue/presentation/widgets/breathing_session_content.dart": [
         "CosmicBreathingOrb(",
-        "Stop breathing",
+        "End exercise",
         "Tap the orb to begin.",
     ],
     "lib/features/rescue/presentation/widgets/cosmic_breathing_orb.dart": [

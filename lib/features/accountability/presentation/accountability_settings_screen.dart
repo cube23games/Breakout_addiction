@@ -4,6 +4,7 @@ import '../../../app/theme/app_spacing.dart';
 import '../../../app/theme/app_typography.dart';
 import '../../../core/widgets/info_card.dart';
 import '../../../core/widgets/primary_button.dart';
+import '../../../core/widgets/selectable_option_tile.dart';
 import '../data/accountability_settings_repository.dart';
 import '../domain/accountability_scope.dart';
 import '../domain/accountability_settings.dart';
@@ -206,14 +207,36 @@ class _AccountabilitySettingsScreenState
                   'Choose the read-only summary areas your accountability partner may view later.',
                   style: AppTypography.muted,
                 ),
-                const SizedBox(height: AppSpacing.sm),
-                for (final scope in AccountabilityScope.values)
-                  CheckboxListTile(
-                    contentPadding: EdgeInsets.zero,
-                    value: _settings.sharedScopes.contains(scope),
-                    title: Text(scope.label),
-                    onChanged: (value) => _toggleScope(scope, value ?? false),
-                  ),
+                const SizedBox(height: AppSpacing.md),
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    const spacing = AppSpacing.sm;
+                    final columns = constraints.maxWidth >= 440 ? 2 : 1;
+                    final tileWidth = columns == 1
+                        ? constraints.maxWidth
+                        : (constraints.maxWidth - spacing) / 2;
+
+                    return Wrap(
+                      spacing: spacing,
+                      runSpacing: spacing,
+                      children: [
+                        for (final scope in AccountabilityScope.values)
+                          SizedBox(
+                            width: tileWidth,
+                            child: SelectableOptionTile(
+                              label: scope.label,
+                              selected:
+                                  _settings.sharedScopes.contains(scope),
+                              onTap: () => _toggleScope(
+                                scope,
+                                !_settings.sharedScopes.contains(scope),
+                              ),
+                            ),
+                          ),
+                      ],
+                    );
+                  },
+                ),
               ],
             ),
           ),

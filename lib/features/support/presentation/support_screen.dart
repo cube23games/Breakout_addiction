@@ -8,10 +8,12 @@ import '../../../app/theme/app_typography.dart';
 import '../../../core/constants/route_names.dart';
 import '../../../core/widgets/info_card.dart';
 import '../../../core/widgets/primary_button.dart';
+import '../../../core/widgets/selectable_option_tile.dart';
 import '../../quotes/data/quote_preferences_repository.dart';
 import '../../quotes/domain/daily_quote.dart';
 import '../data/support_contact_repository.dart';
 import '../domain/support_contact.dart';
+import 'widgets/support_bottom_navigation.dart';
 
 class SupportScreen extends StatefulWidget {
   const SupportScreen({super.key});
@@ -236,31 +238,79 @@ class _SupportScreenState extends State<SupportScreen> {
     );
   }
 
+  void _leaveSupport() {
+    final navigator = Navigator.of(context);
+
+    if (navigator.canPop()) {
+      navigator.pop();
+      return;
+    }
+
+    navigator.pushReplacementNamed(RouteNames.home);
+  }
+
   Widget _modeButton({
     required String label,
     required QuoteMode mode,
   }) {
-    final selected = _mode == mode;
-    return Expanded(
-      child: OutlinedButton(
-        onPressed: () => _saveMode(mode),
-        child: Text(selected ? '$label ✓' : label),
-      ),
+    return SelectableOptionTile(
+      label: label,
+      selected: _mode == mode,
+      onTap: () => _saveMode(mode),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     if (_loading) {
-      return Scaffold(
-        appBar: AppBar(title: const Text('Support')),
-        body: const Center(child: CircularProgressIndicator()),
+      return PopScope(
+        canPop: Navigator.of(context).canPop(),
+        onPopInvokedWithResult: (didPop, result) {
+          if (!didPop) {
+            Navigator.pushReplacementNamed(
+              context,
+              RouteNames.home,
+            );
+          }
+        },
+        child: Scaffold(
+          appBar: AppBar(
+            automaticallyImplyLeading: false,
+            leading: IconButton(
+              onPressed: _leaveSupport,
+              icon: const Icon(Icons.arrow_back),
+              tooltip: 'Back',
+            ),
+            title: const Text('Support'),
+          ),
+          body: const Center(
+            child: CircularProgressIndicator(),
+          ),
+        ),
       );
     }
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Support')),
-      body: ListView(
+    return PopScope(
+      canPop: Navigator.of(context).canPop(),
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) {
+          Navigator.pushReplacementNamed(
+            context,
+            RouteNames.home,
+          );
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          automaticallyImplyLeading: false,
+          leading: IconButton(
+            onPressed: _leaveSupport,
+            icon: const Icon(Icons.arrow_back),
+            tooltip: 'Back',
+          ),
+          title: const Text('Support'),
+        ),
+        body: ListView(
         padding: const EdgeInsets.all(AppSpacing.lg),
         children: [
           InfoCard(
@@ -489,23 +539,42 @@ class _SupportScreenState extends State<SupportScreen> {
                   style: AppTypography.muted,
                 ),
                 const SizedBox(height: AppSpacing.md),
-                Row(
-                  children: [
-                    _modeButton(
-                      label: 'Motivational',
-                      mode: QuoteMode.motivational,
-                    ),
-                    const SizedBox(width: 8),
-                    _modeButton(
-                      label: 'Recovery',
-                      mode: QuoteMode.recovery,
-                    ),
-                    const SizedBox(width: 8),
-                    _modeButton(
-                      label: 'Faith',
-                      mode: QuoteMode.faith,
-                    ),
-                  ],
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    const spacing = AppSpacing.sm;
+                    final columns = constraints.maxWidth >= 340 ? 2 : 1;
+                    final tileWidth = columns == 1
+                        ? constraints.maxWidth
+                        : (constraints.maxWidth - spacing) / 2;
+
+                    return Wrap(
+                      spacing: spacing,
+                      runSpacing: spacing,
+                      children: [
+                        SizedBox(
+                          width: tileWidth,
+                          child: _modeButton(
+                            label: 'Motivational',
+                            mode: QuoteMode.motivational,
+                          ),
+                        ),
+                        SizedBox(
+                          width: tileWidth,
+                          child: _modeButton(
+                            label: 'Recovery',
+                            mode: QuoteMode.recovery,
+                          ),
+                        ),
+                        SizedBox(
+                          width: tileWidth,
+                          child: _modeButton(
+                            label: 'Faith',
+                            mode: QuoteMode.faith,
+                          ),
+                        ),
+                      ],
+                    );
+                  },
                 ),
                 const SizedBox(height: AppSpacing.md),
                 DropdownButtonFormField<String>(
@@ -552,7 +621,9 @@ class _SupportScreenState extends State<SupportScreen> {
               ],
             ),
           ),
-        ],
+          ],
+        ),
+        bottomNavigationBar: const SupportBottomNavigation(),
       ),
     );
   }

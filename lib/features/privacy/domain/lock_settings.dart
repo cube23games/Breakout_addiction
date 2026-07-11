@@ -1,12 +1,15 @@
 import 'lock_scope.dart';
 
 class LockSettings {
+  static const Set<int> supportedGraceMinutes = <int>{0, 1, 2, 5, 10};
+
   final bool isEnabled;
   final Set<LockScope> enabledScopes;
   final bool allowRescueWithoutUnlock;
   final bool useBiometrics;
   final bool hasPasscode;
   final bool neutralPrivacyMode;
+  final int backgroundGraceMinutes;
 
   const LockSettings({
     required this.isEnabled,
@@ -15,6 +18,7 @@ class LockSettings {
     required this.useBiometrics,
     required this.hasPasscode,
     required this.neutralPrivacyMode,
+    required this.backgroundGraceMinutes,
   });
 
   factory LockSettings.disabled() {
@@ -25,6 +29,7 @@ class LockSettings {
       useBiometrics: false,
       hasPasscode: false,
       neutralPrivacyMode: true,
+      backgroundGraceMinutes: 0,
     );
   }
 
@@ -35,6 +40,7 @@ class LockSettings {
     bool? useBiometrics,
     bool? hasPasscode,
     bool? neutralPrivacyMode,
+    int? backgroundGraceMinutes,
   }) {
     return LockSettings(
       isEnabled: isEnabled ?? this.isEnabled,
@@ -44,11 +50,17 @@ class LockSettings {
       useBiometrics: useBiometrics ?? this.useBiometrics,
       hasPasscode: hasPasscode ?? this.hasPasscode,
       neutralPrivacyMode: neutralPrivacyMode ?? this.neutralPrivacyMode,
+      backgroundGraceMinutes:
+          backgroundGraceMinutes ?? this.backgroundGraceMinutes,
     );
   }
 
   bool shouldLock(LockScope scope) {
     return isEnabled &&
         (enabledScopes.contains(LockScope.app) || enabledScopes.contains(scope));
+  }
+
+  static int normalizeGraceMinutes(int value) {
+    return supportedGraceMinutes.contains(value) ? value : 0;
   }
 }

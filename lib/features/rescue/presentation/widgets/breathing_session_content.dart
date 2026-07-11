@@ -108,7 +108,7 @@ class BreathingSessionContent extends StatelessWidget {
               icon: const Icon(
                 Icons.stop_circle_outlined,
               ),
-              label: const Text('Stop breathing'),
+              label: const Text('End exercise'),
             ),
           )
         else

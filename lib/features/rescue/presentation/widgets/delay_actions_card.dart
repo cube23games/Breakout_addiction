@@ -10,6 +10,7 @@ import '../../../quotes/domain/daily_quote.dart';
 import 'active_delay_content.dart';
 import 'completed_delay_content.dart';
 import 'delay_check_in_result.dart';
+import 'delay_duration_selector.dart';
 import 'delay_guidance_content.dart';
 import 'delay_timer_controller.dart';
 
@@ -130,9 +131,19 @@ class _DelayActionsCardState extends State<DelayActionsCard> {
         children: [
           Text(title, style: AppTypography.section),
           const SizedBox(height: AppSpacing.sm),
+          const Text(
+            'Choose a delay. The active choice stays highlighted.',
+            style: AppTypography.muted,
+          ),
+          const SizedBox(height: AppSpacing.md),
+          DelayDurationSelector(
+            selectedMinutes: selectedDuration?.inMinutes,
+            onSelected: _startDelay,
+          ),
           if (_timerController.isActive &&
               deadline != null &&
-              selectedDuration != null)
+              selectedDuration != null) ...[
+            const SizedBox(height: AppSpacing.md),
             ActiveDelayContent(
               deadline: deadline,
               totalDuration: selectedDuration,
@@ -145,8 +156,9 @@ class _DelayActionsCardState extends State<DelayActionsCard> {
               onReviewReasons: widget.onReviewReasons,
               onOpenSupport: _openSupport,
               onCancel: _resetDelay,
-            )
-          else if (_timerController.completed)
+            ),
+          ] else if (_timerController.completed) ...[
+            const SizedBox(height: AppSpacing.md),
             CompletedDelayContent(
               result: _checkInResult,
               onResultSelected: (result) {
@@ -158,26 +170,8 @@ class _DelayActionsCardState extends State<DelayActionsCard> {
               onOpenSupport: _openSupport,
               onLog: _openLog,
               onFinish: _resetDelay,
-            )
-          else
-            Wrap(
-              spacing: AppSpacing.sm,
-              runSpacing: AppSpacing.sm,
-              children: [
-                OutlinedButton(
-                  onPressed: () => _startDelay(3),
-                  child: const Text('Delay 3 min'),
-                ),
-                OutlinedButton(
-                  onPressed: () => _startDelay(10),
-                  child: const Text('Delay 10 min'),
-                ),
-                OutlinedButton(
-                  onPressed: () => _startDelay(15),
-                  child: const Text('Delay 15 min'),
-                ),
-              ],
             ),
+          ],
         ],
       ),
     );
