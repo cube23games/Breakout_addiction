@@ -1,11 +1,10 @@
 import 'dart:async';
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 
 import '../../../../app/theme/app_spacing.dart';
 import '../../../../app/theme/app_typography.dart';
 import '../../../../core/widgets/info_card.dart';
+import 'cosmic_breathing_orb.dart';
 
 class BreathingCard extends StatefulWidget {
   const BreathingCard({super.key});
@@ -178,42 +177,11 @@ class _BreathingCardState extends State<BreathingCard>
           ),
           const SizedBox(height: AppSpacing.md),
           Center(
-            child: AnimatedBuilder(
+            child: CosmicBreathingOrb(
               animation: _controller,
-              builder: (context, child) {
-                final scale = _running ? _orbScale(_controller.value) : 0.78;
-                final glow = _running
-                    ? 18 + (10 * math.sin(_controller.value * math.pi))
-                    : 12.0;
-
-                return Transform.scale(
-                  scale: scale,
-                  child: Container(
-                    width: 148,
-                    height: 148,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: RadialGradient(
-                        colors: [
-                          Theme.of(context).colorScheme.primary.withOpacity(0.90),
-                          Theme.of(context).colorScheme.primary.withOpacity(0.25),
-                          Theme.of(context).colorScheme.surface.withOpacity(0.05),
-                        ],
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          blurRadius: glow,
-                          spreadRadius: 3,
-                          color: Theme.of(context).colorScheme.primary.withOpacity(0.35),
-                        ),
-                      ],
-                    ),
-                    child: Center(
-                      child: Text(_phaseLabel, style: AppTypography.section),
-                    ),
-                  ),
-                );
-              },
+              running: _running,
+              label: _phaseLabel,
+              scaleFor: _orbScale,
             ),
           ),
           const SizedBox(height: AppSpacing.md),
