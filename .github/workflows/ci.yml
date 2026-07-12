@@ -35,6 +35,9 @@ jobs:
             flutter create --platforms=android --project-name breakout_addiction .
           fi
 
+      - name: Configure Android scheduled notifications
+        run: python3 tools/patch_android_notifications.py
+
       - name: Get packages
         run: flutter pub get
 

@@ -10,6 +10,7 @@ import '../../../quotes/domain/daily_quote.dart';
 import 'active_delay_content.dart';
 import 'completed_delay_content.dart';
 import 'delay_check_in_result.dart';
+import 'delay_completion_notification_coordinator.dart';
 import 'delay_duration_selector.dart';
 import 'delay_guidance_content.dart';
 import 'delay_timer_controller.dart';
@@ -23,17 +24,17 @@ class DelayActionsCard extends StatefulWidget {
 
   final VoidCallback onOpenBreathing;
   final VoidCallback onReviewReasons;
-
   @override
   State<DelayActionsCard> createState() => _DelayActionsCardState();
 }
 
 class _DelayActionsCardState extends State<DelayActionsCard> {
   late final DelayTimerController _timerController;
+  final DelayCompletionNotificationCoordinator _notifications =
+      DelayCompletionNotificationCoordinator();
   QuoteMode _quoteMode = QuoteMode.recovery;
   DelayCheckInResult? _checkInResult;
   bool _restoring = true;
-
   @override
   void initState() {
     super.initState();
@@ -42,7 +43,6 @@ class _DelayActionsCardState extends State<DelayActionsCard> {
     _restore();
     _loadPreferences();
   }
-
   Future<void> _restore() async {
     await _timerController.restore();
     if (mounted) setState(() => _restoring = false);
@@ -57,39 +57,58 @@ class _DelayActionsCardState extends State<DelayActionsCard> {
     if (mounted) setState(() {});
   }
 
-  Future<void> _startDelay(int minutes) async {
-    _checkInResult = null;
-    await _timerController.start(Duration(minutes: minutes));
-    if (!mounted) return;
-
+  void _showMessage(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         behavior: SnackBarBehavior.floating,
         backgroundColor: const Color(0xFF13212C),
-        content: Text(
-          'Good call. Delay for $minutes minutes and stay with the plan.',
-        ),
+        content: Text(message),
       ),
     );
   }
 
-  Future<void> _resetDelay() async {
+  Future<void> _startDelay(int minutes) async {
     _checkInResult = null;
-    await _timerController.reset();
+    await _timerController.start(Duration(minutes: minutes));
+    final deadline = _timerController.deadline;
+    final result = deadline == null
+        ? const DelayCompletionNotificationResult(
+            permissionGranted: false,
+            scheduled: false,
+          )
+        : await _notifications.schedule(deadline);
+    if (!mounted) return;
+
+    final message = result.scheduled
+        ? '$minutes-minute countdown started. '
+            'Breakout will notify you when it ends.'
+        : result.permissionGranted
+            ? '$minutes-minute countdown started, but the completion '
+                'alert could not be scheduled.'
+            : '$minutes-minute countdown started. Notifications are off, '
+                'so keep Breakout open or enable them in Android Settings.';
+    _showMessage(message);
   }
 
+  Future<void> _cancelDelay() async {
+    _checkInResult = null;
+    await _notifications.cancel();
+    await _timerController.reset();
+    if (mounted) _showMessage('Countdown canceled.');
+  }
+
+  Future<void> _finishDelay() async {
+    await _notifications.cancel();
+    await _timerController.reset();
+  }
   Future<void> _openRecoveryEventLog() async {
     final result = await Navigator.pushNamed(
       context,
       RouteNames.recoveryEventLog,
     );
     if (!mounted || result is! RecoveryEventSaveResult) return;
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(result.message)),
-    );
+    _showMessage(result.message);
   }
-
   @override
   void dispose() {
     _timerController
@@ -97,7 +116,6 @@ class _DelayActionsCardState extends State<DelayActionsCard> {
       ..dispose();
     super.dispose();
   }
-
   @override
   Widget build(BuildContext context) {
     final deadline = _timerController.deadline;
@@ -144,7 +162,7 @@ class _DelayActionsCardState extends State<DelayActionsCard> {
                   context,
                   RouteNames.support,
                 ),
-                onCancel: _resetDelay,
+                onCancel: _cancelDelay,
               ),
             ] else if (_timerController.completed) ...[
               const SizedBox(height: AppSpacing.md),
@@ -161,7 +179,7 @@ class _DelayActionsCardState extends State<DelayActionsCard> {
                   RouteNames.support,
                 ),
                 onLog: _openRecoveryEventLog,
-                onFinish: _resetDelay,
+                onFinish: _finishDelay,
               ),
             ],
           ],

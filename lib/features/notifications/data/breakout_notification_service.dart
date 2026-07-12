@@ -20,6 +20,12 @@ class BreakoutNotificationService {
   static const String riskChannelDescription =
       'Proactive reminders before high-risk windows begin.';
 
+  static const String delayChannelId = 'breakout_rescue_delay';
+  static const String delayChannelName = 'Rescue Countdown';
+  static const String delayChannelDescription =
+      'Alerts when a Rescue countdown is complete.';
+  static const int delayCompletionNotificationId = 55001;
+
   Future<void> initialize() async {
     if (_initialized) {
       return;
@@ -34,7 +40,8 @@ class BreakoutNotificationService {
       // Keep timezone defaults if device lookup fails.
     }
 
-    const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const androidSettings =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
     const darwinSettings = DarwinInitializationSettings();
 
     const initSettings = InitializationSettings(
@@ -43,37 +50,43 @@ class BreakoutNotificationService {
       macOS: darwinSettings,
     );
 
-    await _plugin.initialize(
-      settings: initSettings,
-    );
+    await _plugin.initialize(settings: initSettings);
 
-    const androidChannel = AndroidNotificationChannel(
-      riskChannelId,
-      riskChannelName,
-      description: riskChannelDescription,
-      importance: Importance.high,
-    );
+    final android = _plugin.resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin>();
 
-    await _plugin
-        .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>()
-        ?.createNotificationChannel(androidChannel);
+    await android?.createNotificationChannel(
+      const AndroidNotificationChannel(
+        riskChannelId,
+        riskChannelName,
+        description: riskChannelDescription,
+        importance: Importance.high,
+      ),
+    );
+    await android?.createNotificationChannel(
+      const AndroidNotificationChannel(
+        delayChannelId,
+        delayChannelName,
+        description: delayChannelDescription,
+        importance: Importance.high,
+      ),
+    );
 
     _initialized = true;
   }
 
-  Future<void> requestPermissions() async {
+  Future<bool> requestPermissions() async {
     await initialize();
 
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
-        await _plugin
+        final granted = await _plugin
             .resolvePlatformSpecificImplementation<
                 AndroidFlutterLocalNotificationsPlugin>()
             ?.requestNotificationsPermission();
-        break;
+        return granted ?? true;
       case TargetPlatform.iOS:
-        await _plugin
+        final granted = await _plugin
             .resolvePlatformSpecificImplementation<
                 IOSFlutterLocalNotificationsPlugin>()
             ?.requestPermissions(
@@ -81,9 +94,9 @@ class BreakoutNotificationService {
               badge: true,
               sound: true,
             );
-        break;
+        return granted ?? false;
       case TargetPlatform.macOS:
-        await _plugin
+        final granted = await _plugin
             .resolvePlatformSpecificImplementation<
                 MacOSFlutterLocalNotificationsPlugin>()
             ?.requestPermissions(
@@ -91,9 +104,9 @@ class BreakoutNotificationService {
               badge: true,
               sound: true,
             );
-        break;
+        return granted ?? false;
       default:
-        break;
+        return true;
     }
   }
 
@@ -147,9 +160,44 @@ class BreakoutNotificationService {
       scheduledDate: nextOccurrence(hour: hour, minute: minute),
       notificationDetails: details,
       payload: payload,
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
       matchDateTimeComponents: DateTimeComponents.time,
     );
+  }
+
+  Future<void> scheduleDelayCompletion(DateTime deadline) async {
+    await initialize();
+
+    final scheduledDate = tz.TZDateTime.from(deadline, tz.local);
+    if (!scheduledDate.isAfter(tz.TZDateTime.now(tz.local))) {
+      return;
+    }
+
+    const details = NotificationDetails(
+      android: AndroidNotificationDetails(
+        delayChannelId,
+        delayChannelName,
+        channelDescription: delayChannelDescription,
+        importance: Importance.high,
+        priority: Priority.high,
+      ),
+      iOS: DarwinNotificationDetails(),
+      macOS: DarwinNotificationDetails(),
+    );
+
+    await _plugin.zonedSchedule(
+      id: delayCompletionNotificationId,
+      title: 'Countdown is complete',
+      body: 'Take a breath and check in: did the urge subside?',
+      scheduledDate: scheduledDate,
+      notificationDetails: details,
+      payload: 'rescue_delay_complete',
+      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+    );
+  }
+
+  Future<void> cancelDelayCompletion() async {
+    await cancel(delayCompletionNotificationId);
   }
 
   Future<void> cancel(int id) async {

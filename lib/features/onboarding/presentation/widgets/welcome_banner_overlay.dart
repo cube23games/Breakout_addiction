@@ -24,6 +24,9 @@ class WelcomeBannerOverlay extends StatefulWidget {
 class _WelcomeBannerOverlayState
     extends State<WelcomeBannerOverlay>
     with SingleTickerProviderStateMixin {
+  static const Duration _displayDuration =
+      Duration(milliseconds: 4500);
+
   late final AnimationController _controller;
   late final Animation<double> _opacity;
   late final Animation<Offset> _position;
@@ -31,6 +34,7 @@ class _WelcomeBannerOverlayState
   Timer? _holdTimer;
   Completer<void>? _holdCompleter;
   bool _started = false;
+  bool _dismissRequested = false;
 
   @override
   void initState() {
@@ -38,7 +42,7 @@ class _WelcomeBannerOverlayState
 
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 550),
+      duration: const Duration(milliseconds: 450),
       reverseDuration: const Duration(milliseconds: 300),
     );
     _opacity = CurvedAnimation(
@@ -47,7 +51,7 @@ class _WelcomeBannerOverlayState
       reverseCurve: Curves.easeIn,
     );
     _position = Tween<Offset>(
-      begin: const Offset(0, -0.12),
+      begin: const Offset(0, -0.08),
       end: Offset.zero,
     ).animate(
       CurvedAnimation(
@@ -71,6 +75,10 @@ class _WelcomeBannerOverlayState
   }
 
   Future<void> _wait(Duration duration) {
+    if (_dismissRequested) {
+      return Future<void>.value();
+    }
+
     _holdTimer?.cancel();
 
     final previous = _holdCompleter;
@@ -90,16 +98,27 @@ class _WelcomeBannerOverlayState
     return completer.future;
   }
 
+  void _dismiss() {
+    _dismissRequested = true;
+    _holdTimer?.cancel();
+    _holdTimer = null;
+
+    final completer = _holdCompleter;
+    if (completer != null && !completer.isCompleted) {
+      completer.complete();
+    }
+  }
+
   Future<void> _run() async {
     final reduceMotion =
         MediaQuery.of(context).disableAnimations;
 
     if (reduceMotion) {
       _controller.value = 1;
-      await _wait(const Duration(milliseconds: 1500));
+      await _wait(_displayDuration);
     } else {
       await _controller.forward();
-      await _wait(const Duration(milliseconds: 1700));
+      await _wait(_displayDuration);
       if (mounted) {
         await _controller.reverse();
       }
@@ -140,50 +159,61 @@ class _WelcomeBannerOverlayState
                 constraints:
                     const BoxConstraints(maxWidth: 520),
                 child: Material(
-                  color: colorScheme.surfaceContainerHigh,
-                  elevation: 8,
+                  color: colorScheme.surfaceContainerHighest,
+                  elevation: 12,
                   borderRadius: BorderRadius.circular(20),
-                  child: Container(
-                    width: double.infinity,
-                    padding:
-                        const EdgeInsets.all(AppSpacing.lg),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: colorScheme.primary
-                            .withOpacity(0.45),
-                      ),
-                    ),
-                    child: Row(
-                      crossAxisAlignment:
-                          CrossAxisAlignment.start,
-                      children: [
-                        Icon(
-                          Icons.bolt_outlined,
+                  child: InkWell(
+                    onTap: _dismiss,
+                    borderRadius: BorderRadius.circular(20),
+                    child: Container(
+                      width: double.infinity,
+                      padding:
+                          const EdgeInsets.all(AppSpacing.lg),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
                           color: colorScheme.primary,
+                          width: 1.5,
                         ),
-                        const SizedBox(width: AppSpacing.md),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment:
-                                CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                widget.message.title,
-                                style: AppTypography.section,
-                              ),
-                              const SizedBox(
-                                height: AppSpacing.xs,
-                              ),
-                              Text(
-                                widget.message.subtitle,
-                                style: AppTypography.muted,
-                              ),
-                            ],
+                      ),
+                      child: Row(
+                        crossAxisAlignment:
+                            CrossAxisAlignment.start,
+                        children: [
+                          Icon(
+                            Icons.bolt_outlined,
+                            color: colorScheme.primary,
+                            size: 28,
                           ),
-                        ),
-                      ],
+                          const SizedBox(width: AppSpacing.md),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment:
+                                  CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  widget.message.title,
+                                  style: AppTypography.section,
+                                ),
+                                const SizedBox(
+                                  height: AppSpacing.xs,
+                                ),
+                                Text(
+                                  widget.message.subtitle,
+                                  style: AppTypography.body,
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: AppSpacing.sm),
+                          Icon(
+                            Icons.close,
+                            size: 18,
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),

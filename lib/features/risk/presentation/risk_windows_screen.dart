@@ -61,7 +61,7 @@ class _RiskWindowsScreenState
   }
 
   Future<void> _requestPermission() async {
-    await BreakoutNotificationService.instance
+    final granted = await BreakoutNotificationService.instance
         .requestPermissions();
 
     if (!mounted) {
@@ -69,9 +69,11 @@ class _RiskWindowsScreenState
     }
 
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
+      SnackBar(
         content: Text(
-          'Notification permission request sent.',
+          granted
+              ? 'Notifications are enabled.'
+              : 'Notifications are off. Enable them in Android Settings to receive reminder alerts.',
         ),
       ),
     );
