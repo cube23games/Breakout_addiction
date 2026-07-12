@@ -8,11 +8,11 @@ class DemoShowcaseRepository {
       DemoShowcaseItem(
         title: 'Private Recovery Core',
         subtitle:
-            'The app is useful even with AI turned off and premium disabled.',
+            'Core recovery tools remain useful without AI.',
         bullets: <String>[
-          'Cycle wheel, Rescue, logs, insights, support, and privacy are all real.',
-          'The user can keep the app simple and local.',
-          'Startup messaging lowers shame instead of increasing it.',
+          'Cycle, Rescue, logs, insights, support, and privacy tools work together.',
+          'Users can keep the experience simple and local-first.',
+          'Supportive language is designed to reduce shame and encourage a practical next step.',
         ],
       ),
       DemoShowcaseItem(
@@ -26,23 +26,23 @@ class DemoShowcaseRepository {
         ],
       ),
       DemoShowcaseItem(
-        title: 'Optional AI Layer',
+        title: 'Optional AI Support',
         subtitle:
             'AI is clearly separated into Breakout Plus AI and can be turned off.',
         bullets: <String>[
           'AI mode clarity is visible on-screen.',
-          'Usage meter shows local/stub/live activity honestly.',
+          'AI status and privacy limits are clearly labeled.',
           'Emergency fallback pushes users toward human help, not more chat.',
         ],
       ),
       DemoShowcaseItem(
         title: 'Proactive Interruption',
         subtitle:
-            'The app can now actively help before risky moments begin.',
+            'The app can support earlier action before a risky moment intensifies.',
         bullets: <String>[
           'Risk windows are configurable.',
-          'Live local reminders can be synced.',
-          'Widget entry paths and quick actions support earlier interruption.',
+          'Local reminders can support planned risk windows.',
+          'Quick actions support earlier interruption.',
         ],
       ),
     ];

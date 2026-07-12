@@ -406,7 +406,6 @@ class _SupportScreenState extends State<SupportScreen> {
                   style: AppTypography.muted,
                 ),
                 const SizedBox(height: AppSpacing.sm),
-                const SizedBox(height: AppSpacing.sm),
                 const Text(
                   'You can keep things simple and local, or turn on optional features later. Nothing is forced.',
                   style: AppTypography.muted,
@@ -461,15 +460,17 @@ class _SupportScreenState extends State<SupportScreen> {
                     ),
                   ),
                 ],
-                const SizedBox(height: AppSpacing.sm),
-                PrimaryButton(
-                  label: 'Open AI Recovery Coach',
-                  icon: Icons.psychology_outlined,
-                  onPressed: () => Navigator.pushNamed(
-                    context,
-                    RouteNames.aiChat,
+                if (InternalSurfaceGate.showDevSurfaces) ...[
+                  const SizedBox(height: AppSpacing.sm),
+                  PrimaryButton(
+                    label: 'Open AI Recovery Coach',
+                    icon: Icons.psychology_outlined,
+                    onPressed: () => Navigator.pushNamed(
+                      context,
+                      RouteNames.aiChat,
+                    ),
                   ),
-                ),
+                ],
                 if (InternalSurfaceGate.showDevSurfaces) ...[
                   const SizedBox(height: AppSpacing.sm),
                   PrimaryButton(

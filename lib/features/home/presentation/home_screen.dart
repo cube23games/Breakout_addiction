@@ -96,7 +96,8 @@ class _HomeScreenState extends State<HomeScreen> {
         actions: [
           IconButton(
             onPressed: () => Navigator.pushNamed(context, RouteNames.support),
-            icon: const Icon(Icons.settings_outlined),
+            tooltip: 'Open Support',
+            icon: const Icon(Icons.support_agent_outlined),
           ),
         ],
       ),
@@ -126,7 +127,7 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Keep Building'),
+                  const Text('Keep Moving Forward'),
                   const SizedBox(height: AppSpacing.sm),
                   const Text(
                     'Use Learn for deeper understanding, Support for your plan, and About Breakout for app details.',

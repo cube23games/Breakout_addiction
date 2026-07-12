@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'config/internal_surface_gate.dart';
 import '../features/accountability/presentation/accountability_settings_screen.dart';
 import '../features/accountability/presentation/accountability_summary_screen.dart';
 import '../features/accountability/presentation/accountability_partner_access_screen.dart';
@@ -31,12 +32,16 @@ import '../features/support/presentation/support_screen.dart';
 import '../features/widget/presentation/widget_preview_screen.dart';
 
 class AppRouter {
+  static Route<dynamic> _homeRoute() {
+    return MaterialPageRoute(
+      builder: (_) => const HomeEntryScreen(),
+    );
+  }
+
   static Route<dynamic> onGenerateRoute(RouteSettings settings) {
     switch (settings.name) {
       case RouteNames.home:
-        return MaterialPageRoute(
-          builder: (_) => const HomeEntryScreen(),
-        );
+        return _homeRoute();
       case RouteNames.onboarding:
         return MaterialPageRoute(
           builder: (_) => const OnboardingScreen(),
@@ -112,6 +117,9 @@ class AppRouter {
           ),
         );
       case RouteNames.aiChat:
+        if (!InternalSurfaceGate.showDevSurfaces) {
+          return _homeRoute();
+        }
         return MaterialPageRoute(
           builder: (_) => const ProtectedRouteGate(
             scope: LockScope.support,
@@ -140,6 +148,9 @@ class AppRouter {
           ),
         );
       case RouteNames.releaseReadiness:
+        if (!InternalSurfaceGate.showDevSurfaces) {
+          return _homeRoute();
+        }
         return MaterialPageRoute(
           builder: (_) => const ProtectedRouteGate(
             scope: LockScope.support,
@@ -161,6 +172,9 @@ class AppRouter {
           ),
         );
       case RouteNames.widgetPreview:
+        if (!InternalSurfaceGate.showDevSurfaces) {
+          return _homeRoute();
+        }
         return MaterialPageRoute(
           builder: (_) => const ProtectedRouteGate(
             scope: LockScope.support,
@@ -197,9 +211,7 @@ class AppRouter {
           ),
         );
       default:
-        return MaterialPageRoute(
-          builder: (_) => const HomeEntryScreen(),
-        );
+        return _homeRoute();
     }
   }
 }

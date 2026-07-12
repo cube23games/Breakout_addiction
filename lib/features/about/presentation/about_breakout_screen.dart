@@ -29,10 +29,10 @@ class AboutBreakoutScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Core product direction', style: AppTypography.section),
+                Text('How Breakout supports recovery', style: AppTypography.section),
                 SizedBox(height: AppSpacing.sm),
                 Text(
-                  'The product is private-first, action-focused, and recovery-first. AI is optional. Premium is useful with or without AI.',
+                  'Breakout is private-first, action-focused, and designed to support recovery without forcing AI or unnecessary complexity.',
                   style: AppTypography.muted,
                 ),
               ],
@@ -47,10 +47,10 @@ class AboutBreakoutScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Demo framing', style: AppTypography.section),
+                Text('How the pieces fit together', style: AppTypography.section),
                 SizedBox(height: AppSpacing.sm),
                 Text(
-                  'A strong demo starts on Home, opens Rescue, shows Risk Windows + reminders, opens Support, then shows the premium split between Breakout Plus and Breakout Plus AI.',
+                  'Home keeps the next step visible. Rescue supports urgent moments. Logs and Insights help users notice patterns, while Support and Privacy settings let them choose how much structure they want.',
                   style: AppTypography.muted,
                 ),
               ],

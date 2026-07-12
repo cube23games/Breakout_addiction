@@ -54,7 +54,7 @@ class PrivacySafetyCenterScreen extends StatelessWidget {
           const _SafetyPoint(
             icon: Icons.phone_android_outlined,
             title: 'Local-first recovery path',
-            detail: 'The core demo path works without requiring cloud AI. Rescue, logging, education, support planning, and insights remain available locally.',
+            detail: 'The core recovery path works without cloud AI. Rescue, logging, education, support planning, and insights remain available locally.',
           ),
           const SizedBox(height: AppSpacing.sm),
           const _SafetyPoint(
@@ -72,7 +72,7 @@ class PrivacySafetyCenterScreen extends StatelessWidget {
           const _SafetyPoint(
             icon: Icons.psychology_alt_outlined,
             title: 'AI is optional',
-            detail: 'AI features are controlled by gates, usage labels, and safety fallbacks. Breakout Plus can still provide value without AI chat.',
+            detail: 'AI features are optional and clearly labeled. Breakout Plus remains useful without AI chat.',
           ),
           const SizedBox(height: AppSpacing.sm),
           const _SafetyPoint(
