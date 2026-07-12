@@ -15,6 +15,8 @@ class BreakoutNotificationService {
 
   bool _initialized = false;
 
+  static const String notificationIconName = 'ic_stat_breakout';
+
   static const String riskChannelId = 'breakout_risk_windows';
   static const String riskChannelName = 'Risk Window Reminders';
   static const String riskChannelDescription =
@@ -41,7 +43,7 @@ class BreakoutNotificationService {
     }
 
     const androidSettings =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
+        AndroidInitializationSettings(notificationIconName);
     const darwinSettings = DarwinInitializationSettings();
 
     const initSettings = InitializationSettings(
@@ -146,6 +148,7 @@ class BreakoutNotificationService {
         riskChannelId,
         riskChannelName,
         channelDescription: riskChannelDescription,
+        icon: notificationIconName,
         importance: Importance.high,
         priority: Priority.high,
       ),
@@ -178,6 +181,7 @@ class BreakoutNotificationService {
         delayChannelId,
         delayChannelName,
         channelDescription: delayChannelDescription,
+        icon: notificationIconName,
         importance: Importance.high,
         priority: Priority.high,
       ),
