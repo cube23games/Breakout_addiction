@@ -273,7 +273,15 @@ def main() -> int:
             'SlideTransition',
             'disableAnimations',
             'Duration(milliseconds: 1700)',
+            'Timer? _holdTimer',
+            'Completer<void>()',
+            '_holdTimer?.cancel()',
         ],
+    )
+    forbid(
+        failures,
+        'lib/features/onboarding/presentation/widgets/welcome_banner_overlay.dart',
+        ['Future<void>.delayed'],
     )
 
     require(

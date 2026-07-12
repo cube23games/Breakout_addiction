@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../../../app/theme/app_spacing.dart';
@@ -26,6 +28,8 @@ class _WelcomeBannerOverlayState
   late final Animation<double> _opacity;
   late final Animation<Offset> _position;
 
+  Timer? _holdTimer;
+  Completer<void>? _holdCompleter;
   bool _started = false;
 
   @override
@@ -66,20 +70,36 @@ class _WelcomeBannerOverlayState
     _run();
   }
 
+  Future<void> _wait(Duration duration) {
+    _holdTimer?.cancel();
+
+    final previous = _holdCompleter;
+    if (previous != null && !previous.isCompleted) {
+      previous.complete();
+    }
+
+    final completer = Completer<void>();
+    _holdCompleter = completer;
+    _holdTimer = Timer(duration, () {
+      _holdTimer = null;
+      if (!completer.isCompleted) {
+        completer.complete();
+      }
+    });
+
+    return completer.future;
+  }
+
   Future<void> _run() async {
     final reduceMotion =
         MediaQuery.of(context).disableAnimations;
 
     if (reduceMotion) {
       _controller.value = 1;
-      await Future<void>.delayed(
-        const Duration(milliseconds: 1500),
-      );
+      await _wait(const Duration(milliseconds: 1500));
     } else {
       await _controller.forward();
-      await Future<void>.delayed(
-        const Duration(milliseconds: 1700),
-      );
+      await _wait(const Duration(milliseconds: 1700));
       if (mounted) {
         await _controller.reverse();
       }
@@ -92,6 +112,13 @@ class _WelcomeBannerOverlayState
 
   @override
   void dispose() {
+    _holdTimer?.cancel();
+
+    final completer = _holdCompleter;
+    if (completer != null && !completer.isCompleted) {
+      completer.complete();
+    }
+
     _controller.dispose();
     super.dispose();
   }
