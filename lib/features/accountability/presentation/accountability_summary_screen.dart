@@ -67,7 +67,9 @@ class _AccountabilitySummaryScreenState
       ..sort((a, b) => a.index.compareTo(b.index));
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Accountability Summary')),
+      appBar: AppBar(
+        title: const Text('Accountability Summary'),
+      ),
       body: ListView(
         padding: const EdgeInsets.all(AppSpacing.lg),
         children: [
@@ -75,10 +77,13 @@ class _AccountabilitySummaryScreenState
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Approved read-only view', style: AppTypography.section),
+                Text(
+                  'Approved read-only view',
+                  style: AppTypography.section,
+                ),
                 const SizedBox(height: AppSpacing.sm),
                 const Text(
-                  'This summary only shows the areas the recovery user chose to share. It does not allow editing, deleting, settings changes, AI provider access, or private app unlock.',
+                  'This summary only shows the areas the recovery user chose to share. It does not allow editing, deleting, settings changes, or private app unlock.',
                   style: AppTypography.muted,
                 ),
               ],
@@ -89,7 +94,10 @@ class _AccountabilitySummaryScreenState
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Shared summary areas', style: AppTypography.section),
+                Text(
+                  'Shared summary areas',
+                  style: AppTypography.section,
+                ),
                 const SizedBox(height: AppSpacing.sm),
                 if (!_settings.enabled || scopes.isEmpty)
                   const Text(
@@ -106,7 +114,10 @@ class _AccountabilitySummaryScreenState
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Privacy boundaries', style: AppTypography.section),
+                Text(
+                  'Privacy boundaries',
+                  style: AppTypography.section,
+                ),
                 const SizedBox(height: AppSpacing.sm),
                 Text(
                   _settings.sharePrivateNotes
@@ -115,10 +126,8 @@ class _AccountabilitySummaryScreenState
                   style: AppTypography.muted,
                 ),
                 const SizedBox(height: AppSpacing.sm),
-                Text(
-                  _settings.shareAiChatHistory
-                      ? 'AI chat sharing is enabled by the recovery user.'
-                      : 'AI chat history is not shared.',
+                const Text(
+                  'Only the selected summary areas are shown.',
                   style: AppTypography.muted,
                 ),
               ],

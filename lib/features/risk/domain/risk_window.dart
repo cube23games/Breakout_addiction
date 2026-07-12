@@ -53,17 +53,59 @@ class RiskWindow {
     return RiskWindow(
       id: (map['id'] as String?) ?? '',
       label: (map['label'] as String?) ?? 'Risk Window',
-      startHour: (map['startHour'] as num?)?.toInt() ?? 22,
-      startMinute: (map['startMinute'] as num?)?.toInt() ?? 0,
-      endHour: (map['endHour'] as num?)?.toInt() ?? 23,
-      endMinute: (map['endMinute'] as num?)?.toInt() ?? 0,
+      startHour:
+          (map['startHour'] as num?)?.toInt() ?? 22,
+      startMinute:
+          (map['startMinute'] as num?)?.toInt() ?? 0,
+      endHour:
+          (map['endHour'] as num?)?.toInt() ?? 23,
+      endMinute:
+          (map['endMinute'] as num?)?.toInt() ?? 0,
       isEnabled: (map['isEnabled'] as bool?) ?? true,
     );
   }
 
-  String get timeRange {
-    return '${_fmt(startHour)}:${_fmt(startMinute)} - ${_fmt(endHour)}:${_fmt(endMinute)}';
+  int get _startMinutes => (startHour * 60) + startMinute;
+  int get _endMinutes => (endHour * 60) + endMinute;
+
+  bool get crossesMidnight => _endMinutes < _startMinutes;
+  bool get hasSameStartAndEnd =>
+      _endMinutes == _startMinutes;
+
+  String formattedRange({
+    required bool use24HourFormat,
+  }) {
+    final start = _formatTime(
+      startHour,
+      startMinute,
+      use24HourFormat,
+    );
+    final end = _formatTime(
+      endHour,
+      endMinute,
+      use24HourFormat,
+    );
+    return '$start - $end';
   }
 
-  static String _fmt(int value) => value.toString().padLeft(2, '0');
+  String get timeRange {
+    return formattedRange(use24HourFormat: true);
+  }
+
+  static String _formatTime(
+    int hour,
+    int minute,
+    bool use24HourFormat,
+  ) {
+    final minuteLabel =
+        minute.toString().padLeft(2, '0');
+
+    if (use24HourFormat) {
+      return '${hour.toString().padLeft(2, '0')}:$minuteLabel';
+    }
+
+    final period = hour >= 12 ? 'PM' : 'AM';
+    final hourOfPeriod = hour % 12 == 0 ? 12 : hour % 12;
+    return '$hourOfPeriod:$minuteLabel $period';
+  }
 }

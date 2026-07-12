@@ -1,6 +1,7 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../core/security/credential_input_mode.dart';
 import '../domain/lock_scope.dart';
 import '../domain/lock_settings.dart';
 
@@ -11,7 +12,9 @@ class LockSettingsRepository {
   static const String _biometricKey = 'privacy_biometrics';
   static const String _neutralModeKey = 'privacy_neutral_mode';
   static const String _passcodeKey = 'privacy_passcode';
-  static const String _backgroundGraceKey = 'privacy_background_grace_minutes';
+  static const String _credentialModeKey = 'privacy_credential_mode';
+  static const String _backgroundGraceKey =
+      'privacy_background_grace_minutes';
 
   final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
 
@@ -53,26 +56,58 @@ class LockSettingsRepository {
       _scopesKey,
       settings.enabledScopes.map((scope) => scope.name).toList(),
     );
-    await prefs.setBool(_rescueBypassKey, settings.allowRescueWithoutUnlock);
+    await prefs.setBool(
+      _rescueBypassKey,
+      settings.allowRescueWithoutUnlock,
+    );
     await prefs.setBool(_biometricKey, settings.useBiometrics);
     await prefs.setBool(_neutralModeKey, settings.neutralPrivacyMode);
     await prefs.setInt(
       _backgroundGraceKey,
-      LockSettings.normalizeGraceMinutes(settings.backgroundGraceMinutes),
+      LockSettings.normalizeGraceMinutes(
+        settings.backgroundGraceMinutes,
+      ),
     );
   }
 
-  Future<void> savePasscode(String passcode) async {
-    await _secureStorage.write(key: _passcodeKey, value: passcode);
+  Future<CredentialInputMode> getCredentialInputMode() async {
+    final prefs = await SharedPreferences.getInstance();
+    final saved = await _secureStorage.read(key: _passcodeKey);
+
+    return CredentialInputMode.fromStored(
+      prefs.getString(_credentialModeKey),
+      existingCredential: saved,
+    );
+  }
+
+  Future<void> savePasscode(
+    String passcode, {
+    CredentialInputMode? mode,
+  }) async {
+    final cleaned = passcode.trim();
+    final resolvedMode = mode ??
+        CredentialInputMode.fromStored(
+          null,
+          existingCredential: cleaned,
+        );
+    final prefs = await SharedPreferences.getInstance();
+
+    await _secureStorage.write(
+      key: _passcodeKey,
+      value: cleaned,
+    );
+    await prefs.setString(_credentialModeKey, resolvedMode.name);
   }
 
   Future<bool> verifyPasscode(String passcode) async {
     final saved = await _secureStorage.read(key: _passcodeKey);
-    return saved != null && saved == passcode;
+    return saved != null && saved == passcode.trim();
   }
 
   Future<void> clearPasscode() async {
+    final prefs = await SharedPreferences.getInstance();
     await _secureStorage.delete(key: _passcodeKey);
+    await prefs.remove(_credentialModeKey);
   }
 
   Future<void> resetToSafeDefaults() async {

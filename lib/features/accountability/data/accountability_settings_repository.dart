@@ -3,11 +3,14 @@ import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../core/security/credential_input_mode.dart';
 import '../domain/accountability_settings.dart';
 
 class AccountabilitySettingsRepository {
   static const String _settingsKey = 'accountability_settings';
   static const String _partnerPasscodeKey = 'accountability_partner_passcode';
+  static const String _partnerCredentialModeKey =
+      'accountability_partner_credential_mode';
 
   final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
 
@@ -25,7 +28,9 @@ class AccountabilitySettingsRepository {
         return AccountabilitySettings.fromMap(decoded);
       }
       if (decoded is Map) {
-        return AccountabilitySettings.fromMap(Map<String, dynamic>.from(decoded));
+        return AccountabilitySettings.fromMap(
+          Map<String, dynamic>.from(decoded),
+        );
       }
     } catch (_) {
       return AccountabilitySettings.defaults;
@@ -44,7 +49,20 @@ class AccountabilitySettingsRepository {
     return saved != null && saved.isNotEmpty;
   }
 
-  Future<void> savePartnerPasscode(String passcode) async {
+  Future<CredentialInputMode> getPartnerCredentialMode() async {
+    final prefs = await SharedPreferences.getInstance();
+    final saved = await _secureStorage.read(key: _partnerPasscodeKey);
+
+    return CredentialInputMode.fromStored(
+      prefs.getString(_partnerCredentialModeKey),
+      existingCredential: saved,
+    );
+  }
+
+  Future<void> savePartnerPasscode(
+    String passcode, {
+    CredentialInputMode? mode,
+  }) async {
     final cleaned = passcode.trim();
 
     if (cleaned.isEmpty) {
@@ -52,9 +70,20 @@ class AccountabilitySettingsRepository {
       return;
     }
 
+    final resolvedMode = mode ??
+        CredentialInputMode.fromStored(
+          null,
+          existingCredential: cleaned,
+        );
+    final prefs = await SharedPreferences.getInstance();
+
     await _secureStorage.write(
       key: _partnerPasscodeKey,
       value: cleaned,
+    );
+    await prefs.setString(
+      _partnerCredentialModeKey,
+      resolvedMode.name,
     );
   }
 
@@ -64,7 +93,9 @@ class AccountabilitySettingsRepository {
   }
 
   Future<void> clearPartnerPasscode() async {
+    final prefs = await SharedPreferences.getInstance();
     await _secureStorage.delete(key: _partnerPasscodeKey);
+    await prefs.remove(_partnerCredentialModeKey);
   }
 
   Future<void> reset() async {

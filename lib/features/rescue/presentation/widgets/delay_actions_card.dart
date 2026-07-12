@@ -25,43 +25,42 @@ class DelayActionsCard extends StatefulWidget {
   final VoidCallback onReviewReasons;
 
   @override
-  State<DelayActionsCard> createState() =>
-      _DelayActionsCardState();
+  State<DelayActionsCard> createState() => _DelayActionsCardState();
 }
 
 class _DelayActionsCardState extends State<DelayActionsCard> {
   late final DelayTimerController _timerController;
-
   QuoteMode _quoteMode = QuoteMode.recovery;
   DelayCheckInResult? _checkInResult;
+  bool _restoring = true;
 
   @override
   void initState() {
     super.initState();
-
     _timerController = DelayTimerController()
       ..addListener(_handleTimerChange);
-
+    _restore();
     _loadPreferences();
+  }
+
+  Future<void> _restore() async {
+    await _timerController.restore();
+    if (mounted) setState(() => _restoring = false);
   }
 
   Future<void> _loadPreferences() async {
     final mode = await QuotePreferencesRepository().getMode();
-
-    if (mounted) {
-      setState(() => _quoteMode = mode);
-    }
+    if (mounted) setState(() => _quoteMode = mode);
   }
 
   void _handleTimerChange() {
-    if (mounted) {
-      setState(() {});
-    }
+    if (mounted) setState(() {});
   }
 
-  void _startDelay(int minutes) {
+  Future<void> _startDelay(int minutes) async {
     _checkInResult = null;
-    _timerController.start(Duration(minutes: minutes));
+    await _timerController.start(Duration(minutes: minutes));
+    if (!mounted) return;
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -74,17 +73,9 @@ class _DelayActionsCardState extends State<DelayActionsCard> {
     );
   }
 
-  void _resetDelay() {
+  Future<void> _resetDelay() async {
     _checkInResult = null;
-    _timerController.reset();
-  }
-
-  void _openSupport() {
-    Navigator.pushNamed(context, RouteNames.support);
-  }
-
-  void _openLog() {
-    _openRecoveryEventLog();
+    await _timerController.reset();
   }
 
   Future<void> _openRecoveryEventLog() async {
@@ -92,16 +83,10 @@ class _DelayActionsCardState extends State<DelayActionsCard> {
       context,
       RouteNames.recoveryEventLog,
     );
-
-    if (!mounted ||
-        result is! RecoveryEventSaveResult) {
-      return;
-    }
+    if (!mounted || result is! RecoveryEventSaveResult) return;
 
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(result.message),
-      ),
+      SnackBar(content: Text(result.message)),
     );
   }
 
@@ -110,7 +95,6 @@ class _DelayActionsCardState extends State<DelayActionsCard> {
     _timerController
       ..removeListener(_handleTimerChange)
       ..dispose();
-
     super.dispose();
   }
 
@@ -118,11 +102,10 @@ class _DelayActionsCardState extends State<DelayActionsCard> {
   Widget build(BuildContext context) {
     final deadline = _timerController.deadline;
     final selectedDuration = _timerController.selectedDuration;
-
     final title = _timerController.isActive
         ? 'Delay Active'
         : _timerController.completed
-            ? 'Delay Complete'
+            ? 'Countdown Complete'
             : 'Delay Actions';
 
     return InfoCard(
@@ -136,41 +119,51 @@ class _DelayActionsCardState extends State<DelayActionsCard> {
             style: AppTypography.muted,
           ),
           const SizedBox(height: AppSpacing.md),
-          DelayDurationSelector(
-            selectedMinutes: selectedDuration?.inMinutes,
-            onSelected: _startDelay,
-          ),
-          if (_timerController.isActive &&
-              deadline != null &&
-              selectedDuration != null) ...[
-            const SizedBox(height: AppSpacing.md),
-            ActiveDelayContent(
-              deadline: deadline,
-              totalDuration: selectedDuration,
-              remainingLabel: _timerController.remainingLabel,
-              guidance: DelayGuidanceContent.tipFor(
-                _quoteMode,
-                _timerController.elapsed,
+          if (_restoring)
+            const Center(child: CircularProgressIndicator())
+          else ...[
+            DelayDurationSelector(
+              selectedMinutes: selectedDuration?.inMinutes,
+              onSelected: _startDelay,
+            ),
+            if (_timerController.isActive &&
+                deadline != null &&
+                selectedDuration != null) ...[
+              const SizedBox(height: AppSpacing.md),
+              ActiveDelayContent(
+                deadline: deadline,
+                totalDuration: selectedDuration,
+                remainingLabel: _timerController.remainingLabel,
+                guidance: DelayGuidanceContent.tipFor(
+                  _quoteMode,
+                  _timerController.elapsed,
+                ),
+                onOpenBreathing: widget.onOpenBreathing,
+                onReviewReasons: widget.onReviewReasons,
+                onOpenSupport: () => Navigator.pushNamed(
+                  context,
+                  RouteNames.support,
+                ),
+                onCancel: _resetDelay,
               ),
-              onOpenBreathing: widget.onOpenBreathing,
-              onReviewReasons: widget.onReviewReasons,
-              onOpenSupport: _openSupport,
-              onCancel: _resetDelay,
-            ),
-          ] else if (_timerController.completed) ...[
-            const SizedBox(height: AppSpacing.md),
-            CompletedDelayContent(
-              result: _checkInResult,
-              onResultSelected: (result) {
-                setState(() => _checkInResult = result);
-              },
-              onDelayAgain: () => _startDelay(3),
-              onOpenBreathing: widget.onOpenBreathing,
-              onReviewReasons: widget.onReviewReasons,
-              onOpenSupport: _openSupport,
-              onLog: _openLog,
-              onFinish: _resetDelay,
-            ),
+            ] else if (_timerController.completed) ...[
+              const SizedBox(height: AppSpacing.md),
+              CompletedDelayContent(
+                result: _checkInResult,
+                onResultSelected: (result) {
+                  setState(() => _checkInResult = result);
+                },
+                onDelayAgain: () => _startDelay(3),
+                onOpenBreathing: widget.onOpenBreathing,
+                onReviewReasons: widget.onReviewReasons,
+                onOpenSupport: () => Navigator.pushNamed(
+                  context,
+                  RouteNames.support,
+                ),
+                onLog: _openRecoveryEventLog,
+                onFinish: _resetDelay,
+              ),
+            ],
           ],
         ],
       ),

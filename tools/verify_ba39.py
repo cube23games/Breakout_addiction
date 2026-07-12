@@ -4,9 +4,10 @@ import sys
 
 checks = {
     "lib/features/onboarding/presentation/home_entry_screen.dart": [
-        "ProtectedRouteGate",
+        "ProtectedRouteGate(",
         "scope: LockScope.app",
-        "child: HomeScreen()",
+        "const HomeScreen()",
+        "WelcomeBannerOverlay(",
     ],
     "lib/features/privacy/data/lock_settings_repository.dart": [
         "LockScope? _parseScope",
@@ -27,7 +28,7 @@ for file, needles in checks.items():
         missing.append(f"missing file: {file}")
         continue
 
-    text = path.read_text()
+    text = path.read_text(encoding="utf-8")
     for needle in needles:
         if needle not in text:
             missing.append(f"{file} missing: {needle}")
@@ -38,4 +39,7 @@ if missing:
         print(f" - {item}")
     sys.exit(1)
 
-print("BA-39 verification passed: app-level home lock and safe scope parsing are wired.")
+print(
+    "BA-39 verification passed: app-level home locking, "
+    "welcome overlay placement, and safe scope parsing are wired."
+)

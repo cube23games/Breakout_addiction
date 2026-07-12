@@ -7,7 +7,12 @@ checks = {
         "class DelayActionsCard extends StatefulWidget",
         "DelayTimerController",
         "Delay Active",
-        "Delay Complete",
+        "Countdown Complete",
+        "CompletedDelayContent",
+    ],
+    "lib/features/rescue/presentation/widgets/completed_delay_content.dart": [
+        "Countdown is complete",
+        "Did the urge subside?",
     ],
     "lib/features/rescue/presentation/widgets/breathing_card.dart": [
         "class BreathingCard extends StatefulWidget",
@@ -42,26 +47,22 @@ failures = []
 
 for filename, needles in checks.items():
     path = Path(filename)
-
     if not path.exists():
         failures.append(f"missing file: {filename}")
         continue
 
     text = path.read_text(encoding="utf-8")
-
     for needle in needles:
         if needle not in text:
             failures.append(f"{filename} missing: {needle}")
 
 if failures:
     print("BA-47 verification failed:")
-
     for failure in failures:
         print(f" - {failure}")
-
     sys.exit(1)
 
 print(
-    "BA-47 verification passed: modular Rescue delay "
-    "and breathing tools are wired."
+    "BA-47 verification passed: modular Rescue delay, "
+    "countdown check-in, and breathing tools are wired."
 )

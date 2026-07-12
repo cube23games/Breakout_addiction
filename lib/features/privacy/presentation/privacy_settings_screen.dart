@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../../app/theme/app_spacing.dart';
 import '../../../app/theme/app_typography.dart';
+import '../../../core/security/credential_input_mode.dart';
 import '../../../core/widgets/info_card.dart';
 import '../../../core/widgets/primary_button.dart';
 import '../data/lock_settings_repository.dart';
 import '../domain/lock_scope.dart';
 import '../domain/lock_settings.dart';
-import 'widgets/neutral_mode_preview_card.dart';
 import 'lock_session_controller.dart';
+import 'widgets/neutral_mode_preview_card.dart';
 import 'widgets/privacy_status_card.dart';
 import 'widgets/relock_timing_card.dart';
 
@@ -16,13 +18,17 @@ class PrivacySettingsScreen extends StatefulWidget {
   const PrivacySettingsScreen({super.key});
 
   @override
-  State<PrivacySettingsScreen> createState() => _PrivacySettingsScreenState();
+  State<PrivacySettingsScreen> createState() =>
+      _PrivacySettingsScreenState();
 }
 
-class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
-  final LockSettingsRepository _repository = LockSettingsRepository();
+class _PrivacySettingsScreenState
+    extends State<PrivacySettingsScreen> {
+  final LockSettingsRepository _repository =
+      LockSettingsRepository();
 
   LockSettings _settings = LockSettings.disabled();
+  CredentialInputMode _credentialMode = CredentialInputMode.pin;
   bool _loading = true;
 
   @override
@@ -33,11 +39,16 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
 
   Future<void> _load() async {
     final loaded = await _repository.getSettings();
+    final credentialMode =
+        await _repository.getCredentialInputMode();
+
     if (!mounted) {
       return;
     }
+
     setState(() {
       _settings = loaded;
+      _credentialMode = credentialMode;
       _loading = false;
     });
   }
@@ -71,76 +82,137 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
 
   Future<void> _showPasscodeSheet() async {
     final controller = TextEditingController();
+    var mode = _credentialMode;
 
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       builder: (sheetContext) {
-        return Padding(
-          padding: EdgeInsets.fromLTRB(
-            AppSpacing.lg,
-            AppSpacing.lg,
-            AppSpacing.lg,
-            MediaQuery.of(sheetContext).viewInsets.bottom + AppSpacing.lg,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Set Passcode', style: AppTypography.title),
-              const SizedBox(height: AppSpacing.sm),
-              const Text(
-                'Choose a simple 4-digit or longer passcode.',
-                style: AppTypography.muted,
-              ),
-              const SizedBox(height: AppSpacing.md),
-              TextField(
-                controller: controller,
-                obscureText: true,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'Passcode',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: AppSpacing.md),
-              PrimaryButton(
-                label: 'Save Passcode',
-                icon: Icons.lock_outline,
-                onPressed: () async {
-                  final value = controller.text.trim();
-                  if (value.length < 4) {
-                    ScaffoldMessenger.of(sheetContext).showSnackBar(
-                      const SnackBar(
-                        content: Text('Use at least 4 digits or characters.'),
-                      ),
-                    );
-                    return;
-                  }
+        return StatefulBuilder(
+          builder: (sheetContext, setSheetState) {
+            final isPin = mode == CredentialInputMode.pin;
 
-                  await _repository.savePasscode(value);
-                  if (!mounted) {
-                    return;
-                  }
-
-                  await _saveSettings(_settings.copyWith(hasPasscode: true));
-                  if (!mounted) {
-                    return;
-                  }
-
-                  if (sheetContext.mounted) {
-                    Navigator.pop(sheetContext);
-                  }
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Passcode saved.')),
-                  );
-                },
+            return SingleChildScrollView(
+              padding: EdgeInsets.fromLTRB(
+                AppSpacing.lg,
+                AppSpacing.lg,
+                AppSpacing.lg,
+                MediaQuery.of(sheetContext).viewInsets.bottom +
+                    AppSpacing.lg,
               ),
-            ],
-          ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Set App Lock', style: AppTypography.title),
+                  const SizedBox(height: AppSpacing.sm),
+                  const Text(
+                    'Choose a numeric PIN or a password. Breakout will use the same input type when you unlock the app.',
+                    style: AppTypography.muted,
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  Wrap(
+                    spacing: AppSpacing.sm,
+                    runSpacing: AppSpacing.sm,
+                    children: [
+                      for (final option in CredentialInputMode.values)
+                        ChoiceChip(
+                          label: Text(option.label),
+                          selected: mode == option,
+                          onSelected: (selected) {
+                            if (!selected || mode == option) {
+                              return;
+                            }
+
+                            FocusScope.of(sheetContext).unfocus();
+                            controller.clear();
+                            setSheetState(() => mode = option);
+                          },
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  TextField(
+                    key: ValueKey(mode),
+                    controller: controller,
+                    obscureText: true,
+                    keyboardType: isPin
+                        ? TextInputType.number
+                        : TextInputType.text,
+                    inputFormatters: isPin
+                        ? <TextInputFormatter>[
+                            FilteringTextInputFormatter.digitsOnly,
+                          ]
+                        : null,
+                    autocorrect: false,
+                    enableSuggestions: false,
+                    textInputAction: TextInputAction.done,
+                    decoration: InputDecoration(
+                      labelText: 'App lock ${mode.label}',
+                      hintText: isPin
+                          ? 'At least 4 digits'
+                          : 'At least 4 characters',
+                      border: const OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  PrimaryButton(
+                    label: 'Save App Lock ${mode.label}',
+                    icon: Icons.lock_outline,
+                    onPressed: () async {
+                      final value = controller.text.trim();
+                      final minimumMessage = isPin
+                          ? 'Use at least 4 digits.'
+                          : 'Use at least 4 characters.';
+
+                      if (value.length < 4) {
+                        ScaffoldMessenger.of(sheetContext)
+                            .showSnackBar(
+                          SnackBar(
+                            content: Text(minimumMessage),
+                          ),
+                        );
+                        return;
+                      }
+
+                      await _repository.savePasscode(
+                        value,
+                        mode: mode,
+                      );
+                      if (!mounted) {
+                        return;
+                      }
+
+                      setState(() => _credentialMode = mode);
+                      await _saveSettings(
+                        _settings.copyWith(hasPasscode: true),
+                      );
+                      if (!mounted) {
+                        return;
+                      }
+
+                      if (sheetContext.mounted) {
+                        Navigator.pop(sheetContext);
+                      }
+
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            'App lock ${mode.label} saved.',
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            );
+          },
         );
       },
     );
+
+    controller.dispose();
   }
 
   Future<void> _removePasscode() async {
@@ -156,8 +228,15 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
       return;
     }
 
+    setState(() {
+      _credentialMode = CredentialInputMode.pin;
+    });
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Passcode removed and locks disabled.')),
+      const SnackBar(
+        content: Text(
+          'App lock credential removed and locks disabled.',
+        ),
+      ),
     );
   }
 
@@ -167,11 +246,15 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
       ..updateGraceMinutes(0)
       ..lockNow();
     await _load();
+
     if (!mounted) {
       return;
     }
+
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Privacy settings reset to safe defaults.')),
+      const SnackBar(
+        content: Text('Privacy settings reset to safe defaults.'),
+      ),
     );
   }
 
@@ -216,13 +299,18 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
         children: [
           const PrivacyStatusCard(),
           const SizedBox(height: AppSpacing.md),
-          NeutralModePreviewCard(neutralMode: _settings.neutralPrivacyMode),
+          NeutralModePreviewCard(
+            neutralMode: _settings.neutralPrivacyMode,
+          ),
           const SizedBox(height: AppSpacing.md),
           const InfoCard(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Layered Privacy', style: AppTypography.section),
+                Text(
+                  'Layered Privacy',
+                  style: AppTypography.section,
+                ),
                 SizedBox(height: AppSpacing.sm),
                 Text(
                   'Choose whether to lock the whole app or only the private areas.',
@@ -236,17 +324,22 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Passcode', style: AppTypography.section),
+                Text(
+                  'App Lock Credential',
+                  style: AppTypography.section,
+                ),
                 const SizedBox(height: AppSpacing.sm),
                 Text(
                   _settings.hasPasscode
-                      ? 'A passcode is currently set.'
-                      : 'No passcode set yet.',
+                      ? 'An app lock ${_credentialMode.label} is currently set.'
+                      : 'No app lock credential is set yet.',
                   style: AppTypography.muted,
                 ),
                 const SizedBox(height: AppSpacing.md),
                 PrimaryButton(
-                  label: _settings.hasPasscode ? 'Update Passcode' : 'Set Passcode',
+                  label: _settings.hasPasscode
+                      ? 'Update App Lock ${_credentialMode.label}'
+                      : 'Set App Lock',
                   icon: Icons.password_outlined,
                   onPressed: _showPasscodeSheet,
                 ),
@@ -257,7 +350,9 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
                     child: OutlinedButton.icon(
                       onPressed: _removePasscode,
                       icon: const Icon(Icons.delete_outline),
-                      label: const Text('Remove Passcode'),
+                      label: const Text(
+                        'Remove App Lock Credential',
+                      ),
                     ),
                   ),
                 ],
@@ -269,7 +364,10 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Lock Master Switch', style: AppTypography.section),
+                Text(
+                  'Lock Master Switch',
+                  style: AppTypography.section,
+                ),
                 SwitchListTile(
                   value: _settings.isEnabled,
                   onChanged: !_settings.hasPasscode
@@ -281,7 +379,7 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
                   subtitle: Text(
                     _settings.hasPasscode
                         ? 'Turn lock protection on or off.'
-                        : 'Set a passcode first to enable lock protection.',
+                        : 'Set an app lock credential first.',
                   ),
                 ),
                 SwitchListTile(
@@ -289,9 +387,13 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
                   onChanged: !_settings.hasPasscode
                       ? null
                       : (value) => _saveSettings(
-                            _settings.copyWith(allowRescueWithoutUnlock: value),
+                            _settings.copyWith(
+                              allowRescueWithoutUnlock: value,
+                            ),
                           ),
-                  title: const Text('Allow Rescue Without Unlock'),
+                  title: const Text(
+                    'Allow Rescue Without Unlock',
+                  ),
                   subtitle: const Text(
                     'Keep the Rescue area available even when private areas are locked.',
                   ),
@@ -299,7 +401,9 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
                 SwitchListTile(
                   value: _settings.neutralPrivacyMode,
                   onChanged: (value) => _saveSettings(
-                    _settings.copyWith(neutralPrivacyMode: value),
+                    _settings.copyWith(
+                      neutralPrivacyMode: value,
+                    ),
                   ),
                   title: const Text('Use Neutral Labels'),
                   subtitle: const Text(
@@ -324,7 +428,10 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Protected Areas', style: AppTypography.section),
+                Text(
+                  'Protected Areas',
+                  style: AppTypography.section,
+                ),
                 _buildScopeTile(
                   title: 'Lock Entire App',
                   subtitle: 'Require unlock across the whole app.',
@@ -342,12 +449,14 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
                 ),
                 _buildScopeTile(
                   title: 'Lock Insights',
-                  subtitle: 'Protect pattern summaries and analysis.',
+                  subtitle:
+                      'Protect pattern summaries and analysis.',
                   scope: LockScope.insights,
                 ),
                 _buildScopeTile(
                   title: 'Lock Support Tools',
-                  subtitle: 'Protect support, risk windows, and recovery plan.',
+                  subtitle:
+                      'Protect support, risk windows, and recovery plan.',
                   scope: LockScope.support,
                 ),
               ],
@@ -361,7 +470,7 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
                 Text('Reset', style: AppTypography.section),
                 const SizedBox(height: AppSpacing.sm),
                 const Text(
-                  'Reset privacy settings to a safe default state while keeping your passcode intact.',
+                  'Reset privacy settings to a safe default state while keeping your app lock credential intact.',
                   style: AppTypography.muted,
                 ),
                 const SizedBox(height: AppSpacing.md),
@@ -370,7 +479,9 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
                   child: OutlinedButton.icon(
                     onPressed: _resetDefaults,
                     icon: const Icon(Icons.refresh_outlined),
-                    label: const Text('Reset Privacy Defaults'),
+                    label: const Text(
+                      'Reset Privacy Defaults',
+                    ),
                   ),
                 ),
               ],

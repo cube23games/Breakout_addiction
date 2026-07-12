@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../app/theme/app_spacing.dart';
+import '../../../core/security/credential_input_mode.dart';
 import '../data/lock_settings_repository.dart';
 import '../domain/lock_scope.dart';
 import '../domain/lock_settings.dart';
@@ -31,6 +32,7 @@ class _ProtectedRouteGateState extends State<ProtectedRouteGate> {
       LockSessionController.instance;
 
   LockSettings? _settings;
+  CredentialInputMode _credentialMode = CredentialInputMode.pin;
   bool _loading = true;
 
   @override
@@ -54,6 +56,8 @@ class _ProtectedRouteGateState extends State<ProtectedRouteGate> {
 
   Future<void> _load() async {
     final settings = await _repository.getSettings();
+    final credentialMode =
+        await _repository.getCredentialInputMode();
 
     if (!mounted) {
       return;
@@ -65,6 +69,7 @@ class _ProtectedRouteGateState extends State<ProtectedRouteGate> {
 
     setState(() {
       _settings = settings;
+      _credentialMode = credentialMode;
       _loading = false;
     });
   }
@@ -98,6 +103,7 @@ class _ProtectedRouteGateState extends State<ProtectedRouteGate> {
       title: 'Protected Content',
       subtitle:
           'Unlock once to use protected areas until the app is left or your relock timer expires.',
+      credentialMode: _credentialMode,
       onUnlockAttempt: _repository.verifyPasscode,
       onUnlockSuccess: _session.unlock,
     );

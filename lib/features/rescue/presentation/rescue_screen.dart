@@ -5,6 +5,7 @@ import '../../../app/theme/app_typography.dart';
 import '../../../core/constants/route_names.dart';
 import '../../../core/widgets/info_card.dart';
 import '../../../core/widgets/primary_button.dart';
+import '../data/delay_session_repository.dart';
 import 'widgets/breathing_card.dart';
 import 'widgets/delay_actions_card.dart';
 import 'widgets/reasons_to_stop_card.dart';
@@ -19,11 +20,39 @@ class RescueScreen extends StatefulWidget {
 }
 
 class _RescueScreenState extends State<RescueScreen> {
+  final DelaySessionRepository _delayRepository =
+      DelaySessionRepository();
+
   double _urgeIntensity = 4;
 
   final GlobalKey _delayActionsKey = GlobalKey();
   final GlobalKey _breathingKey = GlobalKey();
   final GlobalKey _reasonsKey = GlobalKey();
+
+  @override
+  void initState() {
+    super.initState();
+    _restoreDelayPosition();
+  }
+
+  Future<void> _restoreDelayPosition() async {
+    final hasDelay =
+        await _delayRepository.hasRestorableSession();
+
+    if (!mounted || !hasDelay) {
+      return;
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Future<void>.delayed(
+        const Duration(milliseconds: 120),
+      ).then((_) {
+        if (mounted) {
+          _scrollTo(_delayActionsKey);
+        }
+      });
+    });
+  }
 
   void _scrollTo(GlobalKey key) {
     final targetContext = key.currentContext;
@@ -47,7 +76,10 @@ class _RescueScreenState extends State<RescueScreen> {
         child: ListView(
           padding: const EdgeInsets.all(AppSpacing.lg),
           children: [
-            Text('Pause. You still have a choice.', style: AppTypography.title),
+            Text(
+              'Pause. You still have a choice.',
+              style: AppTypography.title,
+            ),
             const SizedBox(height: AppSpacing.sm),
             const Text(
               'Interrupt the cycle before it gains momentum.',
@@ -58,8 +90,11 @@ class _RescueScreenState extends State<RescueScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Urge Intensity', style: AppTypography.section),
-                  SizedBox(height: AppSpacing.sm),
+                  Text(
+                    'Urge Intensity',
+                    style: AppTypography.section,
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
                   Slider(
                     value: _urgeIntensity,
                     min: 0,
@@ -87,10 +122,14 @@ class _RescueScreenState extends State<RescueScreen> {
               const SizedBox(height: AppSpacing.md),
               UrgeSupportGuidanceCard(
                 intensity: _urgeIntensity.round(),
-                onChooseDelay: () => _scrollTo(_delayActionsKey),
-                onBreathe: () => _scrollTo(_breathingKey),
-                onReviewReasons: () => _scrollTo(_reasonsKey),
-                onOpenSupport: () => Navigator.pushNamed(
+                onChooseDelay: () =>
+                    _scrollTo(_delayActionsKey),
+                onBreathe: () =>
+                    _scrollTo(_breathingKey),
+                onReviewReasons: () =>
+                    _scrollTo(_reasonsKey),
+                onOpenSupport: () =>
+                    Navigator.pushNamed(
                   context,
                   RouteNames.support,
                 ),
@@ -113,12 +152,18 @@ class _RescueScreenState extends State<RescueScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Support Actions', style: AppTypography.section),
+                  Text(
+                    'Support Actions',
+                    style: AppTypography.section,
+                  ),
                   const SizedBox(height: AppSpacing.sm),
                   PrimaryButton(
                     label: 'Open Support',
                     icon: Icons.support_agent_outlined,
-                    onPressed: () => Navigator.pushNamed(context, RouteNames.support),
+                    onPressed: () => Navigator.pushNamed(
+                      context,
+                      RouteNames.support,
+                    ),
                   ),
                 ],
               ),
@@ -131,27 +176,54 @@ class _RescueScreenState extends State<RescueScreen> {
         onTap: (index) {
           switch (index) {
             case 0:
-              Navigator.pushReplacementNamed(context, RouteNames.home);
+              Navigator.pushReplacementNamed(
+                context,
+                RouteNames.home,
+              );
               break;
             case 1:
               break;
             case 2:
-              Navigator.pushReplacementNamed(context, RouteNames.logHub);
+              Navigator.pushReplacementNamed(
+                context,
+                RouteNames.logHub,
+              );
               break;
             case 3:
-              Navigator.pushReplacementNamed(context, RouteNames.insights);
+              Navigator.pushReplacementNamed(
+                context,
+                RouteNames.insights,
+              );
               break;
             case 4:
-              Navigator.pushReplacementNamed(context, RouteNames.support);
+              Navigator.pushReplacementNamed(
+                context,
+                RouteNames.support,
+              );
               break;
           }
         },
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home_outlined), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.flash_on_outlined), label: 'Rescue'),
-          BottomNavigationBarItem(icon: Icon(Icons.edit_note_outlined), label: 'Log'),
-          BottomNavigationBarItem(icon: Icon(Icons.insights_outlined), label: 'Insights'),
-          BottomNavigationBarItem(icon: Icon(Icons.support_agent_outlined), label: 'Support'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home_outlined),
+            label: 'Home',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.flash_on_outlined),
+            label: 'Rescue',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.edit_note_outlined),
+            label: 'Log',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.insights_outlined),
+            label: 'Insights',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.support_agent_outlined),
+            label: 'Support',
+          ),
         ],
       ),
     );

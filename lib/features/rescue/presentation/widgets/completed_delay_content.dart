@@ -54,10 +54,13 @@ class CompletedDelayContent extends StatelessWidget {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Delay complete', style: AppTypography.section),
+            Text(
+              'Countdown is complete',
+              style: AppTypography.section,
+            ),
             const SizedBox(height: AppSpacing.sm),
             Text(
-              'How is the urge now?',
+              'Did the urge subside?',
               style: AppTypography.body,
             ),
             const SizedBox(height: AppSpacing.md),
@@ -66,20 +69,23 @@ class CompletedDelayContent extends StatelessWidget {
               runSpacing: AppSpacing.sm,
               children: [
                 OutlinedButton.icon(
-                  onPressed: () =>
-                      onResultSelected(DelayCheckInResult.lower),
+                  onPressed: () => onResultSelected(
+                    DelayCheckInResult.lower,
+                  ),
                   icon: const Icon(Icons.trending_down),
                   label: const Text('Lower'),
                 ),
                 OutlinedButton.icon(
-                  onPressed: () =>
-                      onResultSelected(DelayCheckInResult.same),
+                  onPressed: () => onResultSelected(
+                    DelayCheckInResult.same,
+                  ),
                   icon: const Icon(Icons.horizontal_rule),
                   label: const Text('About the same'),
                 ),
                 OutlinedButton.icon(
-                  onPressed: () =>
-                      onResultSelected(DelayCheckInResult.stronger),
+                  onPressed: () => onResultSelected(
+                    DelayCheckInResult.stronger,
+                  ),
                   icon: const Icon(Icons.trending_up),
                   label: const Text('Stronger'),
                 ),
@@ -133,7 +139,10 @@ class CompletedDelayContent extends StatelessWidget {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Use more support now', style: AppTypography.section),
+            Text(
+              'Use more support now',
+              style: AppTypography.section,
+            ),
             const SizedBox(height: AppSpacing.sm),
             Text(
               'Change locations, put distance between you and the trigger, and contact someone instead of staying isolated.',
@@ -144,7 +153,9 @@ class CompletedDelayContent extends StatelessWidget {
               width: double.infinity,
               child: FilledButton.icon(
                 onPressed: onOpenSupport,
-                icon: const Icon(Icons.support_agent_outlined),
+                icon: const Icon(
+                  Icons.support_agent_outlined,
+                ),
                 label: const Text('Open Support'),
               ),
             ),

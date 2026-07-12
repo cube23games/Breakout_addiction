@@ -4,21 +4,35 @@ import '../../../core/constants/route_names.dart';
 import '../../home/presentation/home_screen.dart';
 import '../../privacy/domain/lock_scope.dart';
 import '../../privacy/presentation/protected_route_gate.dart';
+import '../../rescue/data/delay_session_repository.dart';
 import '../../widget/data/app_entry_repository.dart';
 import '../data/onboarding_repository.dart';
+import '../data/welcome_banner_repository.dart';
+import '../domain/welcome_message.dart';
+import 'widgets/welcome_banner_overlay.dart';
 
 class HomeEntryScreen extends StatefulWidget {
   const HomeEntryScreen({super.key});
 
   @override
-  State<HomeEntryScreen> createState() => _HomeEntryScreenState();
+  State<HomeEntryScreen> createState() =>
+      _HomeEntryScreenState();
 }
 
 class _HomeEntryScreenState extends State<HomeEntryScreen> {
-  final OnboardingRepository _onboardingRepository = OnboardingRepository();
-  final AppEntryRepository _appEntryRepository = AppEntryRepository();
+  static bool _completedEntryResolvedThisProcess = false;
 
-  Widget? _child;
+  final OnboardingRepository _onboardingRepository =
+      OnboardingRepository();
+  final AppEntryRepository _appEntryRepository =
+      AppEntryRepository();
+  final DelaySessionRepository _delaySessionRepository =
+      DelaySessionRepository();
+  final WelcomeBannerRepository _welcomeBannerRepository =
+      WelcomeBannerRepository();
+
+  bool _homeReady = false;
+  WelcomeMessage? _welcomeMessage;
 
   @override
   void initState() {
@@ -35,53 +49,124 @@ class _HomeEntryScreenState extends State<HomeEntryScreen> {
 
     if (!state.completed) {
       setState(() {
-        _child = null;
+        _homeReady = false;
+        _welcomeMessage = null;
       });
 
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) {
           return;
         }
-        Navigator.pushReplacementNamed(context, RouteNames.onboarding);
+        Navigator.pushReplacementNamed(
+          context,
+          RouteNames.onboarding,
+        );
       });
       return;
     }
 
-    final pending = await _appEntryRepository.consumePendingEntry();
+    final isInitialCompletedEntry =
+        !_completedEntryResolvedThisProcess;
+    _completedEntryResolvedThisProcess = true;
+
+    final pending =
+        await _appEntryRepository.consumePendingEntry();
 
     if (!mounted) {
       return;
     }
 
-    if (pending == null || pending.routeName == RouteNames.home) {
+    if (pending != null &&
+        pending.routeName != RouteNames.home) {
       setState(() {
-        _child = const ProtectedRouteGate(
-          scope: LockScope.app,
-          child: HomeScreen(),
+        _homeReady = false;
+        _welcomeMessage = null;
+      });
+
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) {
+          return;
+        }
+        Navigator.pushReplacementNamed(
+          context,
+          pending.routeName,
         );
       });
       return;
     }
 
-    setState(() {
-      _child = null;
-    });
+    if (isInitialCompletedEntry) {
+      final hasDelay = await _delaySessionRepository
+          .hasRestorableSession();
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) {
         return;
       }
-      Navigator.pushReplacementNamed(context, pending.routeName);
+
+      if (hasDelay) {
+        setState(() {
+          _homeReady = false;
+          _welcomeMessage = null;
+        });
+
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) {
+            return;
+          }
+          Navigator.pushReplacementNamed(
+            context,
+            RouteNames.rescue,
+          );
+        });
+        return;
+      }
+    }
+
+    final welcomeMessage = isInitialCompletedEntry
+        ? await _welcomeBannerRepository.nextMessage()
+        : null;
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _homeReady = true;
+      _welcomeMessage = welcomeMessage;
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    return _child ??
-        const Scaffold(
-          body: Center(
-            child: CircularProgressIndicator(),
-          ),
-        );
+    if (!_homeReady) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    return ProtectedRouteGate(
+      scope: LockScope.app,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          const HomeScreen(),
+          if (_welcomeMessage != null)
+            IgnorePointer(
+              child: WelcomeBannerOverlay(
+                message: _welcomeMessage!,
+                onComplete: () {
+                  if (mounted) {
+                    setState(() {
+                      _welcomeMessage = null;
+                    });
+                  }
+                },
+              ),
+            ),
+        ],
+      ),
+    );
   }
 }

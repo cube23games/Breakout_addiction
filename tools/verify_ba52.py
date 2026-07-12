@@ -17,6 +17,7 @@ CHECKS = {
     'lib/features/privacy/data/lock_settings_repository.dart': [
         'privacy_background_grace_minutes',
         'LockSettings.normalizeGraceMinutes',
+        'getCredentialInputMode',
     ],
     'lib/features/privacy/presentation/lock_session_controller.dart': [
         'class LockSessionController extends ChangeNotifier',
@@ -29,12 +30,13 @@ CHECKS = {
     'lib/features/privacy/presentation/protected_route_gate.dart': [
         'LockSessionController.instance',
         '_session.isUnlocked',
+        'credentialMode: _credentialMode',
         'onUnlockSuccess: _session.unlock',
     ],
     'lib/features/privacy/presentation/lock_gate_screen.dart': [
         'AccountabilitySettingsRepository',
         'settings.canUsePartnerAccess && hasPasscode',
-        'Accountability Partner Access',
+        'Open Partner View',
         'RouteNames.accountabilityPartnerAccess',
     ],
     'lib/features/privacy/presentation/widgets/relock_timing_card.dart': [
@@ -47,6 +49,7 @@ CHECKS = {
         'RelockTimingCard(',
         'backgroundGraceMinutes',
         'LockSessionController.instance',
+        'App Lock Credential',
     ],
     'lib/features/support/presentation/support_screen.dart': [
         'PopScope(',
@@ -64,6 +67,7 @@ CHECKS = {
         'SelectableOptionTile',
         'LayoutBuilder(',
         'sharedScopes.contains(scope)',
+        'Partner Access Credential',
     ],
     'lib/features/home/presentation/widgets/startup_notice_sheet.dart': [
         'AppColors.surface.withValues(alpha: 0.98)',
@@ -154,7 +158,7 @@ if failures:
     sys.exit(1)
 
 print(
-    'BA-52 verification passed: session-wide locking, partner access, '
-    'navigation, highlighted tiles, startup contrast, and safer Rescue '
-    'wording are wired.'
+    'BA-52 verification passed: session-wide locking, credential-aware '
+    'partner access, navigation, highlighted tiles, startup contrast, '
+    'and safer Rescue wording are wired.'
 )

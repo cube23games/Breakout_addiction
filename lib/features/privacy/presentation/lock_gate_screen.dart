@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../../app/theme/app_spacing.dart';
 import '../../../app/theme/app_typography.dart';
 import '../../../core/constants/route_names.dart';
+import '../../../core/security/credential_input_mode.dart';
 import '../../../core/widgets/info_card.dart';
 import '../../../core/widgets/primary_button.dart';
 import '../../accountability/data/accountability_settings_repository.dart';
@@ -10,6 +12,7 @@ import '../../accountability/data/accountability_settings_repository.dart';
 class LockGateScreen extends StatefulWidget {
   final String title;
   final String subtitle;
+  final CredentialInputMode credentialMode;
   final Future<bool> Function(String passcode) onUnlockAttempt;
   final VoidCallback onUnlockSuccess;
 
@@ -17,6 +20,7 @@ class LockGateScreen extends StatefulWidget {
     super.key,
     required this.title,
     required this.subtitle,
+    required this.credentialMode,
     required this.onUnlockAttempt,
     required this.onUnlockSuccess,
   });
@@ -62,27 +66,39 @@ class _LockGateScreenState extends State<LockGateScreen> {
   }
 
   Future<void> _unlock() async {
+    final value = _controller.text.trim();
+
+    if (value.isEmpty) {
+      setState(() {
+        _errorText =
+            'Enter your app lock ${widget.credentialMode.label}.';
+      });
+      return;
+    }
+
     setState(() {
       _isBusy = true;
       _errorText = null;
     });
 
-    final ok = await widget.onUnlockAttempt(
-      _controller.text.trim(),
-    );
+    final ok = await widget.onUnlockAttempt(value);
 
     if (!mounted) {
       return;
     }
 
-    setState(() => _isBusy = false);
-
     if (ok) {
+      setState(() => _isBusy = false);
       widget.onUnlockSuccess();
       return;
     }
 
-    setState(() => _errorText = 'That code does not match.');
+    _controller.clear();
+    setState(() {
+      _isBusy = false;
+      _errorText =
+          'Incorrect app lock ${widget.credentialMode.label}. Try again.';
+    });
   }
 
   void _openPartnerAccess() {
@@ -94,6 +110,8 @@ class _LockGateScreenState extends State<LockGateScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isPin = widget.credentialMode == CredentialInputMode.pin;
+
     return Scaffold(
       appBar: AppBar(title: const Text('Protected')),
       body: Center(
@@ -113,13 +131,23 @@ class _LockGateScreenState extends State<LockGateScreen> {
                   TextField(
                     controller: _controller,
                     obscureText: true,
-                    keyboardType: TextInputType.number,
+                    keyboardType:
+                        isPin ? TextInputType.number : TextInputType.text,
+                    inputFormatters: isPin
+                        ? <TextInputFormatter>[
+                            FilteringTextInputFormatter.digitsOnly,
+                          ]
+                        : null,
+                    autocorrect: false,
+                    enableSuggestions: false,
+                    textInputAction: TextInputAction.done,
                     decoration: InputDecoration(
-                      labelText: 'Passcode',
+                      labelText:
+                          'App lock ${widget.credentialMode.label}',
                       border: const OutlineInputBorder(),
                       errorText: _errorText,
                     ),
-                    onSubmitted: (_) => _unlock(),
+                    onSubmitted: _isBusy ? null : (_) => _unlock(),
                   ),
                   const SizedBox(height: AppSpacing.md),
                   PrimaryButton(
@@ -132,22 +160,24 @@ class _LockGateScreenState extends State<LockGateScreen> {
                     const Divider(),
                     const SizedBox(height: AppSpacing.sm),
                     Text(
-                      'Accountability Partner',
+                      'Partner View',
                       style: AppTypography.section,
                     ),
                     const SizedBox(height: AppSpacing.xs),
                     const Text(
-                      'Open the separate read-only partner view without unlocking private app content.',
+                      'Partner access uses its own PIN or password and opens only the approved read-only summary.',
                       style: AppTypography.muted,
                     ),
                     const SizedBox(height: AppSpacing.md),
                     SizedBox(
                       width: double.infinity,
-                      child: OutlinedButton.icon(
-                        onPressed: _openPartnerAccess,
-                        icon: const Icon(Icons.visibility_outlined),
-                        label: const Text(
-                          'Accountability Partner Access',
+                      child: Semantics(
+                        label: 'Accountability Partner Access',
+                        button: true,
+                        child: OutlinedButton.icon(
+                          onPressed: _openPartnerAccess,
+                          icon: const Icon(Icons.visibility_outlined),
+                          label: const Text('Open Partner View'),
                         ),
                       ),
                     ),

@@ -10,7 +10,7 @@ class DelayDurationSelector extends StatelessWidget {
     super.key,
   });
 
-  static const List<int> _durations = <int>[3, 10, 15];
+  static const List<int> _durations = <int>[3, 5, 15];
 
   final int? selectedMinutes;
   final ValueChanged<int> onSelected;

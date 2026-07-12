@@ -31,23 +31,25 @@ checks = {
         "class AccountabilitySettingsRepository",
         "FlutterSecureStorage",
         "_partnerPasscodeKey",
+        "getPartnerCredentialMode",
         "verifyPartnerPasscode",
         "AccountabilitySettings.defaults",
     ],
     "lib/features/accountability/presentation/accountability_settings_screen.dart": [
         "class AccountabilitySettingsScreen",
         "Enable Accountability Mode",
-        "Partner Passcode",
-        "Share AI chat history",
+        "Partner Access Credential",
+        "CredentialInputMode.values",
+        "Share private notes",
     ],
     "lib/features/accountability/presentation/accountability_partner_access_screen.dart": [
         "class AccountabilityPartnerAccessScreen",
         "Read-only support access",
-        "Partner passcode",
+        "Partner ${_credentialMode.label}",
+        "Incorrect partner ${_credentialMode.label}. Try again.",
         "Open Accountability Summary",
         "verifyPartnerPasscode",
         "RouteNames.accountabilitySummary",
-        "onPressed: _checking ? () {} : _verify",
     ],
     "lib/features/accountability/presentation/accountability_summary_screen.dart": [
         "class AccountabilitySummaryScreen",
@@ -55,7 +57,7 @@ checks = {
         "Shared summary areas",
         "Privacy boundaries",
         "Private notes are not shared",
-        "AI chat history is not shared",
+        "Only the selected summary areas are shown.",
     ],
     "lib/core/constants/route_names.dart": [
         "accountabilitySettings",
@@ -76,23 +78,47 @@ checks = {
     ],
 }
 
-missing = []
+forbidden = {
+    "lib/features/accountability/presentation/accountability_settings_screen.dart": [
+        "Share AI chat history",
+    ],
+    "lib/features/accountability/presentation/accountability_summary_screen.dart": [
+        "AI provider access",
+        "AI chat history is not shared.",
+        "AI chat sharing is enabled",
+    ],
+}
 
-for file, needles in checks.items():
-    path = Path(file)
+failures = []
+
+for filename, needles in checks.items():
+    path = Path(filename)
     if not path.exists():
-        missing.append(f"missing file: {file}")
+        failures.append(f"missing file: {filename}")
         continue
 
-    text = path.read_text()
+    text = path.read_text(encoding="utf-8")
     for needle in needles:
         if needle not in text:
-            missing.append(f"{file} missing: {needle}")
+            failures.append(f"{filename} missing: {needle}")
 
-if missing:
+for filename, needles in forbidden.items():
+    path = Path(filename)
+    if not path.exists():
+        continue
+
+    text = path.read_text(encoding="utf-8")
+    for needle in needles:
+        if needle in text:
+            failures.append(f"{filename} still exposes: {needle}")
+
+if failures:
     print("BA-41 verification failed:")
-    for item in missing:
+    for item in failures:
         print(f" - {item}")
     sys.exit(1)
 
-print("BA-41 verification passed: Accountability partner access and read-only summary are wired.")
+print(
+    "BA-41 verification passed: separate credential-aware "
+    "accountability access and read-only privacy boundaries are wired."
+)
