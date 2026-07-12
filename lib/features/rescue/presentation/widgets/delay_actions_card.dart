@@ -133,7 +133,7 @@ class _DelayActionsCardState extends State<DelayActionsCard> {
           Text(title, style: AppTypography.section),
           const SizedBox(height: AppSpacing.sm),
           const Text(
-            'Choose a delay. The active choice stays highlighted.',
+            'Choose a delay. The active choice stays highlighted. To receive an alert when the countdown ends, allow notification permission when Android asks. Breakout only uses it for reminders you choose, and the timer still works without it.',
             style: AppTypography.muted,
           ),
           const SizedBox(height: AppSpacing.md),

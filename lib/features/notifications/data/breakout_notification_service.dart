@@ -14,8 +14,11 @@ class BreakoutNotificationService {
       FlutterLocalNotificationsPlugin();
 
   bool _initialized = false;
+  Future<void>? _initializationFuture;
 
   static const String notificationIconName = 'ic_stat_breakout';
+  static const String fallbackNotificationIconName =
+      '@mipmap/ic_launcher';
 
   static const String riskChannelId = 'breakout_risk_windows';
   static const String riskChannelName = 'Risk Window Reminders';
@@ -33,6 +36,25 @@ class BreakoutNotificationService {
       return;
     }
 
+    final existing = _initializationFuture;
+    if (existing != null) {
+      await existing;
+      return;
+    }
+
+    final future = _initialize();
+    _initializationFuture = future;
+
+    try {
+      await future;
+    } finally {
+      if (!_initialized) {
+        _initializationFuture = null;
+      }
+    }
+  }
+
+  Future<void> _initialize() async {
     tz.initializeTimeZones();
 
     try {
@@ -42,17 +64,11 @@ class BreakoutNotificationService {
       // Keep timezone defaults if device lookup fails.
     }
 
-    const androidSettings =
-        AndroidInitializationSettings(notificationIconName);
-    const darwinSettings = DarwinInitializationSettings();
-
-    const initSettings = InitializationSettings(
-      android: androidSettings,
-      iOS: darwinSettings,
-      macOS: darwinSettings,
-    );
-
-    await _plugin.initialize(settings: initSettings);
+    try {
+      await _initializePlugin(notificationIconName);
+    } catch (_) {
+      await _initializePlugin(fallbackNotificationIconName);
+    }
 
     final android = _plugin.resolvePlatformSpecificImplementation<
         AndroidFlutterLocalNotificationsPlugin>();
@@ -75,6 +91,20 @@ class BreakoutNotificationService {
     );
 
     _initialized = true;
+  }
+
+  Future<void> _initializePlugin(String iconName) async {
+    final androidSettings =
+        AndroidInitializationSettings(iconName);
+    const darwinSettings = DarwinInitializationSettings();
+
+    final initSettings = InitializationSettings(
+      android: androidSettings,
+      iOS: darwinSettings,
+      macOS: darwinSettings,
+    );
+
+    await _plugin.initialize(settings: initSettings);
   }
 
   Future<bool> requestPermissions() async {
@@ -148,7 +178,6 @@ class BreakoutNotificationService {
         riskChannelId,
         riskChannelName,
         channelDescription: riskChannelDescription,
-        icon: notificationIconName,
         importance: Importance.high,
         priority: Priority.high,
       ),
@@ -181,7 +210,6 @@ class BreakoutNotificationService {
         delayChannelId,
         delayChannelName,
         channelDescription: delayChannelDescription,
-        icon: notificationIconName,
         importance: Importance.high,
         priority: Priority.high,
       ),

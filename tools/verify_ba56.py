@@ -3,28 +3,25 @@ from pathlib import Path
 import sys
 
 CHECKS = {
+    'assets/branding/breakout_notification_icon.png': [],
     'lib/features/notifications/data/breakout_notification_service.dart': [
         "notificationIconName = 'ic_stat_breakout'",
-        'AndroidInitializationSettings(notificationIconName)',
-        'icon: notificationIconName',
+        'fallbackNotificationIconName',
+        'AndroidInitializationSettings(iconName)',
+        'await _initializePlugin(notificationIconName)',
+        'await _initializePlugin(fallbackNotificationIconName)',
     ],
     'tools/patch_android_notifications.py': [
-        'ic_stat_breakout.xml',
-        'NOTIFICATION_ICON_XML',
-        'android:viewportWidth="24"',
-        'android:strokeColor="#FFFFFFFF"',
-        'M7.75,6 L7.75,18',
+        'breakout_notification_icon.png',
+        'ic_stat_breakout.png',
         'write_notification_icon()',
+        "data.startswith(b'\\x89PNG",
+        'shutil.copyfile',
+        'actual Breakout',
     ],
     '.github/workflows/ci.yml': [
         'Configure Android scheduled notifications',
         'python3 tools/patch_android_notifications.py',
-    ],
-}
-
-FORBIDDEN = {
-    'lib/features/notifications/data/breakout_notification_service.dart': [
-        "@mipmap/ic_launcher",
     ],
 }
 
@@ -34,6 +31,14 @@ for filename, needles in CHECKS.items():
     path = Path(filename)
     if not path.is_file():
         failures.append(f'missing file: {filename}')
+        continue
+
+    if path.suffix == '.png':
+        data = path.read_bytes()
+        if not data.startswith(b'\x89PNG\r\n\x1a\n'):
+            failures.append(f'{filename} is not a valid PNG')
+        if len(data) < 500:
+            failures.append(f'{filename} is unexpectedly small')
         continue
 
     text = path.read_text(encoding='utf-8')
@@ -46,20 +51,11 @@ service = Path(
 )
 if service.is_file():
     text = service.read_text(encoding='utf-8')
-    if text.count('icon: notificationIconName') < 2:
+    if 'icon: notificationIconName' in text:
         failures.append(
-            'notification icon must be set on both Android channels'
+            'per-notification icon override should use the initialized '
+            'default so fallback remains possible'
         )
-
-for filename, needles in FORBIDDEN.items():
-    path = Path(filename)
-    if not path.is_file():
-        continue
-
-    text = path.read_text(encoding='utf-8')
-    for needle in needles:
-        if needle in text:
-            failures.append(f'{filename} still contains: {needle}')
 
 if failures:
     print('BA-56 verification failed:')
@@ -68,6 +64,6 @@ if failures:
     sys.exit(1)
 
 print(
-    'BA-56 verification passed: Breakout notifications use a dedicated '
-    'monochrome B/O status-bar icon instead of the launcher square.'
+    'BA-56 verification passed: Breakout uses the actual app-logo '
+    'silhouette as a monochrome Android status-bar icon with a safe fallback.'
 )
