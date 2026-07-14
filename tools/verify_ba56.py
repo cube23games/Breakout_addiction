@@ -1,16 +1,24 @@
 #!/usr/bin/env python3
 from pathlib import Path
-import hashlib
 import sys
 
-ICON_SHA256 = (
-    '7cb24c5125c7dc32a1ddc5fe22a0f3a4'
-    'b85c05c1efbd89e930232661ea6d94d3'
+SERVICE = Path(
+    'lib/features/notifications/data/'
+    'breakout_notification_service.dart'
 )
+PATCHER = Path('tools/patch_android_notifications.py')
+CI = Path('.github/workflows/ci.yml')
 
-CHECKS = {
-    'assets/branding/breakout_notification_icon.png': [],
-    'lib/features/notifications/data/breakout_notification_service.dart': [
+failures = []
+
+for path in (SERVICE, PATCHER, CI):
+    if not path.is_file():
+        failures.append(f'missing file: {path}')
+
+if SERVICE.is_file():
+    service_text = SERVICE.read_text(encoding='utf-8')
+
+    required_service_values = [
         "notificationIconName = 'ic_stat_breakout'",
         'fallbackNotificationIconName',
         'AndroidInitializationSettings(iconName)',
@@ -18,51 +26,88 @@ CHECKS = {
         'icon: useCustomIcon ? notificationIconName : null',
         'useCustomIcon: true',
         'useCustomIcon: false',
-    ],
-    'tools/patch_android_notifications.py': [
-        'breakout_notification_icon.png',
+    ]
+
+    for value in required_service_values:
+        if value not in service_text:
+            failures.append(f'{SERVICE} missing: {value}')
+
+if PATCHER.is_file():
+    patcher_text = PATCHER.read_text(encoding='utf-8')
+
+    required_patcher_values = [
+        'ic_stat_breakout.xml',
+        'VECTOR_ICON_XML',
+        'android:fillColor="@android:color/transparent"',
+        'android:strokeColor="#FFFFFFFF"',
+        'android:fillColor="#FFFFFFFF"',
+        'LEGACY_NOTIFICATION_ICON',
         'ic_stat_breakout.png',
-        'write_notification_icon()',
-        "data.startswith(b'\\x89PNG",
+        'LEGACY_NOTIFICATION_ICON.unlink()',
+        'monochrome Breakout',
+    ]
+
+    forbidden_patcher_values = [
+        'import shutil',
         'shutil.copyfile',
-        'actual Breakout',
-    ],
-    '.github/workflows/ci.yml': [
-        'Configure Android scheduled notifications',
-        'python3 tools/patch_android_notifications.py',
-    ],
-}
+        'SOURCE_NOTIFICATION_ICON',
+        'assets/branding/breakout_notification_icon.png',
+    ]
 
-failures = []
+    for value in required_patcher_values:
+        if value not in patcher_text:
+            failures.append(f'{PATCHER} missing: {value}')
 
-for filename, needles in CHECKS.items():
-    path = Path(filename)
-    if not path.is_file():
-        failures.append(f'missing file: {filename}')
-        continue
-
-    if path.suffix == '.png':
-        data = path.read_bytes()
-        if not data.startswith(b'\x89PNG\r\n\x1a\n'):
-            failures.append(f'{filename} is not a valid PNG')
-        if hashlib.sha256(data).hexdigest() != ICON_SHA256:
+    for value in forbidden_patcher_values:
+        if value in patcher_text:
             failures.append(
-                f'{filename} does not match the bold actual-logo asset'
+                f'{PATCHER} still contains obsolete PNG-copy logic: '
+                f'{value}'
             )
-        continue
 
-    text = path.read_text(encoding='utf-8')
-    for needle in needles:
-        if needle not in text:
-            failures.append(f'{filename} missing: {needle}')
+if CI.is_file():
+    ci_text = CI.read_text(encoding='utf-8')
+
+    create_step = (
+        'flutter create --platforms=android '
+        '--project-name breakout_addiction .'
+    )
+    patch_step = 'python3 tools/patch_android_notifications.py'
+
+    required_ci_values = [
+        'Create platform folders if missing',
+        create_step,
+        'Configure Android scheduled notifications',
+        patch_step,
+    ]
+
+    for value in required_ci_values:
+        if value not in ci_text:
+            failures.append(f'{CI} missing: {value}')
+
+    create_index = ci_text.find(create_step)
+    patch_index = ci_text.find(patch_step)
+
+    if (
+        create_index < 0
+        or patch_index < 0
+        or create_index > patch_index
+    ):
+        failures.append(
+            'CI must generate android/ before running the '
+            'notification patcher'
+        )
 
 if failures:
     print('BA-56 verification failed:')
+
     for failure in failures:
         print(f' - {failure}')
+
     sys.exit(1)
 
 print(
-    'BA-56 verification passed: Breakout explicitly applies the bold '
-    'actual-logo silhouette to notifications with a safe fallback.'
+    'BA-56 verification passed: notifications retain the BA-56B '
+    'custom-icon fallback logic, CI generates Android before patching, '
+    'and the patcher generates a monochrome vector mask.'
 )
