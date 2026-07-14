@@ -12,9 +12,8 @@ CHECKS = {
     ],
     'lib/features/notifications/data/breakout_notification_service.dart': [
         'Future<void>? _initializationFuture',
-        'fallbackNotificationIconName',
-        'await _initializePlugin(notificationIconName)',
         'await _initializePlugin(fallbackNotificationIconName)',
+        'icon: useCustomIcon ? notificationIconName : null',
     ],
     'lib/features/rescue/presentation/widgets/delay_actions_card.dart': [
         'allow notification permission when Android asks',
@@ -64,6 +63,6 @@ if failures:
 
 print(
     'BA-56A verification passed: notification setup cannot block the '
-    'first app frame, the actual logo has a safe fallback, and Rescue '
-    'explains notification permission.'
+    'first app frame, the actual logo is applied per notification with '
+    'a safe fallback, and Rescue explains notification permission.'
 )

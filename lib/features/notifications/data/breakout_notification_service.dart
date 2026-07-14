@@ -64,11 +64,9 @@ class BreakoutNotificationService {
       // Keep timezone defaults if device lookup fails.
     }
 
-    try {
-      await _initializePlugin(notificationIconName);
-    } catch (_) {
-      await _initializePlugin(fallbackNotificationIconName);
-    }
+    // Keep startup independent from the custom status-bar icon. The
+    // branded icon is applied explicitly when a notification is created.
+    await _initializePlugin(fallbackNotificationIconName);
 
     final android = _plugin.resolvePlatformSpecificImplementation<
         AndroidFlutterLocalNotificationsPlugin>();
@@ -107,16 +105,41 @@ class BreakoutNotificationService {
     await _plugin.initialize(settings: initSettings);
   }
 
+  Future<bool> notificationsEnabled() async {
+    await initialize();
+
+    if (defaultTargetPlatform != TargetPlatform.android) {
+      return true;
+    }
+
+    final android = _plugin.resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin>();
+    return await android?.areNotificationsEnabled() ?? true;
+  }
+
   Future<bool> requestPermissions() async {
     await initialize();
 
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
-        final granted = await _plugin
-            .resolvePlatformSpecificImplementation<
-                AndroidFlutterLocalNotificationsPlugin>()
-            ?.requestNotificationsPermission();
-        return granted ?? true;
+        final android = _plugin.resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>();
+
+        final alreadyEnabled =
+            await android?.areNotificationsEnabled();
+        if (alreadyEnabled == true) {
+          return true;
+        }
+
+        final requested =
+            await android?.requestNotificationsPermission();
+
+        // Android settings can be changed outside the app. Always read
+        // the live OS state again instead of trusting an older denial.
+        final refreshed =
+            await android?.areNotificationsEnabled();
+        return refreshed ?? requested ?? false;
+
       case TargetPlatform.iOS:
         final granted = await _plugin
             .resolvePlatformSpecificImplementation<
@@ -127,6 +150,7 @@ class BreakoutNotificationService {
               sound: true,
             );
         return granted ?? false;
+
       case TargetPlatform.macOS:
         final granted = await _plugin
             .resolvePlatformSpecificImplementation<
@@ -137,6 +161,7 @@ class BreakoutNotificationService {
               sound: true,
             );
         return granted ?? false;
+
       default:
         return true;
     }
@@ -163,6 +188,26 @@ class BreakoutNotificationService {
     return scheduled;
   }
 
+  NotificationDetails _details({
+    required String channelId,
+    required String channelName,
+    required String channelDescription,
+    required bool useCustomIcon,
+  }) {
+    return NotificationDetails(
+      android: AndroidNotificationDetails(
+        channelId,
+        channelName,
+        channelDescription: channelDescription,
+        icon: useCustomIcon ? notificationIconName : null,
+        importance: Importance.high,
+        priority: Priority.high,
+      ),
+      iOS: const DarwinNotificationDetails(),
+      macOS: const DarwinNotificationDetails(),
+    );
+  }
+
   Future<void> scheduleDailyReminder({
     required int id,
     required String title,
@@ -173,26 +218,52 @@ class BreakoutNotificationService {
   }) async {
     await initialize();
 
-    const details = NotificationDetails(
-      android: AndroidNotificationDetails(
-        riskChannelId,
-        riskChannelName,
-        channelDescription: riskChannelDescription,
-        importance: Importance.high,
-        priority: Priority.high,
-      ),
-      iOS: DarwinNotificationDetails(),
-      macOS: DarwinNotificationDetails(),
-    );
+    final scheduledDate =
+        nextOccurrence(hour: hour, minute: minute);
 
+    try {
+      await _scheduleDailyReminder(
+        id: id,
+        title: title,
+        body: body,
+        scheduledDate: scheduledDate,
+        payload: payload,
+        useCustomIcon: true,
+      );
+    } catch (_) {
+      await _scheduleDailyReminder(
+        id: id,
+        title: title,
+        body: body,
+        scheduledDate: scheduledDate,
+        payload: payload,
+        useCustomIcon: false,
+      );
+    }
+  }
+
+  Future<void> _scheduleDailyReminder({
+    required int id,
+    required String title,
+    required String body,
+    required tz.TZDateTime scheduledDate,
+    required String payload,
+    required bool useCustomIcon,
+  }) async {
     await _plugin.zonedSchedule(
       id: id,
       title: title,
       body: body,
-      scheduledDate: nextOccurrence(hour: hour, minute: minute),
-      notificationDetails: details,
+      scheduledDate: scheduledDate,
+      notificationDetails: _details(
+        channelId: riskChannelId,
+        channelName: riskChannelName,
+        channelDescription: riskChannelDescription,
+        useCustomIcon: useCustomIcon,
+      ),
       payload: payload,
-      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+      androidScheduleMode:
+          AndroidScheduleMode.inexactAllowWhileIdle,
       matchDateTimeComponents: DateTimeComponents.time,
     );
   }
@@ -205,26 +276,37 @@ class BreakoutNotificationService {
       return;
     }
 
-    const details = NotificationDetails(
-      android: AndroidNotificationDetails(
-        delayChannelId,
-        delayChannelName,
-        channelDescription: delayChannelDescription,
-        importance: Importance.high,
-        priority: Priority.high,
-      ),
-      iOS: DarwinNotificationDetails(),
-      macOS: DarwinNotificationDetails(),
-    );
+    try {
+      await _scheduleDelayCompletion(
+        scheduledDate,
+        useCustomIcon: true,
+      );
+    } catch (_) {
+      await _scheduleDelayCompletion(
+        scheduledDate,
+        useCustomIcon: false,
+      );
+    }
+  }
 
+  Future<void> _scheduleDelayCompletion(
+    tz.TZDateTime scheduledDate, {
+    required bool useCustomIcon,
+  }) async {
     await _plugin.zonedSchedule(
       id: delayCompletionNotificationId,
       title: 'Countdown is complete',
       body: 'Take a breath and check in: did the urge subside?',
       scheduledDate: scheduledDate,
-      notificationDetails: details,
+      notificationDetails: _details(
+        channelId: delayChannelId,
+        channelName: delayChannelName,
+        channelDescription: delayChannelDescription,
+        useCustomIcon: useCustomIcon,
+      ),
       payload: 'rescue_delay_complete',
-      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+      androidScheduleMode:
+          AndroidScheduleMode.inexactAllowWhileIdle,
     );
   }
 

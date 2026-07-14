@@ -1,6 +1,12 @@
 #!/usr/bin/env python3
 from pathlib import Path
+import hashlib
 import sys
+
+ICON_SHA256 = (
+    '7cb24c5125c7dc32a1ddc5fe22a0f3a4'
+    'b85c05c1efbd89e930232661ea6d94d3'
+)
 
 CHECKS = {
     'assets/branding/breakout_notification_icon.png': [],
@@ -8,8 +14,10 @@ CHECKS = {
         "notificationIconName = 'ic_stat_breakout'",
         'fallbackNotificationIconName',
         'AndroidInitializationSettings(iconName)',
-        'await _initializePlugin(notificationIconName)',
         'await _initializePlugin(fallbackNotificationIconName)',
+        'icon: useCustomIcon ? notificationIconName : null',
+        'useCustomIcon: true',
+        'useCustomIcon: false',
     ],
     'tools/patch_android_notifications.py': [
         'breakout_notification_icon.png',
@@ -37,25 +45,16 @@ for filename, needles in CHECKS.items():
         data = path.read_bytes()
         if not data.startswith(b'\x89PNG\r\n\x1a\n'):
             failures.append(f'{filename} is not a valid PNG')
-        if len(data) < 500:
-            failures.append(f'{filename} is unexpectedly small')
+        if hashlib.sha256(data).hexdigest() != ICON_SHA256:
+            failures.append(
+                f'{filename} does not match the bold actual-logo asset'
+            )
         continue
 
     text = path.read_text(encoding='utf-8')
     for needle in needles:
         if needle not in text:
             failures.append(f'{filename} missing: {needle}')
-
-service = Path(
-    'lib/features/notifications/data/breakout_notification_service.dart'
-)
-if service.is_file():
-    text = service.read_text(encoding='utf-8')
-    if 'icon: notificationIconName' in text:
-        failures.append(
-            'per-notification icon override should use the initialized '
-            'default so fallback remains possible'
-        )
 
 if failures:
     print('BA-56 verification failed:')
@@ -64,6 +63,6 @@ if failures:
     sys.exit(1)
 
 print(
-    'BA-56 verification passed: Breakout uses the actual app-logo '
-    'silhouette as a monochrome Android status-bar icon with a safe fallback.'
+    'BA-56 verification passed: Breakout explicitly applies the bold '
+    'actual-logo silhouette to notifications with a safe fallback.'
 )
