@@ -47,12 +47,15 @@ RECEIVERS = """        <receiver
         </receiver>
 """
 
-# Android supplies the colored circular badge around a notification small icon.
-# The drawable therefore contains one large solid breakout bolt only:
-# - no duplicate outer ring
-# - no strokes
-# - no tiny interior detail
-# - white monochrome mask artwork
+# Android notification small icons are monochrome system-tinted masks.
+# This drawable restores the actual Breakout Addiction brand mark as a
+# simplified silhouette:
+# - broken circular barrier
+# - bold center path breaking through
+# - a few large breakout shards at the top
+# - white artwork only
+# - no dark square background
+# - no gradients, shadows, or tiny detail
 VECTOR_ICON_XML = """<?xml version="1.0" encoding="utf-8"?>
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
@@ -62,12 +65,65 @@ VECTOR_ICON_XML = """<?xml version="1.0" encoding="utf-8"?>
 
     <path
         android:fillColor="#FFFFFFFF"
-        android:pathData="M14.5,1.5
-            L5.2,13.0
-            L10.7,13.0
-            L9.0,22.5
-            L19.0,9.7
-            L13.5,9.7
+        android:pathData="M6.0,18.1
+            C4.2,16.5 3.2,14.3 3.2,11.8
+            C3.2,7.4 6.1,3.8 10.3,2.8
+            L10.9,5.5
+            C8.1,6.2 6.1,8.7 6.1,11.8
+            C6.1,13.0 6.4,14.0 7.0,15.0
+            L8.2,14.0
+            L8.9,17.7
+            C7.9,18.2 6.9,18.3 6.0,18.1
+            Z" />
+
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M18.0,18.1
+            C19.8,16.5 20.8,14.3 20.8,11.8
+            C20.8,7.4 17.9,3.8 13.7,2.8
+            L13.1,5.5
+            C15.9,6.2 17.9,8.7 17.9,11.8
+            C17.9,13.0 17.6,14.0 17.0,15.0
+            L15.8,14.0
+            L15.1,17.7
+            C16.1,18.2 17.1,18.3 18.0,18.1
+            Z" />
+
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M11.2,21.0
+            L8.7,19.5
+            L10.2,14.3
+            C10.5,13.3 10.7,12.5 10.5,11.6
+            C10.2,10.4 9.4,9.5 8.5,8.6
+            L10.3,6.1
+            C12.1,7.5 13.8,9.1 14.3,11.2
+            C14.8,13.5 13.8,15.5 13.2,17.2
+            L14.8,17.2
+            L11.2,21.0
+            Z" />
+
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M9.3,2.0
+            L7.9,3.8
+            L9.5,4.5
+            L10.2,3.0
+            Z" />
+
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M12.0,1.4
+            L11.4,4.5
+            L12.6,4.5
+            Z" />
+
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M14.7,2.0
+            L13.8,3.0
+            L14.5,4.5
+            L16.1,3.8
             Z" />
 
 </vector>
@@ -202,8 +258,8 @@ def main() -> int:
         return 1
 
     print(
-        'Android exact Rescue alarms, notification receivers, bold '
-        'monochrome icon, and release keep rules configured.'
+        'Android exact Rescue alarms, notification receivers, '
+        'brand-faithful monochrome icon, and release keep rules configured.'
     )
     return 0
 
