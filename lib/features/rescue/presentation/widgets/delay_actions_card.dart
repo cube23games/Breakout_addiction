@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../../../app/theme/app_spacing.dart';
@@ -35,6 +37,8 @@ class _DelayActionsCardState extends State<DelayActionsCard> {
   QuoteMode _quoteMode = QuoteMode.recovery;
   DelayCheckInResult? _checkInResult;
   bool _restoring = true;
+  bool _usesExactCompletionAlert = false;
+  bool _completionCleanupStarted = false;
   @override
   void initState() {
     super.initState();
@@ -54,6 +58,16 @@ class _DelayActionsCardState extends State<DelayActionsCard> {
   }
 
   void _handleTimerChange() {
+    if (_timerController.completed &&
+        !_usesExactCompletionAlert &&
+        !_completionCleanupStarted) {
+      _completionCleanupStarted = true;
+
+      // When the user is already looking at Countdown Complete, cancel an
+      // inexact fallback so Android cannot display it several minutes later.
+      unawaited(_notifications.cancel());
+    }
+
     if (mounted) setState(() {});
   }
 
@@ -69,35 +83,50 @@ class _DelayActionsCardState extends State<DelayActionsCard> {
 
   Future<void> _startDelay(int minutes) async {
     _checkInResult = null;
+    _usesExactCompletionAlert = false;
+    _completionCleanupStarted = false;
     await _timerController.start(Duration(minutes: minutes));
     final deadline = _timerController.deadline;
     final result = deadline == null
         ? const DelayCompletionNotificationResult(
             permissionGranted: false,
             scheduled: false,
+            exact: false,
           )
         : await _notifications.schedule(deadline);
+
+    _usesExactCompletionAlert = result.exact;
+
     if (!mounted) return;
 
-    final message = result.scheduled
+    final message = result.scheduled && result.exact
         ? '$minutes-minute countdown started. '
-            'Breakout will notify you when it ends.'
-        : result.permissionGranted
-            ? '$minutes-minute countdown started, but the completion '
-                'alert could not be scheduled.'
-            : '$minutes-minute countdown started. Notifications are off, '
-                'so keep Breakout open or enable them in Android Settings.';
+            'Breakout will alert you when it ends.'
+        : result.scheduled
+            ? '$minutes-minute countdown started. Android may delay the '
+                'completion alert because precise alarms are off. Keep '
+                'Breakout open for exact timing.'
+            : result.permissionGranted
+                ? '$minutes-minute countdown started, but the completion '
+                    'alert could not be scheduled.'
+                : '$minutes-minute countdown started. Notifications are '
+                    'off, so keep Breakout open or enable them in Android '
+                    'Settings.';
     _showMessage(message);
   }
 
   Future<void> _cancelDelay() async {
     _checkInResult = null;
+    _completionCleanupStarted = true;
+    _usesExactCompletionAlert = false;
     await _notifications.cancel();
     await _timerController.reset();
     if (mounted) _showMessage('Countdown canceled.');
   }
 
   Future<void> _finishDelay() async {
+    _completionCleanupStarted = true;
+    _usesExactCompletionAlert = false;
     await _notifications.cancel();
     await _timerController.reset();
   }
@@ -133,7 +162,7 @@ class _DelayActionsCardState extends State<DelayActionsCard> {
           Text(title, style: AppTypography.section),
           const SizedBox(height: AppSpacing.sm),
           const Text(
-            'Choose a delay. The active choice stays highlighted. To receive an alert when the countdown ends, allow notification permission when Android asks. Breakout only uses it for reminders you choose, and the timer still works without it.',
+            'Choose a delay. The active choice stays highlighted. For an on-time completion alert, allow notifications and Alarms & reminders when Android asks. Breakout only uses them for reminders you choose, and the timer still works without them.',
             style: AppTypography.muted,
           ),
           const SizedBox(height: AppSpacing.md),

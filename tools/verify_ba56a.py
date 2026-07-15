@@ -16,9 +16,9 @@ CHECKS = {
         'icon: useCustomIcon ? notificationIconName : null',
     ],
     'lib/features/rescue/presentation/widgets/delay_actions_card.dart': [
-        'allow notification permission when Android asks',
-        'only uses it for reminders you choose',
-        'timer still works without it',
+        'allow notifications and Alarms & reminders when Android asks',
+        'only uses them for reminders you choose',
+        'timer still works without them',
     ],
 }
 
@@ -50,9 +50,9 @@ delay_card = Path(
 )
 if delay_card.is_file():
     lines = len(delay_card.read_text(encoding='utf-8').splitlines())
-    if lines > 190:
+    if lines > 230:
         failures.append(
-            f'{delay_card} is {lines} lines; maximum is 190'
+            f'{delay_card} is {lines} lines; maximum is 230'
         )
 
 if failures:

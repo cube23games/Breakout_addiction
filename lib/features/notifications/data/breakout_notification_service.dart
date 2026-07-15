@@ -4,6 +4,16 @@ import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
+class DelayNotificationScheduleOutcome {
+  const DelayNotificationScheduleOutcome({
+    required this.scheduled,
+    required this.exact,
+  });
+
+  final bool scheduled;
+  final bool exact;
+}
+
 class BreakoutNotificationService {
   BreakoutNotificationService._();
 
@@ -167,6 +177,23 @@ class BreakoutNotificationService {
     }
   }
 
+  Future<bool> requestExactAlarmPermission() async {
+    await initialize();
+
+    if (defaultTargetPlatform != TargetPlatform.android) {
+      return true;
+    }
+
+    final android = _plugin.resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin>();
+
+    try {
+      return await android?.requestExactAlarmsPermission() ?? false;
+    } catch (_) {
+      return false;
+    }
+  }
+
   tz.TZDateTime nextOccurrence({
     required int hour,
     required int minute,
@@ -268,29 +295,99 @@ class BreakoutNotificationService {
     );
   }
 
-  Future<void> scheduleDelayCompletion(DateTime deadline) async {
+  Future<DelayNotificationScheduleOutcome>
+      scheduleDelayCompletion(
+    DateTime deadline, {
+    required bool preferExact,
+  }) async {
     await initialize();
 
     final scheduledDate = tz.TZDateTime.from(deadline, tz.local);
+
     if (!scheduledDate.isAfter(tz.TZDateTime.now(tz.local))) {
-      return;
+      return const DelayNotificationScheduleOutcome(
+        scheduled: false,
+        exact: false,
+      );
     }
 
+    // Remove any stale completion alert before registering a new one.
+    await cancelDelayCompletion();
+
+    final scheduleModes = preferExact
+        ? const <AndroidScheduleMode>[
+            AndroidScheduleMode.exactAllowWhileIdle,
+            AndroidScheduleMode.inexactAllowWhileIdle,
+          ]
+        : const <AndroidScheduleMode>[
+            AndroidScheduleMode.inexactAllowWhileIdle,
+          ];
+
+    for (final scheduleMode in scheduleModes) {
+      try {
+        await _scheduleDelayCompletionWithIconFallback(
+          scheduledDate,
+          scheduleMode: scheduleMode,
+        );
+
+        final pending = await _delayCompletionPending();
+
+        if (pending) {
+          return DelayNotificationScheduleOutcome(
+            scheduled: true,
+            exact:
+                scheduleMode ==
+                AndroidScheduleMode.exactAllowWhileIdle,
+          );
+        }
+      } catch (_) {
+        // Exact scheduling can fail if Android revokes precise-alarm access.
+        // The next pass through the loop uses the honest inexact fallback.
+      }
+
+      await cancelDelayCompletion();
+    }
+
+    return const DelayNotificationScheduleOutcome(
+      scheduled: false,
+      exact: false,
+    );
+  }
+
+  Future<void> _scheduleDelayCompletionWithIconFallback(
+    tz.TZDateTime scheduledDate, {
+    required AndroidScheduleMode scheduleMode,
+  }) async {
     try {
       await _scheduleDelayCompletion(
         scheduledDate,
+        scheduleMode: scheduleMode,
         useCustomIcon: true,
       );
     } catch (_) {
+      await _plugin.cancel(
+        id: delayCompletionNotificationId,
+      );
+
       await _scheduleDelayCompletion(
         scheduledDate,
+        scheduleMode: scheduleMode,
         useCustomIcon: false,
       );
     }
   }
 
+  Future<bool> _delayCompletionPending() async {
+    final pending = await _plugin.pendingNotificationRequests();
+
+    return pending.any(
+      (request) => request.id == delayCompletionNotificationId,
+    );
+  }
+
   Future<void> _scheduleDelayCompletion(
     tz.TZDateTime scheduledDate, {
+    required AndroidScheduleMode scheduleMode,
     required bool useCustomIcon,
   }) async {
     await _plugin.zonedSchedule(
@@ -305,8 +402,7 @@ class BreakoutNotificationService {
         useCustomIcon: useCustomIcon,
       ),
       payload: 'rescue_delay_complete',
-      androidScheduleMode:
-          AndroidScheduleMode.inexactAllowWhileIdle,
+      androidScheduleMode: scheduleMode,
     );
   }
 

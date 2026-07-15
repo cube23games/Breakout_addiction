@@ -13,9 +13,23 @@ LEGACY_NOTIFICATION_ICON = Path(
     'android/app/src/main/res/drawable/ic_stat_breakout.png'
 )
 
-PERMISSION = (
+KEEP_RULES = Path(
+    'android/app/src/main/res/raw/keep.xml'
+)
+
+BOOT_PERMISSION = (
     '<uses-permission '
     'android:name="android.permission.RECEIVE_BOOT_COMPLETED" />'
+)
+
+EXACT_ALARM_PERMISSION = (
+    '<uses-permission '
+    'android:name="android.permission.SCHEDULE_EXACT_ALARM" />'
+)
+
+PERMISSIONS = (
+    BOOT_PERMISSION,
+    EXACT_ALARM_PERMISSION,
 )
 
 RECEIVERS = """        <receiver
@@ -33,17 +47,12 @@ RECEIVERS = """        <receiver
         </receiver>
 """
 
-# Android notification small icons are monochrome masks. Android supplies
-# their final color. A full-color launcher logo becomes a white or black blob.
-#
-# This vector uses:
-# - no background
-# - one thick open ring
-# - one bold center bolt
-# - white artwork only
-#
-# Android will tint this mask correctly in the status bar, notification shade,
-# lock screen, light mode, and dark mode.
+# Android supplies the colored circular badge around a notification small icon.
+# The drawable therefore contains one large solid breakout bolt only:
+# - no duplicate outer ring
+# - no strokes
+# - no tiny interior detail
+# - white monochrome mask artwork
 VECTOR_ICON_XML = """<?xml version="1.0" encoding="utf-8"?>
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
@@ -52,36 +61,45 @@ VECTOR_ICON_XML = """<?xml version="1.0" encoding="utf-8"?>
     android:viewportHeight="24">
 
     <path
-        android:fillColor="@android:color/transparent"
-        android:strokeColor="#FFFFFFFF"
-        android:strokeWidth="3.2"
-        android:strokeLineCap="round"
-        android:strokeLineJoin="round"
-        android:pathData="M18.36,5.64
-            C14.85,2.13 9.15,2.13 5.64,5.64
-            C2.13,9.15 2.13,14.85 5.64,18.36
-            C9.15,21.87 14.85,21.87 18.36,18.36
-            C19.30,17.42 20.00,16.35 20.48,15.20" />
-
-    <path
         android:fillColor="#FFFFFFFF"
-        android:pathData="M13.10,5.20
-            L7.40,12.90
-            L11.00,12.90
-            L10.20,18.80
-            L16.70,10.50
-            L13.00,10.50
+        android:pathData="M14.5,1.5
+            L5.2,13.0
+            L10.7,13.0
+            L9.0,22.5
+            L19.0,9.7
+            L13.5,9.7
             Z" />
 
 </vector>
 """
 
+KEEP_RULES_XML = """<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools"
+    tools:keep="@drawable/ic_stat_breakout,@mipmap/ic_launcher" />
+"""
 
-def write_notification_icon() -> None:
+
+def insert_permission(text: str, permission: str) -> str:
+    if permission in text:
+        return text
+
+    match = re.search(r'<manifest\b[^>]*>', text, flags=re.DOTALL)
+
+    if match is None:
+        raise ValueError('Could not find <manifest> element.')
+
+    return (
+        text[:match.end()]
+        + '\n    '
+        + permission
+        + text[match.end():]
+    )
+
+
+def write_notification_resources() -> None:
     NOTIFICATION_ICON.parent.mkdir(parents=True, exist_ok=True)
+    KEEP_RULES.parent.mkdir(parents=True, exist_ok=True)
 
-    # Remove the old PNG so Android never has two drawable resources with
-    # the same name and so the full-color badge cannot return accidentally.
     if LEGACY_NOTIFICATION_ICON.exists():
         LEGACY_NOTIFICATION_ICON.unlink()
 
@@ -90,26 +108,28 @@ def write_notification_icon() -> None:
         encoding='utf-8',
     )
 
+    KEEP_RULES.write_text(
+        KEEP_RULES_XML,
+        encoding='utf-8',
+    )
+
 
 def main() -> int:
     if not MANIFEST.is_file():
-        print(f'Missing generated manifest: {MANIFEST}', file=sys.stderr)
+        print(
+            f'Missing generated manifest: {MANIFEST}',
+            file=sys.stderr,
+        )
         return 1
 
     text = MANIFEST.read_text(encoding='utf-8')
 
-    if PERMISSION not in text:
-        match = re.search(r'<manifest\b[^>]*>', text, flags=re.DOTALL)
-        if match is None:
-            print('Could not find <manifest> element.', file=sys.stderr)
-            return 1
-
-        text = (
-            text[:match.end()]
-            + '\n    '
-            + PERMISSION
-            + text[match.end():]
-        )
+    try:
+        for permission in PERMISSIONS:
+            text = insert_permission(text, permission)
+    except ValueError as exc:
+        print(str(exc), file=sys.stderr)
+        return 1
 
     receiver_name = (
         'com.dexterous.flutterlocalnotifications.'
@@ -120,7 +140,10 @@ def main() -> int:
         marker = '    </application>'
 
         if marker not in text:
-            print('Could not find </application> marker.', file=sys.stderr)
+            print(
+                'Could not find </application> marker.',
+                file=sys.stderr,
+            )
             return 1
 
         text = text.replace(
@@ -130,10 +153,11 @@ def main() -> int:
         )
 
     MANIFEST.write_text(text, encoding='utf-8')
-    write_notification_icon()
+    write_notification_resources()
 
     required_manifest_values = [
-        PERMISSION,
+        BOOT_PERMISSION,
+        EXACT_ALARM_PERMISSION,
         'ScheduledNotificationReceiver',
         'ScheduledNotificationBootReceiver',
         'android.intent.action.BOOT_COMPLETED',
@@ -152,32 +176,34 @@ def main() -> int:
         )
         return 1
 
-    if not NOTIFICATION_ICON.is_file():
-        print(
-            f'Notification icon was not generated: {NOTIFICATION_ICON}',
-            file=sys.stderr,
-        )
-        return 1
-
-    generated_icon = NOTIFICATION_ICON.read_text(encoding='utf-8')
-
-    if generated_icon != VECTOR_ICON_XML:
+    if NOTIFICATION_ICON.read_text(
+        encoding='utf-8',
+    ) != VECTOR_ICON_XML:
         print(
             'Generated notification vector does not match its source.',
             file=sys.stderr,
         )
         return 1
 
+    if KEEP_RULES.read_text(
+        encoding='utf-8',
+    ) != KEEP_RULES_XML:
+        print(
+            'Generated notification keep rules do not match their source.',
+            file=sys.stderr,
+        )
+        return 1
+
     if LEGACY_NOTIFICATION_ICON.exists():
         print(
-            'Legacy full-color notification PNG still exists.',
+            'Legacy notification PNG still exists.',
             file=sys.stderr,
         )
         return 1
 
     print(
-        'Android scheduled notifications and monochrome Breakout '
-        'status-bar icon configured.'
+        'Android exact Rescue alarms, notification receivers, bold '
+        'monochrome icon, and release keep rules configured.'
     )
     return 0
 

@@ -38,13 +38,15 @@ if PATCHER.is_file():
     required_patcher_values = [
         'ic_stat_breakout.xml',
         'VECTOR_ICON_XML',
-        'android:fillColor="@android:color/transparent"',
-        'android:strokeColor="#FFFFFFFF"',
         'android:fillColor="#FFFFFFFF"',
+        'KEEP_RULES_XML',
+        'tools:keep=',
+        '@drawable/ic_stat_breakout',
+        'android.permission.SCHEDULE_EXACT_ALARM',
         'LEGACY_NOTIFICATION_ICON',
         'ic_stat_breakout.png',
         'LEGACY_NOTIFICATION_ICON.unlink()',
-        'monochrome Breakout',
+        'monochrome icon',
     ]
 
     forbidden_patcher_values = [

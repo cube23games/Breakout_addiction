@@ -132,6 +132,42 @@ jobs:
       - name: Build APK
         run: flutter build apk --release
 
+      - name: Verify notification icon in release APK
+        run: |
+          python3 - <<'PY3'
+          from pathlib import Path
+          import zipfile
+
+          apk = Path(
+              'build/app/outputs/flutter-apk/app-release.apk'
+          )
+
+          if not apk.is_file():
+              raise SystemExit(
+                  f'Release APK was not found: {apk}'
+              )
+
+          with zipfile.ZipFile(apk) as archive:
+              resources = archive.read('resources.arsc')
+
+          resource_name = 'ic_stat_breakout'
+
+          found = (
+              resource_name.encode('utf-8') in resources
+              or resource_name.encode('utf-16le') in resources
+          )
+
+          if not found:
+              raise SystemExit(
+                  'Release APK stripped @drawable/ic_stat_breakout.'
+              )
+
+          print(
+              'Release APK contains the Breakout notification icon '
+              'resource.'
+          )
+          PY3
+
       - name: Build AAB
         run: flutter build appbundle --release
 
