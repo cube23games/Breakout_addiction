@@ -14,15 +14,18 @@ paid entitlement or app-integrity verification fails:
 
 | Feature | Implementation |
 | --- | --- |
+| Daily Recovery Dashboard | Private daily risk snapshot, first action, next risk window, recommended routine, and weekly activity |
+| Private pattern intelligence | Peak day/time, trigger combinations, earlier pre-slip signals, effective interruptions, and weekly local summary |
 | Pattern-aware local guidance | Dedicated Plus screen generated locally from current insights, pressure drivers, encouragement, and optional faith settings |
 | Expanded encouragement and faith-sensitive packs | Local Plus guidance includes practical encouragement and an optional Christian reflection without a cloud call |
-| Educate Me Plus | Two locked deeper tracks with five Plus lessons |
+| Educate Me Plus | Nine-plus premium tracks and 25-plus lessons across triggers, stress, loneliness, sleep, digital boundaries, accountability, relationship repair, rebuilding, and optional Christian recovery |
 | Guided routines | Four routines with on-device progress and reset |
 | Recovery journeys | Secular and optional Christian journeys with progress |
+| Structured recovery programs | Seven substantial 7-, 10-, 14-, and 30-day programs with private progress |
 | Recovery-plan integration | Existing saved plan is incorporated into premium reports and linked from Premium Tools |
 | Advanced insights | Dedicated on-device 30- and 90-day trend screen with counts, pressure context, repeated trigger, period direction, and next focus |
 | Advanced risk windows | Existing local window/reminder tools linked from Premium Tools |
-| Accountability | Existing privacy-controlled accountability tools linked from Premium Tools |
+| Accountability Center | Check-in preparation, consent-based sharing controls, a reviewable summary, milestones, next focus, and a non-shaming recovery engagement scorecard |
 | Recovery reports | Concise or detailed private report with explicit copy action |
 | Expanded personalization | Routine focus, report detail, and widget focus preferences |
 | Enhanced widget options | Premium widget focus changes real widget snapshot content and includes preview |

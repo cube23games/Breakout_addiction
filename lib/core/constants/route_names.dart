@@ -28,6 +28,7 @@ class RouteNames {
   static const widgetPreview = '/widget-preview';
   static const cycle = '/cycle';
   static const privacySettings = '/privacy';
+  static const accountabilityCenter = '/premium/accountability-center';
   static const accountabilitySettings = '/accountability-settings';
   static const accountabilityPartnerAccess = '/accountability-partner-access';
   static const accountabilitySummary = '/accountability-summary';

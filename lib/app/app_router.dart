@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'config/internal_surface_gate.dart';
 import '../features/accountability/presentation/accountability_settings_screen.dart';
+import '../features/accountability/presentation/accountability_center_screen.dart';
 import '../features/accountability/presentation/accountability_summary_screen.dart';
 import '../features/accountability/presentation/accountability_partner_access_screen.dart';
 import '../core/constants/route_names.dart';
@@ -300,6 +301,16 @@ class AppRouter {
             child: PremiumToolGate(
               featureId: 'widget_options',
               child: WidgetPreviewScreen(),
+            ),
+          ),
+        );
+      case RouteNames.accountabilityCenter:
+        return MaterialPageRoute(
+          builder: (_) => const ProtectedRouteGate(
+            scope: LockScope.support,
+            child: PremiumToolGate(
+              featureId: 'accountability',
+              child: AccountabilityCenterScreen(),
             ),
           ),
         );

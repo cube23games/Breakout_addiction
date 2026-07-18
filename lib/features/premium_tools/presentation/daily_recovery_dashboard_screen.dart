@@ -189,6 +189,18 @@ class _DailyRecoveryDashboardScreenState
                 ),
                 const SizedBox(height: AppSpacing.md),
                 Text(dashboard.weeklyLine, style: AppTypography.muted),
+                const SizedBox(height: AppSpacing.md),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () => Navigator.pushNamed(
+                      context,
+                      RouteNames.accountabilityCenter,
+                    ),
+                    icon: const Icon(Icons.people_alt_outlined),
+                    label: const Text('Open Accountability Center'),
+                  ),
+                ),
               ],
             ),
           ),

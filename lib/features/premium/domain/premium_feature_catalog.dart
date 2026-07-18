@@ -123,8 +123,8 @@ class PremiumFeatureCatalog {
     ),
     PremiumFeature(
       id: 'accountability',
-      title: 'Accountability Reports and Preparation',
-      description: 'Prepare privacy-controlled summaries and focused check-in material for trusted support.',
+      title: 'Accountability Center and Progress Scorecard',
+      description: 'Prepare check-ins, track recovery engagement without shame, choose milestones and next focus, and share only approved summaries.',
       requiredPlan: PremiumPlan.plus,
       category: PremiumFeatureCategory.accountability,
     ),

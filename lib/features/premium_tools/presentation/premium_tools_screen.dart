@@ -194,11 +194,11 @@ class PremiumToolsScreen extends StatelessWidget {
               const SizedBox(height: AppSpacing.md),
               _toolCard(
                 context,
-                title: 'Accountability Tools',
+                title: 'Accountability Center and Scorecard',
                 description:
-                    'Prepare privacy-controlled summaries for trusted human support.',
+                    'Prepare check-ins, review non-shaming recovery engagement, track milestones, and control what trusted support can see.',
                 icon: Icons.people_alt_outlined,
-                route: RouteNames.accountabilitySettings,
+                route: RouteNames.accountabilityCenter,
               ),
             ],
           ),
