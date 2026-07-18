@@ -7,6 +7,7 @@ import '../../../../core/widgets/info_card.dart';
 import '../../../../core/widgets/primary_button.dart';
 import '../../../premium/data/premium_access_repository.dart';
 import '../../../premium/domain/premium_feature_catalog.dart';
+import '../../../premium/domain/premium_plan.dart';
 import '../../../premium/domain/premium_status.dart';
 
 class PremiumToolGate extends StatelessWidget {

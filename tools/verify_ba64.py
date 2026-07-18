@@ -67,9 +67,11 @@ checks = {
         "arguments: prompt",
     ],
     "lib/features/premium_tools/presentation/widgets/premium_tool_gate.dart": [
+        "import '../../../premium/domain/premium_plan.dart';",
         "featureId",
         "PremiumFeatureCatalog.byId",
         "status.plan.includes",
+        "requiredPlan.label",
         "Open Premium",
     ],
     "lib/features/widget/data/widget_snapshot_repository.dart": [
