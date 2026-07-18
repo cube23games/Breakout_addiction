@@ -102,6 +102,89 @@ class LessonRepository {
         ),
       ],
     ),
+    LessonTrack(
+      id: 'plus_pattern_interruption',
+      title: 'Educate Me Plus — Pattern Interruption',
+      subtitle:
+          'Go deeper into warning signs, rituals, risk windows, and practical friction.',
+      premiumOnly: true,
+      lessons: <Lesson>[
+        Lesson(
+          id: 'ritual_before_urge',
+          title: 'The ritual often begins before the urge',
+          summary:
+              'Secrecy, scrolling, isolation, and negotiation can be part of the cycle before intensity rises.',
+          bullets: <String>[
+            'Look for repeated setup behavior, not only peak desire.',
+            'Changing location can interrupt a ritual before it becomes an urge.',
+            'Earlier friction usually costs less effort than late resistance.',
+          ],
+          closingLine:
+              'Treat the setup as actionable recovery information.',
+        ),
+        Lesson(
+          id: 'risk_window_design',
+          title: 'Design around predictable risk windows',
+          summary:
+              'A recurring vulnerable time is easier to prepare for than an apparently random failure.',
+          bullets: <String>[
+            'Name the time, setting, pressure, and privacy involved.',
+            'Move the first safe action before the risky window begins.',
+            'Use reminders as preparation, not as punishment.',
+          ],
+          closingLine:
+              'Good recovery design reduces the number of decisions made under pressure.',
+        ),
+        Lesson(
+          id: 'friction_and_replacement',
+          title: 'Friction works better with replacement',
+          summary:
+              'Blocking one path is stronger when a realistic next action is already available.',
+          bullets: <String>[
+            'Friction slows automatic behavior.',
+            'Replacement answers what to do with the discomfort next.',
+            'The best replacement is simple enough to use while tired or stressed.',
+          ],
+          closingLine:
+              'Pair every boundary with a specific next action.',
+        ),
+      ],
+    ),
+    LessonTrack(
+      id: 'plus_rebuilding',
+      title: 'Educate Me Plus — Rebuilding After a Slip',
+      subtitle:
+          'Use honest review, responsibility, and repair without turning a setback into surrender.',
+      premiumOnly: true,
+      lessons: <Lesson>[
+        Lesson(
+          id: 'slip_is_data_not_permission',
+          title: 'A slip is data, not permission to continue',
+          summary:
+              'The first setback does not require a longer episode or a ruined week.',
+          bullets: <String>[
+            'Stop as soon as awareness returns.',
+            'Change location before beginning the review.',
+            'Record the earliest useful warning sign, not a moral verdict.',
+          ],
+          closingLine:
+              'Recovery resumes with the next honest action.',
+        ),
+        Lesson(
+          id: 'repair_the_condition',
+          title: 'Repair one condition before the next window',
+          summary:
+              'Reflection becomes useful when it changes the environment, plan, or support step.',
+          bullets: <String>[
+            'Choose one condition that made acting out easier.',
+            'Make one boundary or support change specific and visible.',
+            'Avoid making ten promises that cannot be tested.',
+          ],
+          closingLine:
+              'One completed repair is stronger than a dramatic list of intentions.',
+        ),
+      ],
+    ),
   ];
 
   List<LessonTrack> getTracks() => _tracks;

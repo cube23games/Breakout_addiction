@@ -19,6 +19,15 @@ import '../features/log/domain/recovery_event_entry.dart';
 import '../features/onboarding/presentation/home_entry_screen.dart';
 import '../features/onboarding/presentation/onboarding_screen.dart';
 import '../features/premium/presentation/premium_screen.dart';
+import '../features/premium_tools/presentation/ai_tools_screen.dart';
+import '../features/premium_tools/presentation/guided_routines_screen.dart';
+import '../features/premium_tools/presentation/premium_tools_screen.dart';
+import '../features/premium_tools/presentation/premium_preferences_screen.dart';
+import '../features/premium_tools/presentation/premium_local_guidance_screen.dart';
+import '../features/premium_tools/presentation/premium_insights_screen.dart';
+import '../features/premium_tools/presentation/recovery_journeys_screen.dart';
+import '../features/premium_tools/presentation/recovery_report_screen.dart';
+import '../features/premium_tools/presentation/widgets/premium_tool_gate.dart';
 import '../features/privacy/domain/lock_scope.dart';
 import '../features/privacy/presentation/privacy_settings_screen.dart';
 import '../features/privacy/presentation/privacy_safety_center_screen.dart';
@@ -116,6 +125,86 @@ class AppRouter {
             child: PremiumScreen(),
           ),
         );
+      case RouteNames.premiumTools:
+        return MaterialPageRoute(
+          builder: (_) => const ProtectedRouteGate(
+            scope: LockScope.support,
+            child: PremiumToolGate(
+              featureId: 'guided_routines',
+              child: PremiumToolsScreen(),
+            ),
+          ),
+        );
+      case RouteNames.guidedRoutines:
+        return MaterialPageRoute(
+          builder: (_) => const ProtectedRouteGate(
+            scope: LockScope.support,
+            child: PremiumToolGate(
+              featureId: 'guided_routines',
+              child: GuidedRoutinesScreen(),
+            ),
+          ),
+        );
+      case RouteNames.premiumGuidance:
+        return MaterialPageRoute(
+          builder: (_) => const ProtectedRouteGate(
+            scope: LockScope.support,
+            child: PremiumToolGate(
+              featureId: 'local_guidance',
+              child: PremiumLocalGuidanceScreen(),
+            ),
+          ),
+        );
+      case RouteNames.premiumInsights:
+        return MaterialPageRoute(
+          builder: (_) => const ProtectedRouteGate(
+            scope: LockScope.insights,
+            child: PremiumToolGate(
+              featureId: 'advanced_insights',
+              child: PremiumInsightsScreen(),
+            ),
+          ),
+        );
+      case RouteNames.recoveryJourneys:
+        return MaterialPageRoute(
+          builder: (_) => const ProtectedRouteGate(
+            scope: LockScope.support,
+            child: PremiumToolGate(
+              featureId: 'recovery_journeys',
+              child: RecoveryJourneysScreen(),
+            ),
+          ),
+        );
+      case RouteNames.recoveryReport:
+        return MaterialPageRoute(
+          builder: (_) => const ProtectedRouteGate(
+            scope: LockScope.support,
+            child: PremiumToolGate(
+              featureId: 'reports',
+              child: RecoveryReportScreen(),
+            ),
+          ),
+        );
+      case RouteNames.premiumPreferences:
+        return MaterialPageRoute(
+          builder: (_) => const ProtectedRouteGate(
+            scope: LockScope.support,
+            child: PremiumToolGate(
+              featureId: 'personalization',
+              child: PremiumPreferencesScreen(),
+            ),
+          ),
+        );
+      case RouteNames.aiTools:
+        return MaterialPageRoute(
+          builder: (_) => const ProtectedRouteGate(
+            scope: LockScope.support,
+            child: PremiumToolGate(
+              featureId: 'ai_chat',
+              child: AiToolsScreen(),
+            ),
+          ),
+        );
       case RouteNames.aiChat:
         final initialPrompt = settings.arguments is String
             ? settings.arguments as String
@@ -172,13 +261,13 @@ class AppRouter {
           ),
         );
       case RouteNames.widgetPreview:
-        if (!InternalSurfaceGate.showDevSurfaces) {
-          return _homeRoute();
-        }
         return MaterialPageRoute(
           builder: (_) => const ProtectedRouteGate(
             scope: LockScope.support,
-            child: WidgetPreviewScreen(),
+            child: PremiumToolGate(
+              featureId: 'widget_options',
+              child: WidgetPreviewScreen(),
+            ),
           ),
         );
       case RouteNames.accountabilityPartnerAccess:

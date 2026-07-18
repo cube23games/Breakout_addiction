@@ -4,6 +4,7 @@ import '../../../app/config/qa_billing_gate.dart';
 import '../../../app/config/qa_entitlement_gate.dart';
 import '../../../app/theme/app_spacing.dart';
 import '../../../app/theme/app_typography.dart';
+import '../../../core/constants/route_names.dart';
 import '../../../core/widgets/info_card.dart';
 import '../billing/domain/billing_product_ids.dart';
 import '../billing/domain/subscription_lifecycle.dart';
@@ -411,6 +412,20 @@ class _PremiumScreenState extends State<PremiumScreen> {
                 'Missing Play products: '
                 '${_billing.storeSnapshot.missingProductIds.join(', ')}',
                 style: AppTypography.muted,
+              ),
+            ),
+          ],
+          if (_status.hasPremium) ...[
+            const SizedBox(height: AppSpacing.md),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: () => Navigator.pushNamed(
+                  context,
+                  RouteNames.premiumTools,
+                ),
+                icon: const Icon(Icons.workspace_premium_outlined),
+                label: const Text('Open Premium Tools'),
               ),
             ),
           ],

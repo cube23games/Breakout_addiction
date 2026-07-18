@@ -10,6 +10,14 @@ class RouteNames {
   static const educate = '/educate';
   static const educateLesson = '/educate/lesson';
   static const premium = '/premium';
+  static const premiumTools = '/premium/tools';
+  static const premiumGuidance = '/premium/local-guidance';
+  static const premiumInsights = '/premium/advanced-insights';
+  static const guidedRoutines = '/premium/guided-routines';
+  static const recoveryJourneys = '/premium/recovery-journeys';
+  static const recoveryReport = '/premium/recovery-report';
+  static const aiTools = '/premium/ai-tools';
+  static const premiumPreferences = '/premium/preferences';
   static const aiChat = '/ai-chat';
   static const support = '/support';
   static const riskWindows = '/risk-windows';
