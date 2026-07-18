@@ -84,6 +84,15 @@ class PremiumToolsScreen extends StatelessWidget {
               const SizedBox(height: AppSpacing.md),
               _toolCard(
                 context,
+                title: 'Private Pattern Intelligence',
+                description:
+                    'Find peak days and times, repeated trigger combinations, earlier warning signals, and what has helped.',
+                icon: Icons.hub_outlined,
+                route: RouteNames.premiumPatterns,
+              ),
+              const SizedBox(height: AppSpacing.md),
+              _toolCard(
+                context,
                 title: 'Local Recovery Guidance',
                 description:
                     'Use on-device patterns, encouragement, and optional faith-sensitive guidance without an AI call.',

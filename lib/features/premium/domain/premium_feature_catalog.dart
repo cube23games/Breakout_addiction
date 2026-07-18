@@ -45,6 +45,13 @@ class PremiumFeatureCatalog {
       category: PremiumFeatureCategory.insight,
     ),
     PremiumFeature(
+      id: 'private_patterns',
+      title: 'Private Pattern Intelligence',
+      description: 'Find peak days and times, trigger combinations, earlier warning signals, effective interruptions, and a weekly local summary.',
+      requiredPlan: PremiumPlan.plus,
+      category: PremiumFeatureCategory.insight,
+    ),
+    PremiumFeature(
       id: 'advanced_insights',
       title: 'Advanced 30- and 90-Day Insights',
       description: 'Private longer-term counts, pressure context, repeated triggers, direction, and next focus.',

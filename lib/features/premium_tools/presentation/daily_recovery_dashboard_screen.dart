@@ -157,6 +157,18 @@ class _DailyRecoveryDashboardScreenState
                     label: const Text('Open Recommended Routines'),
                   ),
                 ),
+                const SizedBox(height: AppSpacing.sm),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () => Navigator.pushNamed(
+                      context,
+                      RouteNames.premiumPatterns,
+                    ),
+                    icon: const Icon(Icons.hub_outlined),
+                    label: const Text('Open Private Pattern Intelligence'),
+                  ),
+                ),
               ],
             ),
           ),
