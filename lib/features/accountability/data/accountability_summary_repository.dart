@@ -233,6 +233,19 @@ class AccountabilitySummaryRepository {
         'Support person: ${plan.supportPerson.trim()}',
       if (plan.fallbackPlan.trim().isNotEmpty)
         'Fallback plan: ${plan.fallbackPlan.trim()}',
+      if (plan.warningSigns.isNotEmpty)
+        'Warning signs: ${plan.warningSigns.join(', ')}',
+      if (plan.triggers.isNotEmpty)
+        'Triggers: ${plan.triggers.join(', ')}',
+      if (plan.highRiskTimes.isNotEmpty)
+        'High-risk times: ${plan.highRiskTimes.join(', ')}',
+      if (plan.morningCommitment.trim().isNotEmpty)
+        'Morning commitment: ${plan.morningCommitment.trim()}',
+      if (plan.eveningCommitment.trim().isNotEmpty)
+        'Evening commitment: ${plan.eveningCommitment.trim()}',
+      if (plan.postSlipPlan.trim().isNotEmpty)
+        'Post-slip rebuild: ${plan.postSlipPlan.trim()}',
+      'Plan readiness: ${plan.completedSections}/${plan.totalSections}',
     ];
 
     if (details.isEmpty) {

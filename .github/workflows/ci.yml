@@ -121,6 +121,7 @@ jobs:
           python3 tools/verify_ba64.py
           python3 tools/verify_ba65.py
           python3 tools/verify_ba66.py
+          python3 tools/verify_ba67.py
 
       - name: Configure isolated QA Android release
         shell: bash

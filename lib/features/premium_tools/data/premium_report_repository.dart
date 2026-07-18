@@ -91,6 +91,13 @@ class PremiumReportRepository {
         'Grounding action: ${plan.groundingAction.isEmpty ? 'Not set' : plan.groundingAction}',
         'Support person: ${plan.supportPerson.isEmpty ? 'Not set' : plan.supportPerson}',
         'Fallback plan: ${plan.fallbackPlan.isEmpty ? 'Not set' : plan.fallbackPlan}',
+        'Warning signs: ${plan.warningSigns.isEmpty ? 'Not set' : plan.warningSigns.join(', ')}',
+        'Primary triggers: ${plan.triggers.isEmpty ? 'Not set' : plan.triggers.join(', ')}',
+        'High-risk times: ${plan.highRiskTimes.isEmpty ? 'Not set' : plan.highRiskTimes.join(', ')}',
+        'Morning commitment: ${plan.morningCommitment.isEmpty ? 'Not set' : plan.morningCommitment}',
+        'Evening commitment: ${plan.eveningCommitment.isEmpty ? 'Not set' : plan.eveningCommitment}',
+        'Post-slip rebuild: ${plan.postSlipPlan.isEmpty ? 'Not set' : plan.postSlipPlan}',
+        'Plan readiness: ${plan.completedSections}/${plan.totalSections} sections',
         '',
         'RISK WINDOWS',
         enabledWindows.isEmpty

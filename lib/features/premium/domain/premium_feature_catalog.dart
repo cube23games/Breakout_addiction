@@ -67,8 +67,8 @@ class PremiumFeatureCatalog {
     ),
     PremiumFeature(
       id: 'recovery_plan',
-      title: 'Recovery-Plan Integration',
-      description: 'Bring saved first actions, backup steps, support, and fallback plans into premium routines and reports.',
+      title: 'Advanced Recovery Plan Builder',
+      description: 'Build warning signs, trigger plans, high-risk times, daily commitments, post-slip rebuilding, review dates, and plan readiness around the free core action plan.',
       requiredPlan: PremiumPlan.plus,
       category: PremiumFeatureCategory.planning,
     ),

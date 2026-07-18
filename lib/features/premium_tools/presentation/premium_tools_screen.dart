@@ -176,9 +176,9 @@ class PremiumToolsScreen extends StatelessWidget {
               const SizedBox(height: AppSpacing.md),
               _toolCard(
                 context,
-                title: 'Personal Recovery Plan',
+                title: 'Advanced Recovery Plan Builder',
                 description:
-                    'Keep first actions, backup steps, grounding, support, and fallback ready.',
+                    'Keep the free first-action plan and add warning signs, triggers, daily commitments, post-slip rebuilding, review dates, and readiness.',
                 icon: Icons.health_and_safety_outlined,
                 route: RouteNames.recoveryPlan,
               ),
