@@ -11,6 +11,7 @@ class RouteNames {
   static const educateLesson = '/educate/lesson';
   static const premium = '/premium';
   static const premiumTools = '/premium/tools';
+  static const premiumDashboard = '/premium/daily-dashboard';
   static const premiumGuidance = '/premium/local-guidance';
   static const premiumInsights = '/premium/advanced-insights';
   static const guidedRoutines = '/premium/guided-routines';

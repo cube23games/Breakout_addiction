@@ -75,6 +75,15 @@ class PremiumToolsScreen extends StatelessWidget {
               const SizedBox(height: AppSpacing.lg),
               _toolCard(
                 context,
+                title: 'Daily Recovery Dashboard',
+                description:
+                    'See today’s risk snapshot, first action, next risk window, recommended routine, and weekly progress.',
+                icon: Icons.dashboard_customize_outlined,
+                route: RouteNames.premiumDashboard,
+              ),
+              const SizedBox(height: AppSpacing.md),
+              _toolCard(
+                context,
                 title: 'Local Recovery Guidance',
                 description:
                     'Use on-device patterns, encouragement, and optional faith-sensitive guidance without an AI call.',

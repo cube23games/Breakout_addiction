@@ -38,6 +38,13 @@ class PremiumFeatureCatalog {
       neverPaywall: true,
     ),
     PremiumFeature(
+      id: 'daily_dashboard',
+      title: 'Daily Recovery Dashboard',
+      description: 'See today’s private risk snapshot, next safe action, routine, risk window, and weekly progress in one place.',
+      requiredPlan: PremiumPlan.plus,
+      category: PremiumFeatureCategory.insight,
+    ),
+    PremiumFeature(
       id: 'advanced_insights',
       title: 'Advanced 30- and 90-Day Insights',
       description: 'Private longer-term counts, pressure context, repeated triggers, direction, and next focus.',

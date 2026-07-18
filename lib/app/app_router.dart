@@ -20,6 +20,7 @@ import '../features/onboarding/presentation/home_entry_screen.dart';
 import '../features/onboarding/presentation/onboarding_screen.dart';
 import '../features/premium/presentation/premium_screen.dart';
 import '../features/premium_tools/presentation/ai_tools_screen.dart';
+import '../features/premium_tools/presentation/daily_recovery_dashboard_screen.dart';
 import '../features/premium_tools/presentation/guided_routines_screen.dart';
 import '../features/premium_tools/presentation/premium_tools_screen.dart';
 import '../features/premium_tools/presentation/premium_preferences_screen.dart';
@@ -132,6 +133,16 @@ class AppRouter {
             child: PremiumToolGate(
               featureId: 'guided_routines',
               child: PremiumToolsScreen(),
+            ),
+          ),
+        );
+      case RouteNames.premiumDashboard:
+        return MaterialPageRoute(
+          builder: (_) => const ProtectedRouteGate(
+            scope: LockScope.insights,
+            child: PremiumToolGate(
+              featureId: 'daily_dashboard',
+              child: DailyRecoveryDashboardScreen(),
             ),
           ),
         );
