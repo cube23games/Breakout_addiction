@@ -9,7 +9,7 @@ class AiChatSettings {
 
   factory AiChatSettings.defaults() {
     return const AiChatSettings(
-      providerMode: ChatProviderMode.mock,
+      providerMode: ChatProviderMode.secureGateway,
     );
   }
 

@@ -17,7 +17,7 @@ class FeatureControlSettingsRepository {
       faithLayerEnabled: prefs.getBool(_faithLayerEnabledKey) ?? true,
       showStartupNotice: prefs.getBool(_showStartupNoticeKey) ?? true,
       remoteAiFeaturesEnabled:
-          prefs.getBool(_remoteAiFeaturesEnabledKey) ?? false,
+          prefs.getBool(_remoteAiFeaturesEnabledKey) ?? true,
     );
   }
 

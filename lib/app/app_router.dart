@@ -117,13 +117,13 @@ class AppRouter {
           ),
         );
       case RouteNames.aiChat:
-        if (!InternalSurfaceGate.showDevSurfaces) {
-          return _homeRoute();
-        }
+        final initialPrompt = settings.arguments is String
+            ? settings.arguments as String
+            : null;
         return MaterialPageRoute(
-          builder: (_) => const ProtectedRouteGate(
+          builder: (_) => ProtectedRouteGate(
             scope: LockScope.support,
-            child: AiChatScreen(),
+            child: AiChatScreen(initialPrompt: initialPrompt),
           ),
         );
       case RouteNames.featureControls:

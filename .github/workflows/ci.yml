@@ -17,6 +17,7 @@ jobs:
       BREAKOUT_APP_SIGNING_CERT_SHA256: ${{ secrets.BREAKOUT_APP_SIGNING_CERT_SHA256 }}
       BREAKOUT_PLAY_SIGNING_CERT_SHA256: ${{ secrets.BREAKOUT_PLAY_SIGNING_CERT_SHA256 }}
       BREAKOUT_BILLING_VERIFY_URL: ${{ secrets.BREAKOUT_BILLING_VERIFY_URL }}
+      BREAKOUT_AI_GATEWAY_URL: ${{ secrets.BREAKOUT_AI_GATEWAY_URL }}
 
     steps:
       - name: Checkout
@@ -116,6 +117,7 @@ jobs:
           python3 tools/verify_ba60.py
           python3 tools/verify_ba61.py
           python3 tools/verify_ba62.py
+          python3 tools/verify_ba63.py
 
       - name: Configure isolated QA Android release
         shell: bash
@@ -176,6 +178,7 @@ jobs:
             --build-number="$BASE_BUILD_NUMBER" \
             --dart-define=BREAKOUT_BUILD_CHANNEL=public \
             --dart-define=BREAKOUT_BILLING_VERIFY_URL="$BREAKOUT_BILLING_VERIFY_URL" \
+            --dart-define=BREAKOUT_AI_GATEWAY_URL="$BREAKOUT_AI_GATEWAY_URL" \
             --dart-define=BREAKOUT_EXPECTED_PACKAGE=com.slimnation.breakoutaddiction \
             --dart-define=BREAKOUT_ALLOWED_SIGNING_SHA256="$BREAKOUT_ALLOWED_SIGNING_SHA256"
 
@@ -199,6 +202,7 @@ jobs:
             --build-number="$UPDATE_BUILD_NUMBER" \
             --dart-define=BREAKOUT_BUILD_CHANNEL=public \
             --dart-define=BREAKOUT_BILLING_VERIFY_URL="$BREAKOUT_BILLING_VERIFY_URL" \
+            --dart-define=BREAKOUT_AI_GATEWAY_URL="$BREAKOUT_AI_GATEWAY_URL" \
             --dart-define=BREAKOUT_EXPECTED_PACKAGE=com.slimnation.breakoutaddiction \
             --dart-define=BREAKOUT_ALLOWED_SIGNING_SHA256="$BREAKOUT_ALLOWED_SIGNING_SHA256"
 
@@ -218,6 +222,7 @@ jobs:
             --build-number="$UPDATE_BUILD_NUMBER" \
             --dart-define=BREAKOUT_BUILD_CHANNEL=public \
             --dart-define=BREAKOUT_BILLING_VERIFY_URL="$BREAKOUT_BILLING_VERIFY_URL" \
+            --dart-define=BREAKOUT_AI_GATEWAY_URL="$BREAKOUT_AI_GATEWAY_URL" \
             --dart-define=BREAKOUT_EXPECTED_PACKAGE=com.slimnation.breakoutaddiction \
             --dart-define=BREAKOUT_ALLOWED_SIGNING_SHA256="$BREAKOUT_ALLOWED_SIGNING_SHA256"
 

@@ -7,12 +7,12 @@ import '../../domain/ai_usage_snapshot.dart';
 
 class AiUsageMeterCard extends StatelessWidget {
   final AiUsageSnapshot snapshot;
-  final VoidCallback onReset;
+  final VoidCallback? onReset;
 
   const AiUsageMeterCard({
     super.key,
     required this.snapshot,
-    required this.onReset,
+    this.onReset,
   });
 
   @override
@@ -21,26 +21,40 @@ class AiUsageMeterCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('AI Usage Meter', style: AppTypography.section),
+          Text('AI fair-use status', style: AppTypography.section),
           const SizedBox(height: AppSpacing.sm),
-          Text('Prompt attempts: ${snapshot.promptAttempts}', style: AppTypography.body),
-          const SizedBox(height: 4),
-          Text('Stopped attempts: ${snapshot.stoppedAttempts}', style: AppTypography.body),
-          const SizedBox(height: 4),
-          Text('Live prototype calls: ${snapshot.livePrototypeCalls}', style: AppTypography.body),
-          const SizedBox(height: 4),
-          Text('Local or stub replies: ${snapshot.localOrStubReplies}', style: AppTypography.body),
-          const SizedBox(height: 4),
-          Text('Last mode: ${snapshot.lastModeLabel}', style: AppTypography.muted),
-          const SizedBox(height: AppSpacing.md),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              onPressed: onReset,
-              icon: const Icon(Icons.refresh_outlined),
-              label: const Text('Reset Usage Meter'),
-            ),
+          Text(
+            '${snapshot.remainingToday} of '
+            '${snapshot.dailyRequestLimit} app-side requests remain today.',
+            style: AppTypography.body,
           ),
+          const SizedBox(height: 4),
+          const Text(
+            'The secure backend also applies abuse and cost controls. Local Rescue, plans, and guidance never depend on AI availability.',
+            style: AppTypography.muted,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Stopped unsafe or unavailable requests: '
+            '${snapshot.stoppedAttempts}',
+            style: AppTypography.muted,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Last mode: ${snapshot.lastModeLabel}',
+            style: AppTypography.muted,
+          ),
+          if (onReset != null) ...[
+            const SizedBox(height: AppSpacing.md),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: onReset,
+                icon: const Icon(Icons.refresh_outlined),
+                label: const Text('Reset QA usage meter'),
+              ),
+            ),
+          ],
         ],
       ),
     );

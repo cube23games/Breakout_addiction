@@ -1,14 +1,22 @@
+import '../../../app/config/internal_surface_gate.dart';
+import '../../../app/config/qa_billing_gate.dart';
+import '../../premium/billing/data/verified_entitlement_repository.dart';
 import '../../premium/data/premium_access_repository.dart';
+import '../../premium/domain/premium_plan.dart';
 import '../../settings/data/feature_control_settings_repository.dart';
+import '../domain/ai_gateway_config.dart';
 import '../domain/ai_preflight_status.dart';
 import '../domain/chat_provider_mode.dart';
 import 'ai_backend_config_repository.dart';
 import 'ai_chat_settings_repository.dart';
 import 'ai_runtime_gate_repository.dart';
+import 'ai_usage_repository.dart';
 
 class AiBackendPreflightService {
   final PremiumAccessRepository _premiumRepository =
       PremiumAccessRepository();
+  final VerifiedEntitlementRepository _entitlementRepository =
+      VerifiedEntitlementRepository();
   final AiChatSettingsRepository _settingsRepository =
       AiChatSettingsRepository();
   final AiBackendConfigRepository _backendRepository =
@@ -17,22 +25,30 @@ class AiBackendPreflightService {
       AiRuntimeGateRepository();
   final FeatureControlSettingsRepository _featureRepository =
       FeatureControlSettingsRepository();
+  final AiUsageRepository _usageRepository = AiUsageRepository();
 
   Future<AiPreflightStatus> run() async {
     final premium = await _premiumRepository.getStatus();
+    final entitlement = await _entitlementRepository.read();
     final settings = await _settingsRepository.getSettings();
     final backend = await _backendRepository.getConfig();
-    final remoteEnabled = await _runtimeGateRepository.getRemotePathEnabled();
+    final remoteEnabled =
+        await _runtimeGateRepository.getRemotePathEnabled();
     final featureSettings = await _featureRepository.getSettings();
+    final usage = await _usageRepository.getSnapshot();
 
-    final providerSupportsRemotePath =
+    final secureGateway =
+        settings.providerMode == ChatProviderMode.secureGateway;
+    final localMock = settings.providerMode == ChatProviderMode.mock;
+    final internalPrototype =
         settings.providerMode == ChatProviderMode.geminiPrototype ||
             settings.providerMode == ChatProviderMode.vertexPrivateReady;
-
     final providerIsVertex =
         settings.providerMode == ChatProviderMode.vertexPrivateReady;
-    final providerIsGemini =
-        settings.providerMode == ChatProviderMode.geminiPrototype;
+
+    final serviceAccessReady = entitlement != null &&
+        entitlement.plan == PremiumPlan.plusAi &&
+        entitlement.hasUsableServiceAccess(DateTime.now().toUtc());
 
     final riskyFeaturesForcedOff = !backend.allowGrounding &&
         !backend.allowMapsGrounding &&
@@ -45,57 +61,92 @@ class AiBackendPreflightService {
       blockers.add('Breakout Plus AI is not active.');
     }
     if (!featureSettings.aiChatEnabled) {
-      blockers.add('AI chat is disabled in Feature Controls.');
+      blockers.add('AI chat is turned off.');
     }
     if (!featureSettings.remoteAiFeaturesEnabled) {
-      blockers.add('Remote AI features are disabled in Feature Controls.');
+      blockers.add('Remote AI features are turned off.');
     }
-    if (!providerSupportsRemotePath) {
-      blockers.add('Selected provider does not use a remote path.');
-    }
-    if (!remoteEnabled) {
-      blockers.add('Remote backend path is disabled.');
-    }
-    if (!backend.hasApiKey) {
-      blockers.add('No API key is saved.');
-    }
-    if (!riskyFeaturesForcedOff) {
-      blockers.add('One or more risky features are enabled.');
+    if (usage.fairUseReached) {
+      blockers.add(
+        'The app-side fair-use limit has been reached for today.',
+      );
     }
 
-    final readyForRemoteStub = premium.hasAiPremium &&
+    bool providerReady = false;
+
+    if (secureGateway) {
+      if (!AiGatewayConfig.isConfigured) {
+        blockers.add('The secure AI gateway is not configured.');
+      }
+      if (!serviceAccessReady) {
+        blockers.add(
+          'Secure AI access needs a current backend-issued entitlement token.',
+        );
+      }
+      providerReady = AiGatewayConfig.isConfigured && serviceAccessReady;
+    } else if (localMock) {
+      final internalAllowed =
+          InternalSurfaceGate.showDevSurfaces || QaBillingGate.enabled;
+      if (!internalAllowed) {
+        blockers.add('Local mock mode is available only in internal builds.');
+      }
+      providerReady = internalAllowed;
+    } else if (internalPrototype) {
+      final internalAllowed =
+          InternalSurfaceGate.showDevSurfaces || QaBillingGate.enabled;
+      if (!internalAllowed) {
+        blockers.add('Prototype providers are internal-only.');
+      }
+      if (!remoteEnabled) {
+        blockers.add('Internal remote path is disabled.');
+      }
+      if (!backend.hasApiKey) {
+        blockers.add('No internal prototype API key is saved.');
+      }
+      if (!riskyFeaturesForcedOff) {
+        blockers.add('One or more risky prototype features are enabled.');
+      }
+      providerReady =
+          (InternalSurfaceGate.showDevSurfaces || QaBillingGate.enabled) &&
+          remoteEnabled &&
+          backend.hasApiKey &&
+          riskyFeaturesForcedOff;
+    }
+
+    final ready = premium.hasAiPremium &&
         featureSettings.aiChatEnabled &&
         featureSettings.remoteAiFeaturesEnabled &&
-        providerSupportsRemotePath &&
-        remoteEnabled &&
-        backend.hasApiKey &&
-        riskyFeaturesForcedOff;
+        !usage.fairUseReached &&
+        providerReady;
 
     String summaryLine;
-    if (readyForRemoteStub && providerIsGemini) {
+    if (ready && secureGateway) {
       summaryLine =
-          'Gemini prototype remote path is armed. Not confidential. Only sanitized prompts should be used.';
-    } else if (readyForRemoteStub && providerIsVertex) {
+          'Secure Breakout AI gateway is ready. No provider API key is stored in the app.';
+    } else if (ready && localMock) {
       summaryLine =
-          'Remote paid path is armed, but it is still routed to a stub transport until the live cutover is built.';
-    } else if (settings.providerMode == ChatProviderMode.mock) {
-      summaryLine = 'Local mock mode is active. No cloud path is armed.';
-    } else if (providerIsGemini) {
+          'Internal local mock mode is ready. No cloud call will occur.';
+    } else if (ready) {
       summaryLine =
-          'Gemini prototype mode is selected, but the real remote call path is still blocked by one or more preflight checks.';
+          'Internal prototype provider is armed for sanitized QA prompts.';
+    } else if (secureGateway) {
+      summaryLine =
+          'Secure AI is unavailable until every entitlement, configuration, and fair-use check passes.';
     } else {
       summaryLine =
-          'Vertex private-ready mode is selected, but the paid path is still blocked by one or more preflight checks.';
+          'The selected internal AI provider is blocked by one or more checks.';
     }
 
     return AiPreflightStatus(
       premiumUnlocked: premium.hasAiPremium,
       providerModeLabel: settings.providerMode.label,
       providerIsVertexPrivateReady: providerIsVertex,
-      remotePathEnabled: remoteEnabled,
-      apiKeyPresent: backend.hasApiKey,
+      remotePathEnabled:
+          secureGateway ? AiGatewayConfig.isConfigured : remoteEnabled,
+      apiKeyPresent:
+          secureGateway ? AiGatewayConfig.isConfigured : backend.hasApiKey,
       riskyFeaturesForcedOff: riskyFeaturesForcedOff,
-      readyForRemoteStub: readyForRemoteStub,
+      readyForRemoteStub: ready,
       summaryLine: summaryLine,
       blockerLines: blockers,
     );

@@ -1,5 +1,6 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../app/config/qa_billing_gate.dart';
 import '../../../core/storage/local_data_safety.dart';
 import '../domain/ai_chat_settings.dart';
 import '../domain/chat_provider_mode.dart';
@@ -10,11 +11,14 @@ class AiChatSettingsRepository {
   Future<AiChatSettings> getSettings() async {
     final prefs = await SharedPreferences.getInstance();
     final raw = prefs.getString(_providerModeKey);
+    final fallback = QaBillingGate.enabled
+        ? ChatProviderMode.mock
+        : ChatProviderMode.secureGateway;
 
     final mode = LocalDataSafety.enumByName(
       ChatProviderMode.values,
       raw,
-      ChatProviderMode.mock,
+      fallback,
     );
 
     return AiChatSettings(providerMode: mode);

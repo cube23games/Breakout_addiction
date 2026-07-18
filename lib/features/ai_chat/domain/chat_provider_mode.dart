@@ -1,4 +1,5 @@
 enum ChatProviderMode {
+  secureGateway,
   mock,
   geminiPrototype,
   vertexPrivateReady,
@@ -7,8 +8,10 @@ enum ChatProviderMode {
 extension ChatProviderModeX on ChatProviderMode {
   String get label {
     switch (this) {
+      case ChatProviderMode.secureGateway:
+        return 'Secure AI Gateway';
       case ChatProviderMode.mock:
-        return 'Mock';
+        return 'Local Mock';
       case ChatProviderMode.geminiPrototype:
         return 'Gemini Prototype';
       case ChatProviderMode.vertexPrivateReady:
@@ -18,12 +21,14 @@ extension ChatProviderModeX on ChatProviderMode {
 
   String get description {
     switch (this) {
+      case ChatProviderMode.secureGateway:
+        return 'Production path through a protected Breakout backend. No provider API key is stored in the app.';
       case ChatProviderMode.mock:
-        return 'Local prototype replies only. No cloud calls.';
+        return 'Local QA replies only. No cloud calls.';
       case ChatProviderMode.geminiPrototype:
-        return 'Cloud-ready prototype placeholder. Use sanitized dummy prompts only.';
+        return 'Internal prototype path for sanitized test prompts only.';
       case ChatProviderMode.vertexPrivateReady:
-        return 'Paid privacy-first configuration placeholder for later Vertex cutover. No live API call yet.';
+        return 'Internal private-backend cutover stub.';
     }
   }
 }

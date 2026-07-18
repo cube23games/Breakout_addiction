@@ -19,7 +19,7 @@ class FeatureControlSettings {
       aiGuidanceEnabled: true,
       faithLayerEnabled: true,
       showStartupNotice: true,
-      remoteAiFeaturesEnabled: false,
+      remoteAiFeaturesEnabled: true,
     );
   }
 

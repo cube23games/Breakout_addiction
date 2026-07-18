@@ -460,17 +460,15 @@ class _SupportScreenState extends State<SupportScreen> {
                     ),
                   ),
                 ],
-                if (InternalSurfaceGate.showDevSurfaces) ...[
-                  const SizedBox(height: AppSpacing.sm),
-                  PrimaryButton(
-                    label: 'Open AI Recovery Coach',
-                    icon: Icons.psychology_outlined,
-                    onPressed: () => Navigator.pushNamed(
-                      context,
-                      RouteNames.aiChat,
-                    ),
+                const SizedBox(height: AppSpacing.sm),
+                PrimaryButton(
+                  label: 'Open AI Recovery Coach',
+                  icon: Icons.psychology_outlined,
+                  onPressed: () => Navigator.pushNamed(
+                    context,
+                    RouteNames.aiChat,
                   ),
-                ],
+                ),
                 if (InternalSurfaceGate.showDevSurfaces) ...[
                   const SizedBox(height: AppSpacing.sm),
                   PrimaryButton(
@@ -513,7 +511,7 @@ class _SupportScreenState extends State<SupportScreen> {
                 Text('Premium Options', style: AppTypography.section),
                 const SizedBox(height: AppSpacing.sm),
                 const Text(
-                  'Breakout Plus gives curated local guidance and faith-sensitive packs without AI chat. Breakout Plus AI adds optional AI features later.',
+                  'Breakout Plus adds deeper local tools without AI. Breakout Plus AI adds optional secure AI personalization with fair-use limits and local fallback.',
                   style: AppTypography.muted,
                 ),
                 const SizedBox(height: AppSpacing.md),

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../app/config/internal_surface_gate.dart';
+import '../../../app/config/qa_billing_gate.dart';
 import '../../../app/theme/app_spacing.dart';
 import '../../../app/theme/app_typography.dart';
 import '../../../core/constants/route_names.dart';
@@ -17,6 +19,7 @@ import '../data/ai_input_guardrail_service.dart';
 import '../data/ai_usage_repository.dart';
 import '../data/chat_provider_factory.dart';
 import '../domain/ai_chat_settings.dart';
+import '../domain/ai_fair_use_policy.dart';
 import '../domain/ai_preflight_status.dart';
 import '../domain/ai_usage_snapshot.dart';
 import '../domain/chat_message.dart';
@@ -27,7 +30,12 @@ import 'widgets/ai_usage_meter_card.dart';
 import 'widgets/emergency_fallback_card.dart';
 
 class AiChatScreen extends StatefulWidget {
-  const AiChatScreen({super.key});
+  final String? initialPrompt;
+
+  const AiChatScreen({
+    super.key,
+    this.initialPrompt,
+  });
 
   @override
   State<AiChatScreen> createState() => _AiChatScreenState();
@@ -67,7 +75,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
     return ChatMessage(
       role: ChatRole.assistant,
       text:
-          'Prototype AI coach ready. This version is still prototype-only. Do not enter highly sensitive, identifying, or emergency information here yet.',
+          'AI recovery support is ready when your Plus AI entitlement, secure gateway, safety checks, and fair-use status all pass. Keep identifying and emergency information out of chat.',
       timestamp: DateTime.now(),
     );
   }
@@ -81,6 +89,11 @@ class _AiChatScreenState extends State<AiChatScreen> {
   }
 
   String _currentModeLabel(AiPreflightStatus preflight) {
+    if (_settings.providerMode == ChatProviderMode.secureGateway) {
+      return preflight.readyForRemoteStub
+          ? 'Secure AI Gateway'
+          : 'Secure AI Unavailable';
+    }
     if (_settings.providerMode == ChatProviderMode.mock) {
       return 'Local Mock';
     }
@@ -126,6 +139,10 @@ class _AiChatScreenState extends State<AiChatScreen> {
   @override
   void initState() {
     super.initState();
+    final initialPrompt = widget.initialPrompt?.trim();
+    if (initialPrompt != null && initialPrompt.isNotEmpty) {
+      _controller.text = initialPrompt;
+    }
     _load();
   }
 
@@ -202,6 +219,17 @@ class _AiChatScreenState extends State<AiChatScreen> {
       return;
     }
 
+    if (input.length > AiFairUsePolicy.maxInputCharacters) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Please shorten the message before sending it to AI support.',
+          ),
+        ),
+      );
+      return;
+    }
+
     final review = _guardrailService.review(input);
 
     if (review.blocked) {
@@ -234,10 +262,8 @@ class _AiChatScreenState extends State<AiChatScreen> {
     }
     setState(() => _preflightStatus = freshPreflight);
 
-    if ((_settings.providerMode == ChatProviderMode.vertexPrivateReady ||
-            _settings.providerMode == ChatProviderMode.geminiPrototype) &&
-        !freshPreflight.readyForRemoteStub &&
-        _settings.providerMode != ChatProviderMode.mock) {
+    if (_settings.providerMode != ChatProviderMode.mock &&
+        !freshPreflight.readyForRemoteStub) {
       final modeLabel = _currentModeLabel(freshPreflight);
       await _usageRepository.recordStoppedAttempt(modeLabel: modeLabel);
       await _refreshUsage();
@@ -298,12 +324,17 @@ class _AiChatScreenState extends State<AiChatScreen> {
     final finalMessages = <ChatMessage>[...updated, reply];
     await _chatRepository.saveMessages(finalMessages);
 
-    final livePrototype = _settings.providerMode == ChatProviderMode.geminiPrototype &&
-        freshPreflight.readyForRemoteStub;
+    final livePrototype =
+        _settings.providerMode == ChatProviderMode.geminiPrototype &&
+            freshPreflight.readyForRemoteStub;
+    final remoteRequest =
+        _settings.providerMode == ChatProviderMode.secureGateway ||
+            livePrototype;
 
     await _usageRepository.recordSuccessfulReply(
       modeLabel: _currentModeLabel(freshPreflight),
       livePrototype: livePrototype,
+      remoteRequest: remoteRequest,
     );
     await _refreshUsage();
 
@@ -372,10 +403,10 @@ class _AiChatScreenState extends State<AiChatScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Prototype guardrails', style: AppTypography.section),
+          Text('AI safety guardrails', style: AppTypography.section),
           SizedBox(height: AppSpacing.sm),
           Text(
-            'This screen blocks minor sexual content and imminent self-harm or violence language. It also scrubs obvious identifying details like phone numbers, emails, addresses, names, and exact locations before processing.',
+            'This screen blocks unsafe requests involving minors and imminent self-harm or violence. It also removes obvious identifying details before secure processing.',
             style: AppTypography.muted,
           ),
         ],
@@ -387,8 +418,8 @@ class _AiChatScreenState extends State<AiChatScreen> {
     final whyLocked = !_premiumStatus.hasAiPremium
         ? 'Breakout Plus AI is required for AI chat.'
         : !_featureSettings.aiChatEnabled
-            ? 'AI chat is currently turned off in Feature Controls.'
-            : 'This feature is not available yet.';
+            ? 'AI chat is currently turned off.'
+            : _preflightStatus.summaryLine;
 
     return ListView(
       padding: const EdgeInsets.all(AppSpacing.lg),
@@ -410,7 +441,9 @@ class _AiChatScreenState extends State<AiChatScreen> {
         const SizedBox(height: AppSpacing.md),
         AiUsageMeterCard(
           snapshot: _usageSnapshot,
-          onReset: _resetUsageMeter,
+          onReset: (InternalSurfaceGate.showDevSurfaces || QaBillingGate.enabled)
+              ? _resetUsageMeter
+              : null,
         ),
         const SizedBox(height: AppSpacing.md),
         _guardrailCard(),
@@ -428,7 +461,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
               Text('What it will do', style: AppTypography.section),
               const SizedBox(height: AppSpacing.sm),
               const Text(
-                'Plus AI adds optional AI chat. Breakout Plus still gives a strong premium experience without AI.',
+                'Plus AI adds optional secure AI support. Breakout Plus still provides substantial local value without AI.',
                 style: AppTypography.muted,
               ),
               const SizedBox(height: AppSpacing.md),
@@ -466,7 +499,9 @@ class _AiChatScreenState extends State<AiChatScreen> {
               const SizedBox(height: AppSpacing.md),
               AiUsageMeterCard(
                 snapshot: _usageSnapshot,
-                onReset: _resetUsageMeter,
+                onReset: (InternalSurfaceGate.showDevSurfaces || QaBillingGate.enabled)
+                    ? _resetUsageMeter
+                    : null,
               ),
               const SizedBox(height: AppSpacing.md),
               _guardrailCard(),
@@ -513,7 +548,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
                     minLines: 1,
                     maxLines: 4,
                     decoration: const InputDecoration(
-                      hintText: 'Type a message for the prototype coach...',
+                      hintText: 'Type a message for AI recovery support...',
                     ),
                   ),
                 ),
@@ -545,8 +580,11 @@ class _AiChatScreenState extends State<AiChatScreen> {
       );
     }
 
-    final canUseAiChat =
-        _premiumStatus.hasAiPremium && _featureSettings.aiChatEnabled;
+    final canUseAiChat = _premiumStatus.hasAiPremium &&
+        _featureSettings.aiChatEnabled &&
+        (_settings.providerMode == ChatProviderMode.mock
+            ? (InternalSurfaceGate.showDevSurfaces || QaBillingGate.enabled)
+            : _preflightStatus.readyForRemoteStub);
 
     return Scaffold(
       appBar: AppBar(
