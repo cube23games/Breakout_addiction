@@ -16,6 +16,7 @@ jobs:
       BREAKOUT_APP_SIGNING_KEY_ALIAS: ${{ secrets.BREAKOUT_APP_SIGNING_KEY_ALIAS }}
       BREAKOUT_APP_SIGNING_CERT_SHA256: ${{ secrets.BREAKOUT_APP_SIGNING_CERT_SHA256 }}
       BREAKOUT_PLAY_SIGNING_CERT_SHA256: ${{ secrets.BREAKOUT_PLAY_SIGNING_CERT_SHA256 }}
+      BREAKOUT_BILLING_VERIFY_URL: ${{ secrets.BREAKOUT_BILLING_VERIFY_URL }}
 
     steps:
       - name: Checkout
@@ -113,6 +114,7 @@ jobs:
           python3 tools/verify_ba57_58.py
           python3 tools/verify_ba59.py
           python3 tools/verify_ba60.py
+          python3 tools/verify_ba61.py
 
       - name: Configure isolated QA Android release
         shell: bash
@@ -171,6 +173,7 @@ jobs:
             --build-name=0.1.0 \
             --build-number="$BASE_BUILD_NUMBER" \
             --dart-define=BREAKOUT_BUILD_CHANNEL=public \
+            --dart-define=BREAKOUT_BILLING_VERIFY_URL="$BREAKOUT_BILLING_VERIFY_URL" \
             --dart-define=BREAKOUT_EXPECTED_PACKAGE=com.slimnation.breakoutaddiction \
             --dart-define=BREAKOUT_ALLOWED_SIGNING_SHA256="$BREAKOUT_ALLOWED_SIGNING_SHA256"
 
@@ -193,6 +196,7 @@ jobs:
             --build-name=0.1.0 \
             --build-number="$UPDATE_BUILD_NUMBER" \
             --dart-define=BREAKOUT_BUILD_CHANNEL=public \
+            --dart-define=BREAKOUT_BILLING_VERIFY_URL="$BREAKOUT_BILLING_VERIFY_URL" \
             --dart-define=BREAKOUT_EXPECTED_PACKAGE=com.slimnation.breakoutaddiction \
             --dart-define=BREAKOUT_ALLOWED_SIGNING_SHA256="$BREAKOUT_ALLOWED_SIGNING_SHA256"
 
@@ -211,6 +215,7 @@ jobs:
             --build-name=0.1.0 \
             --build-number="$UPDATE_BUILD_NUMBER" \
             --dart-define=BREAKOUT_BUILD_CHANNEL=public \
+            --dart-define=BREAKOUT_BILLING_VERIFY_URL="$BREAKOUT_BILLING_VERIFY_URL" \
             --dart-define=BREAKOUT_EXPECTED_PACKAGE=com.slimnation.breakoutaddiction \
             --dart-define=BREAKOUT_ALLOWED_SIGNING_SHA256="$BREAKOUT_ALLOWED_SIGNING_SHA256"
 

@@ -1,13 +1,19 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:url_launcher/url_launcher.dart';
 
+import '../../data/premium_access_repository.dart';
 import '../../domain/premium_plan.dart';
 import '../data/billing_provider.dart';
+import '../data/billing_verification_gateway.dart';
 import '../data/play_billing_provider.dart';
+import '../data/verified_entitlement_repository.dart';
+import '../domain/billing_product_ids.dart';
 import '../domain/billing_purchase_event.dart';
 import '../domain/billing_store_product.dart';
 import '../domain/billing_store_snapshot.dart';
+import '../domain/verified_entitlement.dart';
 
 class PremiumBillingController extends ChangeNotifier {
   PremiumBillingController._();
@@ -16,7 +22,16 @@ class PremiumBillingController extends ChangeNotifier {
       PremiumBillingController._();
 
   BillingProvider _provider = PlayBillingProvider();
+  BillingVerificationGateway _verificationGateway =
+      BillingVerificationGateway();
+  final VerifiedEntitlementRepository _entitlementRepository =
+      VerifiedEntitlementRepository();
+  final PremiumAccessRepository _accessRepository =
+      PremiumAccessRepository();
+
   StreamSubscription<BillingPurchaseEvent>? _subscription;
+  final Set<String> _processingEventKeys = <String>{};
+  Future<void> _eventQueue = Future<void>.value();
   BillingStoreSnapshot _storeSnapshot = BillingStoreSnapshot.idle();
   BillingPurchaseEvent? _latestEvent;
   bool _started = false;
@@ -27,6 +42,7 @@ class PremiumBillingController extends ChangeNotifier {
   BillingPurchaseEvent? get latestEvent => _latestEvent;
   bool get busy => _busy;
   bool get started => _started;
+  bool get verificationConfigured => _verificationGateway.isConfigured;
   String get operationMessage => _operationMessage;
 
   Future<void> start() async {
@@ -35,22 +51,44 @@ class PremiumBillingController extends ChangeNotifier {
     _subscription = _provider.purchaseEvents.listen(
       (event) {
         _latestEvent = event;
-        _operationMessage = event.state == BillingPurchaseState.pending
-            ? 'Payment is pending. No paid access was granted.'
-            : 'A Play transaction was received. Secure verification is required before entitlement can change.';
-        notifyListeners();
+        _eventQueue = _eventQueue
+            .then((_) => _handlePurchaseEvent(event))
+            .catchError((Object error, StackTrace stackTrace) {
+          debugPrint('Billing event processing failed: $error');
+          debugPrintStack(stackTrace: stackTrace);
+        });
       },
       onError: (Object error, StackTrace stackTrace) {
-        _operationMessage = 'Google Play Billing reported an error: $error';
+        _operationMessage =
+            'Google Play Billing reported a stream error: $error';
         debugPrintStack(stackTrace: stackTrace);
         notifyListeners();
       },
     );
     await refreshProducts();
+    if (verificationConfigured &&
+        _storeSnapshot.connectionState == BillingConnectionState.available) {
+      _operationMessage =
+          'Refreshing verified subscription access from Google Play…';
+      notifyListeners();
+      try {
+        await _provider.restore();
+      } catch (error) {
+        _operationMessage =
+            'Subscription refresh is temporarily unavailable: $error';
+        notifyListeners();
+      }
+    }
   }
 
   Future<void> refreshProducts() async {
     _busy = true;
+    _storeSnapshot = const BillingStoreSnapshot(
+      connectionState: BillingConnectionState.connecting,
+      products: <BillingStoreProduct>[],
+      missingProductIds: <String>{},
+      message: 'Connecting to Google Play Billing…',
+    );
     notifyListeners();
     try {
       _storeSnapshot = await _provider.connectAndLoad();
@@ -69,21 +107,109 @@ class PremiumBillingController extends ChangeNotifier {
     }
   }
 
-  Future<void> beginPurchase(PremiumPlan plan) {
-    throw StateError(
-      'Purchasing remains disabled until secure verification is connected.',
-    );
+  Future<void> beginPurchase(PremiumPlan plan) async {
+    if (!verificationConfigured) {
+      throw StateError(
+        'Secure purchase verification is not configured. The purchase flow remains disabled so an unverified transaction cannot be accepted.',
+      );
+    }
+    _busy = true;
+    _operationMessage = 'Opening Google Play for ${plan.label}…';
+    notifyListeners();
+    try {
+      await _provider.purchase(plan);
+    } finally {
+      _busy = false;
+      notifyListeners();
+    }
   }
 
   Future<void> restore() async {
-    await _provider.restore();
+    _busy = true;
+    _operationMessage = 'Asking Google Play to restore purchases…';
+    notifyListeners();
+    try {
+      await _provider.restore();
+    } finally {
+      _busy = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> manageSubscription(PremiumPlan plan) async {
+    final productId = BillingProductIds.forPlan(plan);
+    final uri = Uri.https(
+      'play.google.com',
+      '/store/account/subscriptions',
+      <String, String>{
+        'sku': productId,
+        'package': BillingVerificationGateway.packageName,
+      },
+    );
+    return launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
+
+  Future<void> _handlePurchaseEvent(BillingPurchaseEvent event) async {
+    if (_processingEventKeys.contains(event.eventKey)) return;
+    if (event.state == BillingPurchaseState.pending) {
+      _operationMessage =
+          'Payment is pending. Paid access will not unlock until Google Play marks the purchase complete and the backend verifies it.';
+      notifyListeners();
+      return;
+    }
+    if (event.state == BillingPurchaseState.canceled) {
+      _operationMessage =
+          event.errorMessage ?? 'The purchase was canceled. No access changed.';
+      notifyListeners();
+      return;
+    }
+    if (event.state == BillingPurchaseState.error) {
+      _operationMessage =
+          event.errorMessage ?? 'Google Play reported a purchase error.';
+      notifyListeners();
+      return;
+    }
+
+    _processingEventKeys.add(event.eventKey);
+    _busy = true;
+    _operationMessage = 'Verifying the Google Play purchase securely…';
+    notifyListeners();
+    try {
+      final verification = await _verificationGateway.verify(event);
+      final entitlement = verification.entitlement;
+      if (!verification.verified || entitlement == null) {
+        _operationMessage = verification.message;
+        return;
+      }
+
+      var finalizedEntitlement = entitlement;
+      if (event.pendingCompletion && !entitlement.serverAcknowledged) {
+        await _provider.complete(event);
+        finalizedEntitlement = entitlement.copyWith(
+          serverAcknowledged: true,
+        );
+      }
+      await _entitlementRepository.save(finalizedEntitlement);
+      final status = await _accessRepository.getStatus();
+      _operationMessage =
+          '${verification.message} ${status.plan.label} is now active.';
+    } catch (error) {
+      _operationMessage = 'The purchase could not be safely finished: $error';
+    } finally {
+      _processingEventKeys.remove(event.eventKey);
+      _busy = false;
+      notifyListeners();
+    }
   }
 
   Future<void> stop() async {
     await _subscription?.cancel();
     await _provider.dispose();
+    _verificationGateway.close();
+    _verificationGateway = BillingVerificationGateway();
     _provider = PlayBillingProvider();
     _subscription = null;
+    _eventQueue = Future<void>.value();
     _started = false;
   }
 }
