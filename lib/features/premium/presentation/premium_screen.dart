@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 
+import '../../../app/config/qa_billing_gate.dart';
 import '../../../app/config/qa_entitlement_gate.dart';
 import '../../../app/theme/app_spacing.dart';
 import '../../../app/theme/app_typography.dart';
 import '../../../core/widgets/info_card.dart';
 import '../billing/domain/billing_product_ids.dart';
+import '../billing/domain/subscription_lifecycle.dart';
 import '../billing/presentation/premium_billing_controller.dart';
 import '../billing/presentation/widgets/subscription_status_card.dart';
 import '../data/premium_access_repository.dart';
@@ -29,6 +31,9 @@ class _PremiumScreenState extends State<PremiumScreen> {
 
   PremiumStatus _status = PremiumStatus.defaults();
   PremiumPlan _comparisonPlan = PremiumPlan.plus;
+  PremiumPlan _qaLifecyclePlan = PremiumPlan.plus;
+  SubscriptionLifecycle _qaLifecycle =
+      SubscriptionLifecycle.active;
   bool _loading = true;
   bool _reloadingFromBilling = false;
 
@@ -67,6 +72,9 @@ class _PremiumScreenState extends State<PremiumScreen> {
   }
 
   Future<void> _setQaPlan(PremiumPlan plan) async {
+    if (_billing.isQaBilling) {
+      await _billing.clearQaSimulation();
+    }
     await _repository.setPlan(plan);
     await _load();
     if (!mounted) {
@@ -123,6 +131,14 @@ class _PremiumScreenState extends State<PremiumScreen> {
     );
   }
 
+  Future<void> _applyQaLifecycle() async {
+    await _billing.setQaLifecycle(
+      plan: _qaLifecyclePlan,
+      lifecycle: _qaLifecycle,
+    );
+    await _load();
+  }
+
   Widget _qaEntitlementCard() {
     return InfoCard(
       child: Column(
@@ -156,6 +172,90 @@ class _PremiumScreenState extends State<PremiumScreen> {
             title: const Text('Show upgrade prompts'),
             subtitle: const Text(
               'Normal public builds hide this QA control.',
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _qaLifecycleCard() {
+    const lifecycles = <SubscriptionLifecycle>[
+      SubscriptionLifecycle.active,
+      SubscriptionLifecycle.canceledActive,
+      SubscriptionLifecycle.gracePeriod,
+      SubscriptionLifecycle.pending,
+      SubscriptionLifecycle.accountHold,
+      SubscriptionLifecycle.expired,
+      SubscriptionLifecycle.revoked,
+      SubscriptionLifecycle.verificationUnavailable,
+    ];
+
+    return InfoCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('QA Billing Lifecycle', style: AppTypography.section),
+          const SizedBox(height: AppSpacing.sm),
+          const Text(
+            'Simulates purchase and subscription states without a charge. Access still flows through the verified-entitlement policy.',
+            style: AppTypography.muted,
+          ),
+          const SizedBox(height: AppSpacing.md),
+          SegmentedButton<PremiumPlan>(
+            segments: const [
+              ButtonSegment(
+                value: PremiumPlan.plus,
+                label: Text('Plus'),
+              ),
+              ButtonSegment(
+                value: PremiumPlan.plusAi,
+                label: Text('Plus AI'),
+              ),
+            ],
+            selected: <PremiumPlan>{_qaLifecyclePlan},
+            onSelectionChanged: (selection) {
+              setState(() => _qaLifecyclePlan = selection.first);
+            },
+          ),
+          const SizedBox(height: AppSpacing.md),
+          DropdownButtonFormField<SubscriptionLifecycle>(
+            initialValue: _qaLifecycle,
+            decoration: const InputDecoration(
+              labelText: 'Subscription state',
+            ),
+            items: [
+              for (final lifecycle in lifecycles)
+                DropdownMenuItem(
+                  value: lifecycle,
+                  child: Text(lifecycle.label),
+                ),
+            ],
+            onChanged: (value) {
+              if (value != null) {
+                setState(() => _qaLifecycle = value);
+              }
+            },
+          ),
+          const SizedBox(height: AppSpacing.md),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: _applyQaLifecycle,
+              icon: const Icon(Icons.science_outlined),
+              label: const Text('Apply simulated lifecycle'),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () async {
+                await _billing.clearQaSimulation();
+                await _load();
+              },
+              icon: const Icon(Icons.restart_alt),
+              label: const Text('Clear simulated billing'),
             ),
           ),
         ],
@@ -260,6 +360,10 @@ class _PremiumScreenState extends State<PremiumScreen> {
             onManage: _status.plan == PremiumPlan.none ? null : _manage,
           ),
           const SizedBox(height: AppSpacing.md),
+          if (QaBillingGate.enabled) ...[
+            _qaLifecycleCard(),
+            const SizedBox(height: AppSpacing.md),
+          ],
           if (QaEntitlementGate.enabled) ...[
             _qaEntitlementCard(),
             const SizedBox(height: AppSpacing.md),
@@ -274,7 +378,9 @@ class _PremiumScreenState extends State<PremiumScreen> {
             plan: PremiumPlan.plus,
             activePlan: _status.plan,
             priceLabel: _priceFor(PremiumPlan.plus),
-            actionLabel: 'Choose Breakout Plus',
+            actionLabel: _billing.isQaBilling
+                ? 'Simulate Plus purchase'
+                : 'Choose Breakout Plus',
             onPressed:
                 purchaseEnabled ? () => _purchase(PremiumPlan.plus) : null,
           ),
@@ -283,7 +389,9 @@ class _PremiumScreenState extends State<PremiumScreen> {
             plan: PremiumPlan.plusAi,
             activePlan: _status.plan,
             priceLabel: _priceFor(PremiumPlan.plusAi),
-            actionLabel: 'Choose Breakout Plus AI',
+            actionLabel: _billing.isQaBilling
+                ? 'Simulate Plus AI purchase'
+                : 'Choose Breakout Plus AI',
             onPressed:
                 purchaseEnabled ? () => _purchase(PremiumPlan.plusAi) : null,
           ),

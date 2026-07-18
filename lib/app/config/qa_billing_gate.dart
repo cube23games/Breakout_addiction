@@ -1,0 +1,16 @@
+class QaBillingGate {
+  const QaBillingGate._();
+
+  static const bool _requested = bool.fromEnvironment(
+    'BREAKOUT_QA_BILLING',
+    defaultValue: false,
+  );
+
+  static const String _buildChannel = String.fromEnvironment(
+    'BREAKOUT_BUILD_CHANNEL',
+    defaultValue: 'public',
+  );
+
+  static bool get enabled =>
+      _requested && _buildChannel == 'qa';
+}

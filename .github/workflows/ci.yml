@@ -115,6 +115,7 @@ jobs:
           python3 tools/verify_ba59.py
           python3 tools/verify_ba60.py
           python3 tools/verify_ba61.py
+          python3 tools/verify_ba62.py
 
       - name: Configure isolated QA Android release
         shell: bash
@@ -138,6 +139,7 @@ jobs:
             --build-number="$BASE_BUILD_NUMBER" \
             --dart-define=BREAKOUT_BUILD_CHANNEL=qa \
             --dart-define=BREAKOUT_QA_ENTITLEMENTS=true \
+            --dart-define=BREAKOUT_QA_BILLING=true \
             --dart-define=BREAKOUT_EXPECTED_PACKAGE=com.slimnation.breakoutaddiction.qa \
             --dart-define=BREAKOUT_ALLOWED_SIGNING_SHA256="$BREAKOUT_ALLOWED_SIGNING_SHA256"
 

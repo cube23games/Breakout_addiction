@@ -1,5 +1,6 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../app/config/qa_billing_gate.dart';
 import '../../../app/config/qa_entitlement_gate.dart';
 import '../../../core/integrity/app_integrity_controller.dart';
 import '../../../core/storage/local_data_safety.dart';
@@ -37,6 +38,27 @@ class PremiumAccessRepository {
         statusMessage:
             'Paid features are unavailable because app integrity could not be confirmed. Core Rescue and recovery tools remain available.',
       );
+    }
+
+    if (QaBillingGate.enabled) {
+      final entitlement = await _entitlementRepository.read();
+      if (entitlement != null) {
+        final plan = SubscriptionAccessPolicy.effectivePlan(
+          entitlement,
+          now: DateTime.now().toUtc(),
+        );
+        return PremiumStatus(
+          plan: plan,
+          showUpgradePrompts: showPrompts,
+          lifecycle: entitlement.lifecycle,
+          source: entitlement.verificationSource,
+          productId: entitlement.productId,
+          expiresAt: entitlement.expiresAt,
+          statusMessage: plan == PremiumPlan.none
+              ? 'QA billing lifecycle does not currently grant paid access.'
+              : '${plan.label} is active through QA billing simulation.',
+        );
+      }
     }
 
     if (QaEntitlementGate.enabled && integrity.allowsPaidFeatures) {
