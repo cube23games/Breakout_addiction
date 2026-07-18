@@ -9,6 +9,13 @@ on:
 jobs:
   build-android:
     runs-on: ubuntu-latest
+    env:
+      BREAKOUT_APP_SIGNING_KEYSTORE_BASE64: ${{ secrets.BREAKOUT_APP_SIGNING_KEYSTORE_BASE64 }}
+      BREAKOUT_APP_SIGNING_STORE_PASSWORD: ${{ secrets.BREAKOUT_APP_SIGNING_STORE_PASSWORD }}
+      BREAKOUT_APP_SIGNING_KEY_PASSWORD: ${{ secrets.BREAKOUT_APP_SIGNING_KEY_PASSWORD }}
+      BREAKOUT_APP_SIGNING_KEY_ALIAS: ${{ secrets.BREAKOUT_APP_SIGNING_KEY_ALIAS }}
+      BREAKOUT_APP_SIGNING_CERT_SHA256: ${{ secrets.BREAKOUT_APP_SIGNING_CERT_SHA256 }}
+      BREAKOUT_PLAY_SIGNING_CERT_SHA256: ${{ secrets.BREAKOUT_PLAY_SIGNING_CERT_SHA256 }}
 
     steps:
       - name: Checkout
@@ -29,20 +36,67 @@ jobs:
       - name: Flutter version
         run: flutter --version
 
-      - name: Create platform folders if missing
+      - name: Validate and restore permanent signing key
+        shell: bash
         run: |
-          if [ ! -d android ]; then
-            flutter create --platforms=android --project-name breakout_addiction .
+          set -euo pipefail
+
+          for name in \
+            BREAKOUT_APP_SIGNING_KEYSTORE_BASE64 \
+            BREAKOUT_APP_SIGNING_STORE_PASSWORD \
+            BREAKOUT_APP_SIGNING_KEY_PASSWORD \
+            BREAKOUT_APP_SIGNING_KEY_ALIAS \
+            BREAKOUT_APP_SIGNING_CERT_SHA256
+          do
+            if [ -z "${!name:-}" ]; then
+              echo "Missing required GitHub secret: $name"
+              exit 1
+            fi
+          done
+
+          KEYSTORE="$RUNNER_TEMP/breakout-addiction-app-signing.p12"
+          printf '%s' "$BREAKOUT_APP_SIGNING_KEYSTORE_BASE64" |
+            base64 --decode > "$KEYSTORE"
+          chmod 600 "$KEYSTORE"
+          echo "BREAKOUT_APP_SIGNING_KEYSTORE_PATH=$KEYSTORE" >> "$GITHUB_ENV"
+
+          NORMALIZED_CERT="$(
+            printf '%s' "$BREAKOUT_APP_SIGNING_CERT_SHA256" |
+              tr -cd 'A-Fa-f0-9' |
+              tr 'a-f' 'A-F'
+          )"
+          if [ "${#NORMALIZED_CERT}" -ne 64 ]; then
+            echo "Signing-certificate SHA-256 secret is invalid."
+            exit 1
           fi
 
-      - name: Configure Android scheduled notifications
-        run: python3 tools/patch_android_notifications.py
+          ALLOWED_CERTS="$NORMALIZED_CERT"
+          if [ -n "${BREAKOUT_PLAY_SIGNING_CERT_SHA256:-}" ]; then
+            PLAY_CERT="$(
+              printf '%s' "$BREAKOUT_PLAY_SIGNING_CERT_SHA256" |
+                tr -cd 'A-Fa-f0-9' |
+                tr 'a-f' 'A-F'
+            )"
+            if [ "${#PLAY_CERT}" -ne 64 ]; then
+              echo "Play signing-certificate SHA-256 secret is invalid."
+              exit 1
+            fi
+            ALLOWED_CERTS="$ALLOWED_CERTS,$PLAY_CERT"
+          fi
+
+          echo "BREAKOUT_ALLOWED_SIGNING_SHA256=$ALLOWED_CERTS" >> "$GITHUB_ENV"
+
+      - name: Define monotonic update version codes
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE_BUILD_NUMBER=$((100000 + GITHUB_RUN_NUMBER * 2))
+          UPDATE_BUILD_NUMBER=$((BASE_BUILD_NUMBER + 1))
+          echo "BASE_BUILD_NUMBER=$BASE_BUILD_NUMBER" >> "$GITHUB_ENV"
+          echo "UPDATE_BUILD_NUMBER=$UPDATE_BUILD_NUMBER" >> "$GITHUB_ENV"
 
       - name: Get packages
         run: flutter pub get
-
-      - name: Generate branded launcher icons
-        run: dart run flutter_launcher_icons
 
       - name: Analyze
         run: flutter analyze --no-fatal-infos
@@ -50,150 +104,169 @@ jobs:
       - name: Run tests
         run: flutter test
 
-      - name: Enable Android desugaring for notifications
+      - name: Run source security verifier
         run: |
-          python3 - <<'PY2'
-          from pathlib import Path
+          python3 tools/verify_ba56.py
+          python3 tools/verify_ba56a.py
+          python3 tools/verify_ba56b.py
+          python3 tools/verify_ba56g.py
+          python3 tools/verify_ba57_58.py
 
-          groovy = Path('android/app/build.gradle')
-          kts = Path('android/app/build.gradle.kts')
-
-          if groovy.exists():
-              text = groovy.read_text(encoding='utf-8')
-
-              if 'coreLibraryDesugaringEnabled true' not in text:
-                  if 'compileOptions {' in text:
-                      text = text.replace(
-                          'compileOptions \{\n',
-                          'compileOptions {\n        coreLibraryDesugaringEnabled true\n',
-                          1,
-                      )
-                  elif 'android {\n' in text:
-                      text = text.replace(
-                          'android {\n',
-                          'android {\n    compileOptions {\n        coreLibraryDesugaringEnabled true\n        sourceCompatibility JavaVersion.VERSION_1_8\n        targetCompatibility JavaVersion.VERSION_1_8\n    }\n',
-                          1,
-                      )
-
-              if "coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.5'" not in text:
-                  if 'dependencies {' in text:
-                      text = text.replace(
-                          'dependencies {\n',
-                          "dependencies {\n    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.5'\n",
-                          1,
-                      )
-                  else:
-                      text += "\n\ndependencies {\n    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.5'\n}\n"
-
-              groovy.write_text(text, encoding='utf-8')
-              print(f'Patched {groovy}')
-
-          elif kts.exists():
-              text = kts.read_text(encoding='utf-8')
-
-              if 'isCoreLibraryDesugaringEnabled = true' not in text:
-                  if 'compileOptions {' in text:
-                      text = text.replace(
-                          'compileOptions {\n',
-                          'compileOptions {\n        isCoreLibraryDesugaringEnabled = true\n',
-                          1,
-                      )
-                  elif 'android {\n' in text:
-                      text = text.replace(
-                          'android {\n',
-                          'android {\n    compileOptions {\n        isCoreLibraryDesugaringEnabled = true\n        sourceCompatibility = JavaVersion.VERSION_1_8\n        targetCompatibility = JavaVersion.VERSION_1_8\n    }\n',
-                          1,
-                      )
-
-              if 'coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")' not in text:
-                  if 'dependencies {' in text:
-                      text = text.replace(
-                          'dependencies {\n',
-                          'dependencies {\n    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")\n',
-                          1,
-                      )
-                  else:
-                      text += '\n\ndependencies {\n    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")\n}\n'
-
-              kts.write_text(text, encoding='utf-8')
-              print(f'Patched {kts}')
-
-          else:
-              raise SystemExit('android/app/build.gradle(.kts) not found in CI workspace')
-          PY2
-
-          grep -n "coreLibraryDesugaring\|desugar_jdk_libs\|compileOptions" android/app/build.gradle android/app/build.gradle.kts 2>/dev/null || true
-
-      - name: Build QA entitlement APK
+      - name: Configure isolated QA Android release
+        shell: bash
         run: |
-          flutter build apk --release --dart-define=BREAKOUT_QA_ENTITLEMENTS=true
-          mkdir -p build/qa-artifacts
-          cp build/app/outputs/flutter-apk/app-release.apk build/qa-artifacts/breakout-addiction-qa-entitlements.apk
-      - name: Build APK
-        run: flutter build apk --release
+          set -euo pipefail
+          rm -rf android
+          # Create platform folders if missing.
+          flutter create --platforms=android --project-name breakout_addiction .
+          # Configure Android scheduled notifications.
+          python3 tools/patch_android_notifications.py
+          python3 tools/patch_android_release_security.py --channel qa
+          dart run flutter_launcher_icons
+
+      - name: Build isolated QA APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          flutter build apk \
+            --release \
+            --build-name=0.1.0-qa \
+            --build-number="$BASE_BUILD_NUMBER" \
+            --dart-define=BREAKOUT_BUILD_CHANNEL=qa \
+            --dart-define=BREAKOUT_QA_ENTITLEMENTS=true \
+            --dart-define=BREAKOUT_EXPECTED_PACKAGE=com.slimnation.breakoutaddiction.qa \
+            --dart-define=BREAKOUT_ALLOWED_SIGNING_SHA256="$BREAKOUT_ALLOWED_SIGNING_SHA256"
+
+          mkdir -p build/security-artifacts
+          cp \
+            build/app/outputs/flutter-apk/app-release.apk \
+            build/security-artifacts/breakout-addiction-qa.apk
+
+          python3 tools/verify_android_release_artifact.py \
+            --artifact build/security-artifacts/breakout-addiction-qa.apk \
+            --expected-package com.slimnation.breakoutaddiction.qa \
+            --expected-version-code "$BASE_BUILD_NUMBER" \
+            --expected-cert "$BREAKOUT_APP_SIGNING_CERT_SHA256"
+
+      - name: Configure permanent public Android release
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf android
+          # Create platform folders if missing.
+          flutter create --platforms=android --project-name breakout_addiction .
+          # Configure Android scheduled notifications.
+          python3 tools/patch_android_notifications.py
+          python3 tools/patch_android_release_security.py --channel public
+          dart run flutter_launcher_icons
+
+      - name: Build public baseline APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          flutter build apk \
+            --release \
+            --build-name=0.1.0 \
+            --build-number="$BASE_BUILD_NUMBER" \
+            --dart-define=BREAKOUT_BUILD_CHANNEL=public \
+            --dart-define=BREAKOUT_EXPECTED_PACKAGE=com.slimnation.breakoutaddiction \
+            --dart-define=BREAKOUT_ALLOWED_SIGNING_SHA256="$BREAKOUT_ALLOWED_SIGNING_SHA256"
+
+          cp \
+            build/app/outputs/flutter-apk/app-release.apk \
+            build/security-artifacts/breakout-addiction-public-baseline.apk
+
+          python3 tools/verify_android_release_artifact.py \
+            --artifact build/security-artifacts/breakout-addiction-public-baseline.apk \
+            --expected-package com.slimnation.breakoutaddiction \
+            --expected-version-code "$BASE_BUILD_NUMBER" \
+            --expected-cert "$BREAKOUT_APP_SIGNING_CERT_SHA256"
+
+      - name: Build public update APK and AAB
+        shell: bash
+        run: |
+          set -euo pipefail
+          flutter build apk \
+            --release \
+            --build-name=0.1.0 \
+            --build-number="$UPDATE_BUILD_NUMBER" \
+            --dart-define=BREAKOUT_BUILD_CHANNEL=public \
+            --dart-define=BREAKOUT_EXPECTED_PACKAGE=com.slimnation.breakoutaddiction \
+            --dart-define=BREAKOUT_ALLOWED_SIGNING_SHA256="$BREAKOUT_ALLOWED_SIGNING_SHA256"
+
+          cp \
+            build/app/outputs/flutter-apk/app-release.apk \
+            build/security-artifacts/breakout-addiction-public-update.apk
+
+          python3 tools/verify_android_release_artifact.py \
+            --artifact build/security-artifacts/breakout-addiction-public-update.apk \
+            --expected-package com.slimnation.breakoutaddiction \
+            --expected-version-code "$UPDATE_BUILD_NUMBER" \
+            --expected-cert "$BREAKOUT_APP_SIGNING_CERT_SHA256"
+
+          flutter build appbundle \
+            --release \
+            --build-name=0.1.0 \
+            --build-number="$UPDATE_BUILD_NUMBER" \
+            --dart-define=BREAKOUT_BUILD_CHANNEL=public \
+            --dart-define=BREAKOUT_EXPECTED_PACKAGE=com.slimnation.breakoutaddiction \
+            --dart-define=BREAKOUT_ALLOWED_SIGNING_SHA256="$BREAKOUT_ALLOWED_SIGNING_SHA256"
+
+          cp \
+            build/app/outputs/bundle/release/app-release.aab \
+            build/security-artifacts/breakout-addiction-public-update.aab
+
+          python3 tools/verify_android_release_artifact.py \
+            --artifact build/security-artifacts/breakout-addiction-public-update.aab \
+            --expected-cert "$BREAKOUT_APP_SIGNING_CERT_SHA256"
 
       - name: Verify notification icon in release APK
         run: |
-          python3 - <<'PY3'
+          python3 - <<'PY'
           from pathlib import Path
           import zipfile
 
           apk = Path(
-              'build/app/outputs/flutter-apk/app-release.apk'
+              'build/security-artifacts/'
+              'breakout-addiction-public-update.apk'
           )
-
-          if not apk.is_file():
-              raise SystemExit(
-                  f'Release APK was not found: {apk}'
-              )
-
           with zipfile.ZipFile(apk) as archive:
               resources = archive.read('resources.arsc')
 
           resource_name = 'ic_stat_breakout'
-
-          found = (
-              resource_name.encode('utf-8') in resources
-              or resource_name.encode('utf-16le') in resources
-          )
-
-          if not found:
+          if (
+              resource_name.encode('utf-8') not in resources
+              and resource_name.encode('utf-16le') not in resources
+          ):
               raise SystemExit(
                   'Release APK stripped @drawable/ic_stat_breakout.'
               )
 
-          print(
-              'Release APK contains the Breakout notification icon '
-              'resource.'
-          )
-          PY3
+          print('Public update APK contains the notification icon.')
+          PY
 
-      - name: Build AAB
-        run: flutter build appbundle --release
-
-      - name: List build outputs
-        run: find build -maxdepth 7 -type f | sort
-
-      - name: Upload APK artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: breakout-addiction-apk
-          path: build/app/outputs/**/*.apk
-          if-no-files-found: error
-          retention-days: 7
-
-      - name: Upload QA entitlement APK artifact
+      - name: Upload isolated QA APK
         uses: actions/upload-artifact@v4
         with:
           name: breakout-addiction-qa-apk
-          path: build/qa-artifacts/breakout-addiction-qa-entitlements.apk
+          path: build/security-artifacts/breakout-addiction-qa.apk
           if-no-files-found: error
           retention-days: 7
 
-      - name: Upload AAB artifact
+      - name: Upload public update-test APKs
         uses: actions/upload-artifact@v4
         with:
-          name: breakout-addiction-aab
-          path: build/app/outputs/**/*.aab
+          name: breakout-addiction-public-update-test
+          path: |
+            build/security-artifacts/breakout-addiction-public-baseline.apk
+            build/security-artifacts/breakout-addiction-public-update.apk
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Upload public AAB
+        uses: actions/upload-artifact@v4
+        with:
+          name: breakout-addiction-public-aab
+          path: build/security-artifacts/breakout-addiction-public-update.aab
           if-no-files-found: error
           retention-days: 7

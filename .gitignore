@@ -8,5 +8,12 @@ build/
 .idea/
 android/.gradle/
 android/local.properties
+android/key.properties
 ios/Flutter/.last_build_id
 *.log
+
+# Permanent Android signing material must never enter Git.
+*.jks
+*.keystore
+*.p12
+.breakout-signing/

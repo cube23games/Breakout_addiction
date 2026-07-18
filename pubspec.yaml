@@ -2,7 +2,7 @@ name: breakout_addiction
 description: Android-first recovery app for compulsive pornography use.
 publish_to: "none"
 
-version: 0.1.0+1
+version: 0.1.0+2
 
 environment:
   sdk: ">=3.3.0 <4.0.0"

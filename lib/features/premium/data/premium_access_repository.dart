@@ -1,5 +1,7 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../app/config/qa_entitlement_gate.dart';
+import '../../../core/integrity/app_integrity_controller.dart';
 import '../../../core/storage/local_data_safety.dart';
 import '../domain/premium_plan.dart';
 import '../domain/premium_status.dart';
@@ -11,27 +13,44 @@ class PremiumAccessRepository {
 
   Future<PremiumStatus> getStatus() async {
     final prefs = await SharedPreferences.getInstance();
-    final rawPlan = prefs.getString(_premiumPlanKey);
-    final legacyUnlocked = prefs.getBool(_legacyPremiumUnlockedKey) ?? false;
+    final integrity =
+        await AppIntegrityController.instance.ensureChecked();
 
-    final fallbackPlan = legacyUnlocked ? PremiumPlan.plus : PremiumPlan.none;
-    final plan = LocalDataSafety.enumByName(
-      PremiumPlan.values,
-      rawPlan,
-      fallbackPlan,
-    );
+    PremiumPlan plan = PremiumPlan.none;
+
+    if (QaEntitlementGate.enabled && integrity.allowsPaidFeatures) {
+      final rawPlan = prefs.getString(_premiumPlanKey);
+      final legacyUnlocked =
+          prefs.getBool(_legacyPremiumUnlockedKey) ?? false;
+      final fallbackPlan =
+          legacyUnlocked ? PremiumPlan.plus : PremiumPlan.none;
+
+      plan = LocalDataSafety.enumByName(
+        PremiumPlan.values,
+        rawPlan,
+        fallbackPlan,
+      );
+    }
 
     return PremiumStatus(
       plan: plan,
-      showUpgradePrompts: prefs.getBool(_upgradePromptsKey) ?? true,
+      showUpgradePrompts:
+          prefs.getBool(_upgradePromptsKey) ?? true,
     );
   }
 
   Future<void> saveStatus(PremiumStatus status) async {
+    await _requireTrustedQaWrite();
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_premiumPlanKey, status.plan.name);
-    await prefs.setBool(_legacyPremiumUnlockedKey, status.isUnlocked);
-    await prefs.setBool(_upgradePromptsKey, status.showUpgradePrompts);
+    await prefs.setBool(
+      _legacyPremiumUnlockedKey,
+      status.isUnlocked,
+    );
+    await prefs.setBool(
+      _upgradePromptsKey,
+      status.showUpgradePrompts,
+    );
   }
 
   Future<void> setPlan(PremiumPlan plan) async {
@@ -40,11 +59,29 @@ class PremiumAccessRepository {
   }
 
   Future<void> setUnlocked(bool value) async {
-    await setPlan(value ? PremiumPlan.plus : PremiumPlan.none);
+    await setPlan(
+      value ? PremiumPlan.plus : PremiumPlan.none,
+    );
   }
 
   Future<void> setUpgradePrompts(bool value) async {
-    final current = await getStatus();
-    await saveStatus(current.copyWith(showUpgradePrompts: value));
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_upgradePromptsKey, value);
+  }
+
+  Future<void> _requireTrustedQaWrite() async {
+    if (!QaEntitlementGate.enabled) {
+      throw StateError(
+        'Local premium plan writes are disabled in public builds.',
+      );
+    }
+
+    final integrity =
+        await AppIntegrityController.instance.ensureChecked();
+    if (!integrity.allowsPaidFeatures) {
+      throw StateError(
+        'Local premium plan writes are blocked by app integrity.',
+      );
+    }
   }
 }

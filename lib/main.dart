@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import 'app/breakout_app.dart';
+import 'core/integrity/app_integrity_controller.dart';
 import 'features/notifications/data/breakout_notification_service.dart';
 
 void main() {
@@ -10,6 +11,7 @@ void main() {
   runApp(const BreakoutApp());
 
   WidgetsBinding.instance.addPostFrameCallback((_) {
+    unawaited(AppIntegrityController.instance.start());
     unawaited(_initializeNotificationsSafely());
   });
 }
