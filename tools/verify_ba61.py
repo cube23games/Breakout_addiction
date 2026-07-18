@@ -74,6 +74,51 @@ if repository.is_file():
             "QaEntitlementGate.enabled && integrity.allowsPaidFeatures" not in text:
         errors.append("legacy local premium state is trusted outside QA")
 
+
+status_card = ROOT / (
+    "lib/features/premium/billing/presentation/widgets/"
+    "subscription_status_card.dart"
+)
+if status_card.is_file():
+    text = status_card.read_text(encoding="utf-8")
+    required_direct_imports = [
+        "../../domain/subscription_lifecycle.dart",
+        "../../../domain/premium_plan.dart",
+    ]
+    for direct_import in required_direct_imports:
+        if direct_import not in text:
+            errors.append(
+                "subscription status card must directly import "
+                + direct_import
+            )
+
+billing_controller = ROOT / (
+    "lib/features/premium/billing/presentation/"
+    "premium_billing_controller.dart"
+)
+if billing_controller.is_file():
+    text = billing_controller.read_text(encoding="utf-8")
+    if (
+        "import '../domain/verified_entitlement.dart';" in text
+        and "VerifiedEntitlement(" not in text
+    ):
+        errors.append(
+            "premium billing controller retains an unused "
+            "verified_entitlement import"
+        )
+
+premium_screen = ROOT / (
+    "lib/features/premium/presentation/premium_screen.dart"
+)
+if premium_screen.is_file():
+    text = premium_screen.read_text(encoding="utf-8")
+    if (
+        "core/constants/route_names.dart" in text
+        and "RouteNames." not in text
+    ):
+        errors.append("premium screen retains an unused route_names import")
+
+
 if errors:
     print("BA-61 verification failed:")
     for error in errors:

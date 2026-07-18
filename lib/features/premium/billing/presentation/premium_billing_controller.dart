@@ -13,7 +13,6 @@ import '../domain/billing_product_ids.dart';
 import '../domain/billing_purchase_event.dart';
 import '../domain/billing_store_product.dart';
 import '../domain/billing_store_snapshot.dart';
-import '../domain/verified_entitlement.dart';
 
 class PremiumBillingController extends ChangeNotifier {
   PremiumBillingController._();

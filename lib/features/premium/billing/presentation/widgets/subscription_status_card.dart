@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../../../../../app/theme/app_spacing.dart';
 import '../../../../../app/theme/app_typography.dart';
 import '../../../../../core/widgets/info_card.dart';
+import '../../domain/subscription_lifecycle.dart';
+import '../../../domain/premium_plan.dart';
 import '../../../domain/premium_status.dart';
 
 class SubscriptionStatusCard extends StatelessWidget {
