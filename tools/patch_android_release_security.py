@@ -273,14 +273,16 @@ class MainActivity : FlutterActivity() {{
         }}
 
         val signatures = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {{
-            val signingInfo = packageInfo.signingInfo
-            if (signingInfo.hasMultipleSigners()) {{
-                signingInfo.apkContentsSigners.toList()
+            val signingInfo =
+                packageInfo.signingInfo ?: return emptyList()
+            val signerArray = if (signingInfo.hasMultipleSigners()) {{
+                signingInfo.apkContentsSigners
             }} else {{
-                signingInfo.signingCertificateHistory.toList()
+                signingInfo.signingCertificateHistory
             }}
+            signerArray?.toList() ?: emptyList()
         }} else {{
-            packageInfo.signatures.toList()
+            packageInfo.signatures?.toList() ?: emptyList()
         }}
 
         return signatures.map {{ signature ->

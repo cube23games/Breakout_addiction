@@ -79,6 +79,9 @@ require(
         "BREAKOUT_APP_SIGNING_KEYSTORE_PATH",
         "GET_SIGNING_CERTIFICATES",
         "MethodChannel",
+        "packageInfo.signingInfo ?: return emptyList()",
+        "signerArray?.toList() ?: emptyList()",
+        "packageInfo.signatures?.toList() ?: emptyList()",
         "--channel",
     ],
 )
@@ -219,6 +222,18 @@ if patcher.is_file():
                 errors.append(
                     f"patcher {mode} did not generate MainActivity"
                 )
+            else:
+                generated_text = generated.read_text(encoding="utf-8")
+                for snippet in (
+                    "packageInfo.signingInfo ?: return emptyList()",
+                    "signerArray?.toList() ?: emptyList()",
+                    "packageInfo.signatures?.toList() ?: emptyList()",
+                ):
+                    if snippet not in generated_text:
+                        errors.append(
+                            f"patcher {mode} generated unsafe signing lookup: "
+                            f"missing {snippet}"
+                        )
 
 if errors:
     print("BA-57/58 verification failed:")
