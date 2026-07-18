@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../core/constants/route_names.dart';
 import '../core/integrity/app_integrity_banner.dart';
+import '../features/premium/billing/presentation/premium_billing_controller.dart';
 import '../features/privacy/presentation/lock_session_controller.dart';
 import 'app_router.dart';
 import 'theme/app_theme.dart';
@@ -16,16 +19,20 @@ class BreakoutApp extends StatefulWidget {
 class _BreakoutAppState extends State<BreakoutApp> {
   final LockSessionController _lockSession =
       LockSessionController.instance;
+  final PremiumBillingController _billing =
+      PremiumBillingController.instance;
 
   @override
   void initState() {
     super.initState();
     _lockSession.start();
+    unawaited(_billing.start());
   }
 
   @override
   void dispose() {
     _lockSession.stop();
+    unawaited(_billing.stop());
     super.dispose();
   }
 
