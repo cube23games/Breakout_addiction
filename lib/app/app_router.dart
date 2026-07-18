@@ -28,6 +28,7 @@ import '../features/premium_tools/presentation/premium_local_guidance_screen.dar
 import '../features/premium_tools/presentation/private_pattern_screen.dart';
 import '../features/premium_tools/presentation/premium_insights_screen.dart';
 import '../features/premium_tools/presentation/recovery_journeys_screen.dart';
+import '../features/premium_tools/presentation/recovery_programs_screen.dart';
 import '../features/premium_tools/presentation/recovery_report_screen.dart';
 import '../features/premium_tools/presentation/widgets/premium_tool_gate.dart';
 import '../features/privacy/domain/lock_scope.dart';
@@ -184,6 +185,16 @@ class AppRouter {
             child: PremiumToolGate(
               featureId: 'advanced_insights',
               child: PremiumInsightsScreen(),
+            ),
+          ),
+        );
+      case RouteNames.recoveryPrograms:
+        return MaterialPageRoute(
+          builder: (_) => const ProtectedRouteGate(
+            scope: LockScope.support,
+            child: PremiumToolGate(
+              featureId: 'structured_programs',
+              child: RecoveryProgramsScreen(),
             ),
           ),
         );

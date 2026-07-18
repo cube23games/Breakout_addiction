@@ -80,6 +80,13 @@ class PremiumFeatureCatalog {
       category: PremiumFeatureCategory.planning,
     ),
     PremiumFeature(
+      id: 'structured_programs',
+      title: 'Structured Recovery Programs',
+      description: 'Follow substantial 7-, 10-, 14-, and 30-day programs for foundations, triggers, nighttime risk, pressure, rebuilding, and optional Christian renewal.',
+      requiredPlan: PremiumPlan.plus,
+      category: PremiumFeatureCategory.planning,
+    ),
+    PremiumFeature(
       id: 'recovery_journeys',
       title: 'Multi-Step Recovery Journeys',
       description: 'Structured secular and optional Christian recovery journeys with progress.',

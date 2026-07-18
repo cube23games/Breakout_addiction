@@ -50,10 +50,10 @@ void main() {
         .where((track) => track.premiumOnly)
         .toList();
 
-    expect(plusTracks.length, greaterThanOrEqualTo(2));
+    expect(plusTracks.length, greaterThanOrEqualTo(9));
     expect(
       plusTracks.expand((track) => track.lessons).length,
-      greaterThanOrEqualTo(5),
+      greaterThanOrEqualTo(25),
     );
   });
 

@@ -111,6 +111,15 @@ class PremiumToolsScreen extends StatelessWidget {
               const SizedBox(height: AppSpacing.md),
               _toolCard(
                 context,
+                title: 'Guided Recovery Programs',
+                description:
+                    'Work through substantial 7-, 10-, 14-, and 30-day programs with private on-device progress.',
+                icon: Icons.view_timeline_outlined,
+                route: RouteNames.recoveryPrograms,
+              ),
+              const SizedBox(height: AppSpacing.md),
+              _toolCard(
+                context,
                 title: 'Recovery Journeys',
                 description:
                     'Work through secular or optional faith-sensitive multi-step journeys.',

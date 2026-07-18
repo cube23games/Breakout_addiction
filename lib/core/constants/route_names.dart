@@ -17,6 +17,7 @@ class RouteNames {
   static const premiumInsights = '/premium/advanced-insights';
   static const guidedRoutines = '/premium/guided-routines';
   static const recoveryJourneys = '/premium/recovery-journeys';
+  static const recoveryPrograms = '/premium/recovery-programs';
   static const recoveryReport = '/premium/recovery-report';
   static const aiTools = '/premium/ai-tools';
   static const premiumPreferences = '/premium/preferences';
