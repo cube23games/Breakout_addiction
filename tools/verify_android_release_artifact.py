@@ -54,6 +54,23 @@ def normalize(value: str) -> str:
     return re.sub(r"[^A-Fa-f0-9]", "", value).upper()
 
 
+def extract_apk_certificate_sha256(output: str, path: Path) -> str:
+    marker = "certificate SHA-256 digest:"
+
+    for line in output.splitlines():
+        if marker not in line:
+            continue
+
+        candidate = normalize(line.split(marker, 1)[1])
+        if len(candidate) == 64:
+            return candidate
+
+    stop(
+        f"Could not read APK signing certificate from {path}.\n"
+        f"apksigner output:\n{output}"
+    )
+
+
 def verify_apk(
     path: Path,
     expected_package: str,
@@ -88,14 +105,7 @@ def verify_apk(
     cert_output = run(
         [apksigner, "verify", "--print-certs", str(path)]
     )
-    digest_match = re.search(
-        r"Signer #\d+ certificate SHA-256 digest:\s*([A-Fa-f0-9:]+)",
-        cert_output,
-    )
-    if not digest_match:
-        stop(f"Could not read APK signing certificate from {path}.")
-
-    actual = normalize(digest_match.group(1))
+    actual = extract_apk_certificate_sha256(cert_output, path)
     expected = normalize(expected_cert)
     if actual != expected:
         stop(

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import importlib.util
 import os
 import subprocess
 import tempfile
@@ -83,6 +84,16 @@ require(
         "signerArray?.toList() ?: emptyList()",
         "packageInfo.signatures?.toList() ?: emptyList()",
         "--channel",
+    ],
+)
+require(
+    "tools/verify_android_release_artifact.py",
+    [
+        "def extract_apk_certificate_sha256",
+        'marker = "certificate SHA-256 digest:"',
+        "line.split(marker, 1)[1]",
+        "if len(candidate) == 64",
+        "apksigner output:",
     ],
 )
 require(
@@ -234,6 +245,42 @@ if patcher.is_file():
                             f"patcher {mode} generated unsafe signing lookup: "
                             f"missing {snippet}"
                         )
+
+
+artifact_verifier = ROOT / "tools/verify_android_release_artifact.py"
+if artifact_verifier.is_file():
+    spec = importlib.util.spec_from_file_location(
+        "verify_android_release_artifact",
+        artifact_verifier,
+    )
+    if spec is None or spec.loader is None:
+        errors.append("could not import Android artifact verifier")
+    else:
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+
+        parser_cases = {
+            (
+                "Signer #1 certificate SHA-256 digest: "
+                + "AB" * 32
+            ): "AB" * 32,
+            (
+                "Signer (minSdkVersion=24, maxSdkVersion=32) "
+                "certificate SHA-256 digest: "
+                + "CD" * 32
+            ): "CD" * 32,
+        }
+
+        for output, expected in parser_cases.items():
+            actual = module.extract_apk_certificate_sha256(
+                output,
+                Path("synthetic.apk"),
+            )
+            if actual != expected:
+                errors.append(
+                    "APK certificate parser rejected a supported "
+                    "apksigner signer label"
+                )
 
 if errors:
     print("BA-57/58 verification failed:")
