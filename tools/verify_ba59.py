@@ -62,6 +62,24 @@ if catalog.is_file():
         if not re.search(pattern, text, flags=re.S):
             errors.append(f"core feature {core_id} is not explicitly never-paywall")
 
+
+premium_screen = ROOT / "lib/features/premium/presentation/premium_screen.dart"
+if premium_screen.is_file():
+    text = premium_screen.read_text(encoding="utf-8")
+    if "return const Scaffold(\n        appBar: AppBar(" in text:
+        errors.append(
+            "Premium loading state uses const Scaffold with non-const AppBar"
+        )
+    for needle in (
+        "return Scaffold(",
+        "appBar: AppBar(title: const Text('Premium'))",
+        "body: const Center(child: CircularProgressIndicator())",
+    ):
+        if needle not in text:
+            errors.append(
+                f"premium loading state missing analyzer-safe marker {needle!r}"
+            )
+
 plan = ROOT / "lib/features/premium/domain/premium_plan.dart"
 if plan.is_file():
     text = plan.read_text(encoding="utf-8")
