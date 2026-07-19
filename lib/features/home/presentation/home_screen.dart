@@ -11,7 +11,7 @@ import 'widgets/daily_quote_card.dart';
 import 'widgets/demo_readiness_card.dart';
 import 'widgets/entry_status_card.dart';
 import 'widgets/home_hero_card.dart';
-import 'widgets/premium_guidance_card.dart';
+import 'widgets/active_recovery_plan_card.dart';
 import 'widgets/progress_snapshot_card.dart';
 import 'widgets/quick_actions_row.dart';
 import 'widgets/risk_status_card.dart';
@@ -115,7 +115,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
             const DailyQuoteCard(),
             const SizedBox(height: AppSpacing.md),
-            const PremiumGuidanceCard(),
+            const ActiveRecoveryPlanCard(),
             const SizedBox(height: AppSpacing.md),
             const RiskStatusCard(),
             const SizedBox(height: AppSpacing.md),

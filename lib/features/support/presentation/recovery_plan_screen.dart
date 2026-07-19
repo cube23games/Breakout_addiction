@@ -112,7 +112,37 @@ class _RecoveryPlanScreenState extends State<RecoveryPlanScreen> {
         .toList();
   }
 
+  bool get _hasMeaningfulPlanEntry {
+    final baseValues = <String>[
+      _riskyPlacesController.text,
+      _firstActionController.text,
+      _secondActionController.text,
+      _groundingActionController.text,
+      _supportPersonController.text,
+      _fallbackPlanController.text,
+    ];
+    final plusValues = <String>[
+      _warningSignsController.text,
+      _triggersController.text,
+      _highRiskTimesController.text,
+      _postSlipPlanController.text,
+      _morningCommitmentController.text,
+      _eveningCommitmentController.text,
+    ];
+    final values = _hasPlus ? <String>[...baseValues, ...plusValues] : baseValues;
+    return values.any((value) => value.trim().isNotEmpty);
+  }
+
   Future<void> _save() async {
+    if (!_hasMeaningfulPlanEntry) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Add at least one recovery plan entry before saving.'),
+        ),
+      );
+      return;
+    }
+
     setState(() => _saving = true);
 
     final plan = RecoveryPlan(

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../app/theme/app_spacing.dart';
 import '../../../app/theme/app_typography.dart';
 import '../../../core/widgets/info_card.dart';
+import '../../../core/widgets/primary_button.dart';
 import '../data/guided_routine_repository.dart';
 import '../data/premium_preferences_repository.dart';
 import '../data/premium_progress_repository.dart';
@@ -17,13 +18,11 @@ class GuidedRoutinesScreen extends StatefulWidget {
       _GuidedRoutinesScreenState();
 }
 
-class _GuidedRoutinesScreenState
-    extends State<GuidedRoutinesScreen> {
-  final PremiumProgressRepository _progress =
-      PremiumProgressRepository();
+class _GuidedRoutinesScreenState extends State<GuidedRoutinesScreen> {
+  final PremiumProgressRepository _progress = PremiumProgressRepository();
   final PremiumPreferencesRepository _preferences =
       PremiumPreferencesRepository();
-  final Map<String, Set<int>> _completed = <String, Set<int>>{};
+  final Map<String, int> _completedCount = <String, int>{};
   PremiumRoutineFocus _focus = PremiumRoutineFocus.balanced;
   bool _loading = true;
 
@@ -36,8 +35,11 @@ class _GuidedRoutinesScreenState
   Future<void> _load() async {
     final preferences = await _preferences.getPreferences();
     for (final routine in GuidedRoutineRepository.routines) {
-      _completed[routine.id] =
-          await _progress.completedSteps(routine.id);
+      _completedCount[routine.id] =
+          await _progress.contiguousCompletedCount(
+        routine.id,
+        maxCount: routine.steps.length,
+      );
     }
     if (mounted) {
       setState(() {
@@ -47,15 +49,15 @@ class _GuidedRoutinesScreenState
     }
   }
 
-  Future<void> _toggle(
-    GuidedRoutine routine,
-    int index,
-    bool value,
-  ) async {
-    await _progress.setStep(
+  Future<void> _completeCurrent(GuidedRoutine routine) async {
+    final count = _completedCount[routine.id] ?? 0;
+    if (count >= routine.steps.length) {
+      return;
+    }
+    await _progress.setSequentialCount(
       itemId: routine.id,
-      index: index,
-      completed: value,
+      completedCount: count + 1,
+      maxCount: routine.steps.length,
     );
     await _load();
   }
@@ -64,7 +66,6 @@ class _GuidedRoutinesScreenState
     await _progress.reset(routine.id);
     await _load();
   }
-
 
   List<GuidedRoutine> _orderedRoutines() {
     final routines = <GuidedRoutine>[...GuidedRoutineRepository.routines];
@@ -82,9 +83,41 @@ class _GuidedRoutinesScreenState
     return routines;
   }
 
+  Widget _activityTile({
+    required GuidedRoutine routine,
+    required int index,
+    required int completedCount,
+  }) {
+    final completed = index < completedCount;
+    final active = index == completedCount;
+    final locked = index > completedCount;
+
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      leading: Icon(
+        completed
+            ? Icons.check_circle
+            : active
+                ? Icons.radio_button_checked
+                : Icons.lock_outline,
+      ),
+      title: Text(routine.steps[index]),
+      subtitle: Text(
+        completed
+            ? 'Finished'
+            : active
+                ? 'Current activity'
+                : 'Complete the current activity first',
+        style: AppTypography.muted,
+      ),
+      enabled: !locked,
+    );
+  }
+
   Widget _routineCard(GuidedRoutine routine) {
-    final completed = _completed[routine.id] ?? <int>{};
-    final count = completed.length.clamp(0, routine.steps.length);
+    final count = (_completedCount[routine.id] ?? 0)
+        .clamp(0, routine.steps.length);
+    final finished = count >= routine.steps.length;
 
     return InfoCard(
       child: Column(
@@ -95,29 +128,31 @@ class _GuidedRoutinesScreenState
           Text(routine.description, style: AppTypography.muted),
           const SizedBox(height: AppSpacing.sm),
           LinearProgressIndicator(
-            value: routine.steps.isEmpty
-                ? 0
-                : count / routine.steps.length,
+            value: routine.steps.isEmpty ? 0 : count / routine.steps.length,
           ),
           const SizedBox(height: 6),
           Text(
-            '$count of ${routine.steps.length} steps complete',
+            '$count of ${routine.steps.length} activities finished',
             style: AppTypography.muted,
           ),
           const SizedBox(height: AppSpacing.md),
-          for (var index = 0;
-              index < routine.steps.length;
-              index++)
-            CheckboxListTile(
-              contentPadding: EdgeInsets.zero,
-              value: completed.contains(index),
-              onChanged: (value) => _toggle(
-                routine,
-                index,
-                value ?? false,
-              ),
-              title: Text(routine.steps[index]),
-              controlAffinity: ListTileControlAffinity.leading,
+          for (var index = 0; index < routine.steps.length; index++)
+            _activityTile(
+              routine: routine,
+              index: index,
+              completedCount: count,
+            ),
+          const SizedBox(height: AppSpacing.sm),
+          if (finished)
+            const Text(
+              'Routine finished for this session.',
+              style: AppTypography.body,
+            )
+          else
+            PrimaryButton(
+              label: 'Complete current activity',
+              icon: Icons.check,
+              onPressed: () => _completeCurrent(routine),
             ),
           Align(
             alignment: Alignment.centerRight,
@@ -141,13 +176,11 @@ class _GuidedRoutinesScreenState
           : ListView(
               padding: const EdgeInsets.all(AppSpacing.lg),
               children: [
-                Text(
-                  'Make the next steps concrete.',
-                  style: AppTypography.title,
-                ),
+                Text('Choose one activity at a time.',
+                    style: AppTypography.title),
                 const SizedBox(height: AppSpacing.xs),
                 const Text(
-                  'Progress stays on this device. Completing a routine is support, not a score or a moral grade.',
+                  'Finish the current activity to unlock the next one. Progress stays on this device.',
                   style: AppTypography.muted,
                 ),
                 const SizedBox(height: AppSpacing.lg),

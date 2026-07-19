@@ -91,8 +91,18 @@ class _AccountabilityCenterScreenState
   }
 
   Future<void> _save() async {
+    final plan = _currentPlan();
+    if (!plan.hasUsefulPreparation) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Add at least one check-in preparation entry before saving.'),
+        ),
+      );
+      return;
+    }
+
     setState(() => _saving = true);
-    await _repository.savePlan(_currentPlan());
+    await _repository.savePlan(plan);
     if (!mounted) {
       return;
     }

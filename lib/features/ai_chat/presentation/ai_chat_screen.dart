@@ -480,14 +480,9 @@ class _AiChatScreenState extends State<AiChatScreen> {
   Widget _unlockedView(BuildContext context) {
     return Column(
       children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.lg,
-            AppSpacing.lg,
-            AppSpacing.lg,
-            AppSpacing.md,
-          ),
-          child: Column(
+        Expanded(
+          child: ListView(
+            padding: const EdgeInsets.all(AppSpacing.lg),
             children: [
               _providerStatusCard(),
               const SizedBox(height: AppSpacing.md),
@@ -509,7 +504,8 @@ class _AiChatScreenState extends State<AiChatScreen> {
               EmergencyFallbackCard(
                 onCall988: _call988,
                 onText988: _text988,
-                onOpenSupport: () => Navigator.pushNamed(context, RouteNames.support),
+                onOpenSupport: () =>
+                    Navigator.pushNamed(context, RouteNames.support),
               ),
               const SizedBox(height: AppSpacing.md),
               Wrap(
@@ -526,14 +522,9 @@ class _AiChatScreenState extends State<AiChatScreen> {
                   label: const Text('Clear Local Chat'),
                 ),
               ),
+              const SizedBox(height: AppSpacing.md),
+              for (final message in _messages) _bubble(message),
             ],
-          ),
-        ),
-        Expanded(
-          child: ListView.builder(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-            itemCount: _messages.length,
-            itemBuilder: (context, index) => _bubble(_messages[index]),
           ),
         ),
         SafeArea(
