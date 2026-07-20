@@ -18,7 +18,12 @@ import 'widgets/risk_status_card.dart';
 import 'widgets/startup_notice_sheet.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  const HomeScreen({
+    this.allowStartupNotice = true,
+    super.key,
+  });
+
+  final bool allowStartupNotice;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -32,10 +37,23 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    _maybeShowStartupNotice();
+    if (widget.allowStartupNotice) {
+      _maybeShowStartupNotice();
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant HomeScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!oldWidget.allowStartupNotice && widget.allowStartupNotice) {
+      _maybeShowStartupNotice();
+    }
   }
 
   Future<void> _maybeShowStartupNotice() async {
+    if (!widget.allowStartupNotice) {
+      return;
+    }
     final settings = await _settingsRepository.getSettings();
     if (!mounted) {
       return;

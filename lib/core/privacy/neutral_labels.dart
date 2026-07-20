@@ -1,6 +1,6 @@
 class NeutralLabels {
   static String rescuePrimary(bool neutralMode) {
-    return neutralMode ? 'Daily Reset' : 'I feel an urge';
+    return neutralMode ? 'Open Rescue' : 'I feel an urge';
   }
 
   static String moodLog(bool neutralMode) {
@@ -20,7 +20,7 @@ class NeutralLabels {
   }
 
   static String widgetRescue(bool neutralMode) {
-    return neutralMode ? 'Daily Reset' : 'Open Rescue';
+    return 'Open Rescue';
   }
 
   static String widgetMood(bool neutralMode) {

@@ -18,6 +18,7 @@ class MoodLogScreen extends StatefulWidget {
 class _MoodLogScreenState extends State<MoodLogScreen> {
   final MoodLogRepository _repository = MoodLogRepository();
   final TextEditingController _noteController = TextEditingController();
+  final TextEditingController _otherMoodController = TextEditingController();
 
   String _moodLabel = 'Neutral';
   double _stress = 4;
@@ -34,20 +35,35 @@ class _MoodLogScreenState extends State<MoodLogScreen> {
     'Bored',
     'Frustrated',
     'Hopeful',
+    'Other',
   ];
 
   @override
   void dispose() {
     _noteController.dispose();
+    _otherMoodController.dispose();
     super.dispose();
   }
 
   Future<void> _saveMood() async {
+    final otherMood = _otherMoodController.text.trim();
+    if (_moodLabel == 'Other' && otherMood.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Describe this moment before saving.'),
+        ),
+      );
+      return;
+    }
+
+    final savedMoodLabel =
+        _moodLabel == 'Other' ? 'Other — $otherMood' : _moodLabel;
+
     setState(() => _isSaving = true);
 
     final entry = MoodEntry(
       timestamp: DateTime.now(),
-      moodLabel: _moodLabel,
+      moodLabel: savedMoodLabel,
       stress: _stress.round(),
       loneliness: _loneliness.round(),
       boredom: _boredom.round(),
@@ -138,6 +154,18 @@ class _MoodLogScreenState extends State<MoodLogScreen> {
                       setState(() => _moodLabel = value);
                     },
                   ),
+                  if (_moodLabel == 'Other') ...[
+                    const SizedBox(height: AppSpacing.sm),
+                    TextField(
+                      controller: _otherMoodController,
+                      textCapitalization: TextCapitalization.sentences,
+                      decoration: const InputDecoration(
+                        labelText: 'Describe this moment',
+                        hintText: 'For example: disappointed, restless, or overwhelmed',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),

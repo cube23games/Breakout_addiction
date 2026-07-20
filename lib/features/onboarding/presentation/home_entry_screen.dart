@@ -151,7 +151,7 @@ class _HomeEntryScreenState extends State<HomeEntryScreen> {
       child: Stack(
         fit: StackFit.expand,
         children: [
-          const HomeScreen(),
+          HomeScreen(allowStartupNotice: _welcomeMessage == null),
           if (_welcomeMessage != null)
             IgnorePointer(
               child: WelcomeBannerOverlay(

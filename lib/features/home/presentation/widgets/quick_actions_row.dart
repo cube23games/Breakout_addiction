@@ -33,14 +33,6 @@ class QuickActionsRow extends StatelessWidget {
               const Text('Quick Actions'),
               const SizedBox(height: 12),
               _fullButton(
-                child: FilledButton.icon(
-                  onPressed: () => Navigator.pushNamed(context, RouteNames.rescue),
-                  icon: const Icon(Icons.health_and_safety_outlined),
-                  label: Text(NeutralLabels.rescuePrimary(neutralMode)),
-                ),
-              ),
-              const SizedBox(height: 12),
-              _fullButton(
                 child: OutlinedButton.icon(
                   onPressed: () => Navigator.pushNamed(context, RouteNames.moodLog),
                   icon: const Icon(Icons.mood_outlined),
