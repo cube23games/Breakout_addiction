@@ -19,11 +19,11 @@ import 'widgets/startup_notice_sheet.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({
-    this.allowStartupNotice = true,
+    this.onStartupNoticeReady,
     super.key,
   });
 
-  final bool allowStartupNotice;
+  final VoidCallback? onStartupNoticeReady;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -33,33 +33,30 @@ class _HomeScreenState extends State<HomeScreen> {
   static bool _startupNoticeHandledThisSession = false;
   final FeatureControlSettingsRepository _settingsRepository =
       FeatureControlSettingsRepository();
+  bool _startupNoticeReadySent = false;
 
   @override
   void initState() {
     super.initState();
-    if (widget.allowStartupNotice) {
-      _maybeShowStartupNotice();
-    }
+    _maybeShowStartupNotice();
   }
 
-  @override
-  void didUpdateWidget(covariant HomeScreen oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (!oldWidget.allowStartupNotice && widget.allowStartupNotice) {
-      _maybeShowStartupNotice();
+  void _notifyStartupNoticeReady() {
+    if (_startupNoticeReadySent) {
+      return;
     }
+    _startupNoticeReadySent = true;
+    widget.onStartupNoticeReady?.call();
   }
 
   Future<void> _maybeShowStartupNotice() async {
-    if (!widget.allowStartupNotice) {
-      return;
-    }
     final settings = await _settingsRepository.getSettings();
     if (!mounted) {
       return;
     }
 
     if (!settings.showStartupNotice || _startupNoticeHandledThisSession) {
+      _notifyStartupNoticeReady();
       return;
     }
 
@@ -103,6 +100,11 @@ class _HomeScreenState extends State<HomeScreen> {
           );
         },
       );
+
+      // The modal route is now in the root Navigator overlay. Notify the
+      // entry screen so it can insert the welcome banner afterward, keeping
+      // the smaller banner visually above the startup notice.
+      _notifyStartupNoticeReady();
     });
   }
 

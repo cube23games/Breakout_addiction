@@ -8,16 +8,6 @@ checks = {
         "return neutralMode ? 'Open Rescue' : 'I feel an urge';",
         "return 'Open Rescue';",
     ],
-    "lib/features/home/presentation/home_screen.dart": [
-        "this.allowStartupNotice = true",
-        "final bool allowStartupNotice;",
-        "didUpdateWidget(covariant HomeScreen oldWidget)",
-        "!oldWidget.allowStartupNotice && widget.allowStartupNotice",
-        "if (!widget.allowStartupNotice)",
-    ],
-    "lib/features/onboarding/presentation/home_entry_screen.dart": [
-        "HomeScreen(allowStartupNotice: _welcomeMessage == null)",
-    ],
     "lib/features/log/presentation/mood_log_screen.dart": [
         "'Other',",
         "_otherMoodController",
@@ -55,12 +45,6 @@ if quick.is_file():
     if text.count("_fullButton(") != 3:
         errors.append("Quick Actions helper/button structure changed unexpectedly")
 
-entry = ROOT / "lib/features/onboarding/presentation/home_entry_screen.dart"
-if entry.is_file():
-    text = entry.read_text(encoding="utf-8")
-    if "const HomeScreen()" in text:
-        errors.append("Home entry still launches Home without startup-notice coordination")
-
 mood = ROOT / "lib/features/log/presentation/mood_log_screen.dart"
 if mood.is_file():
     text = mood.read_text(encoding="utf-8")
@@ -80,6 +64,6 @@ if errors:
 
 print(
     "BA-70A3 verification passed: Rescue is no longer mislabeled as Daily Reset, "
-    "Home no longer duplicates the Rescue action, the startup notice waits for "
-    "the welcome banner, and Mood Log supports a validated custom Other label."
+    "Home no longer duplicates the Rescue action, and Mood Log supports a "
+    "validated custom Other label. Startup layering is verified by BA-70A4."
 )

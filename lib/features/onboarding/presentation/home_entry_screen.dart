@@ -32,7 +32,9 @@ class _HomeEntryScreenState extends State<HomeEntryScreen> {
       WelcomeBannerRepository();
 
   bool _homeReady = false;
+  bool _welcomeOverlayScheduled = false;
   WelcomeMessage? _welcomeMessage;
+  OverlayEntry? _welcomeOverlayEntry;
 
   @override
   void initState() {
@@ -136,6 +138,56 @@ class _HomeEntryScreenState extends State<HomeEntryScreen> {
     });
   }
 
+  void _showWelcomeOverlay() {
+    if (!mounted ||
+        _welcomeMessage == null ||
+        _welcomeOverlayEntry != null ||
+        _welcomeOverlayScheduled) {
+      return;
+    }
+
+    _welcomeOverlayScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _welcomeOverlayScheduled = false;
+      if (!mounted ||
+          _welcomeMessage == null ||
+          _welcomeOverlayEntry != null) {
+        return;
+      }
+
+      final message = _welcomeMessage!;
+      final overlay = Overlay.of(context, rootOverlay: true);
+      late final OverlayEntry entry;
+      entry = OverlayEntry(
+        builder: (_) => WelcomeBannerOverlay(
+          message: message,
+          onComplete: () {
+            if (_welcomeOverlayEntry != entry) {
+              return;
+            }
+            entry.remove();
+            _welcomeOverlayEntry = null;
+            if (mounted) {
+              setState(() {
+                _welcomeMessage = null;
+              });
+            }
+          },
+        ),
+      );
+
+      _welcomeOverlayEntry = entry;
+      overlay.insert(entry);
+    });
+  }
+
+  @override
+  void dispose() {
+    _welcomeOverlayEntry?.remove();
+    _welcomeOverlayEntry = null;
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     if (!_homeReady) {
@@ -148,24 +200,8 @@ class _HomeEntryScreenState extends State<HomeEntryScreen> {
 
     return ProtectedRouteGate(
       scope: LockScope.app,
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          HomeScreen(allowStartupNotice: _welcomeMessage == null),
-          if (_welcomeMessage != null)
-            IgnorePointer(
-              child: WelcomeBannerOverlay(
-                message: _welcomeMessage!,
-                onComplete: () {
-                  if (mounted) {
-                    setState(() {
-                      _welcomeMessage = null;
-                    });
-                  }
-                },
-              ),
-            ),
-        ],
+      child: HomeScreen(
+        onStartupNoticeReady: _showWelcomeOverlay,
       ),
     );
   }
