@@ -4,6 +4,7 @@ import '../domain/chat_provider.dart';
 class MockRecoveryCoachProvider implements ChatProvider {
   String _replyText(String input) {
     final text = input.toLowerCase();
+    final hasApprovedContext = input.contains('[USER-APPROVED RECOVERY CONTEXT]');
 
     if (text.contains('suicide') ||
         text.contains('kill myself') ||
@@ -36,7 +37,9 @@ class MockRecoveryCoachProvider implements ChatProvider {
       return 'Prototype response: catch the sequence early. Name where you are in the cycle, shorten the decision window, and make your next action physical and specific.';
     }
 
-    return 'Prototype response: pause, name the pattern, and choose one small next step. The goal is not solving everything right now. The goal is interrupting the cycle earlier than usual.';
+    return hasApprovedContext
+        ? 'Prototype personalized response: I reviewed only the recovery context you approved. Use the saved action that best matches the warning sign or risk window you named, then review or turn off AI Recovery Memory whenever you choose.'
+        : 'Prototype response: pause, name the pattern, and choose one small next step. The goal is not solving everything right now. The goal is interrupting the cycle earlier than usual.';
   }
 
   @override
