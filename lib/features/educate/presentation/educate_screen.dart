@@ -1,216 +1,45 @@
 import 'package:flutter/material.dart';
-
 import '../../../app/theme/app_spacing.dart';
 import '../../../app/theme/app_typography.dart';
 import '../../../core/constants/route_names.dart';
 import '../../../core/widgets/info_card.dart';
 import '../../premium/data/premium_access_repository.dart';
 import '../../premium/domain/premium_status.dart';
-import '../../premium/presentation/widgets/premium_badge.dart';
 import '../data/lesson_repository.dart';
-import '../domain/lesson.dart';
 import '../domain/lesson_track.dart';
 import 'lesson_detail_screen.dart';
 
 class EducateScreen extends StatelessWidget {
   const EducateScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final repository = LessonRepository();
-    final tracks = repository.getTracks();
-    final premiumRepository = PremiumAccessRepository();
-
-    return Scaffold(
-      appBar: AppBar(title: const Text('Educate Me')),
-      body: FutureBuilder<PremiumStatus>(
-        future: premiumRepository.getStatus(),
-        builder: (context, snapshot) {
-          final status = snapshot.data ?? PremiumStatus.defaults();
-          return ListView(
-            padding: const EdgeInsets.all(AppSpacing.lg),
-            children: [
-              Text('Learn the pattern.', style: AppTypography.title),
-              const SizedBox(height: AppSpacing.xs),
-              const Text(
-                'Understand why the cycle happens, what relief you may be seeking, and how earlier interruption changes the pattern.',
-                style: AppTypography.muted,
-              ),
-              const SizedBox(height: AppSpacing.lg),
-              for (final track in tracks) ...[
-                _TrackCard(
-                  track: track,
-                  unlocked: !track.premiumOnly || status.hasPremium,
-                ),
-                const SizedBox(height: AppSpacing.md),
-              ],
-              if (!status.hasPremium && status.showUpgradePrompts)
-                InfoCard(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: const [
-                          Expanded(
-                            child: Text(
-                              'Educate Me Plus',
-                              style: AppTypography.section,
-                            ),
-                          ),
-                          PremiumBadge(),
-                        ],
-                      ),
-                      const SizedBox(height: AppSpacing.sm),
-                      const Text(
-                        'Plus adds deeper tracks on ritual setup, risk-window design, practical friction, and rebuilding after setbacks.',
-                        style: AppTypography.muted,
-                      ),
-                      const SizedBox(height: AppSpacing.md),
-                      SizedBox(
-                        width: double.infinity,
-                        child: OutlinedButton.icon(
-                          onPressed: () => Navigator.pushNamed(
-                            context,
-                            RouteNames.premium,
-                          ),
-                          icon: const Icon(
-                            Icons.workspace_premium_outlined,
-                          ),
-                          label: const Text('Explore Premium'),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-            ],
-          );
-        },
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: 3,
-        onTap: (index) {
-          switch (index) {
-            case 0:
-              Navigator.pushReplacementNamed(context, RouteNames.home);
-              break;
-            case 1:
-              Navigator.pushReplacementNamed(context, RouteNames.rescue);
-              break;
-            case 2:
-              Navigator.pushReplacementNamed(context, RouteNames.logHub);
-              break;
-            case 3:
-              break;
-            case 4:
-              Navigator.pushReplacementNamed(context, RouteNames.support);
-              break;
-          }
-        },
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.flash_on_outlined),
-            label: 'Rescue',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.edit_note_outlined),
-            label: 'Log',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.menu_book_outlined),
-            label: 'Learn',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.support_agent_outlined),
-            label: 'Support',
-          ),
+  @override Widget build(BuildContext context){
+    final tracks=LessonRepository().getTracks();
+    return Scaffold(appBar:AppBar(title:const Text('Learn')),body:FutureBuilder<PremiumStatus>(
+      future:PremiumAccessRepository().getStatus(),
+      builder:(context,snapshot){final status=snapshot.data??PremiumStatus.defaults();return ListView(padding:const EdgeInsets.all(AppSpacing.lg),children:[
+        Text('Learn what is happening.',style:AppTypography.title),const SizedBox(height:AppSpacing.xs),
+        const Text('Choose one topic. Lessons stay collapsed until you open the track.',style:AppTypography.muted),
+        const SizedBox(height:AppSpacing.lg),
+        for(final track in tracks)...[
+          _TrackSummary(track:track,unlocked:!track.premiumOnly||status.hasPremium),
+          const SizedBox(height:AppSpacing.md),
         ],
-      ),
-    );
+        if(!status.hasPremium)InfoCard(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+          Text('Educate Me Plus',style:AppTypography.section),const SizedBox(height:AppSpacing.sm),
+          const Text('Plus adds deeper lessons about warning signs, risk windows, rebuilding after slips, and stress.',style:AppTypography.muted),
+          const SizedBox(height:AppSpacing.md),OutlinedButton.icon(onPressed:()=>Navigator.pushNamed(context,RouteNames.premium),icon:const Icon(Icons.workspace_premium_outlined),label:const Text('Explore Plus')),
+        ])),
+      ]);},
+    ));
   }
 }
-
-class _TrackCard extends StatelessWidget {
-  final LessonTrack track;
-  final bool unlocked;
-
-  const _TrackCard({
-    required this.track,
-    required this.unlocked,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return InfoCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(track.title, style: AppTypography.section),
-              ),
-              if (track.premiumOnly)
-                const PremiumBadge(label: 'Plus'),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          Text(track.subtitle, style: AppTypography.muted),
-          if (!unlocked) ...[
-            const SizedBox(height: AppSpacing.sm),
-            const Text(
-              'This deeper learning track requires Breakout Plus.',
-              style: AppTypography.muted,
-            ),
-          ],
-          const SizedBox(height: AppSpacing.md),
-          for (final lesson in track.lessons) ...[
-            _LessonTile(
-              lesson: lesson,
-              unlocked: unlocked,
-            ),
-            const SizedBox(height: 8),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-class _LessonTile extends StatelessWidget {
-  final Lesson lesson;
-  final bool unlocked;
-
-  const _LessonTile({
-    required this.lesson,
-    required this.unlocked,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      contentPadding: EdgeInsets.zero,
-      title: Text(lesson.title),
-      subtitle: Text(lesson.summary),
-      trailing: Icon(
-        unlocked ? Icons.arrow_forward_ios : Icons.lock_outline,
-        size: 16,
-      ),
-      onTap: () {
-        if (!unlocked) {
-          Navigator.pushNamed(context, RouteNames.premium);
-          return;
-        }
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => LessonDetailScreen(lesson: lesson),
-          ),
-        );
-      },
-    );
-  }
+class _TrackSummary extends StatelessWidget{
+  const _TrackSummary({required this.track,required this.unlocked}); final LessonTrack track; final bool unlocked;
+  @override Widget build(BuildContext context)=>InfoCard(child:ExpansionTile(
+    tilePadding:EdgeInsets.zero,childrenPadding:EdgeInsets.zero,
+    leading:Icon(unlocked?Icons.menu_book_outlined:Icons.lock_outline),
+    title:Text(track.title,style:AppTypography.section),subtitle:Text(track.subtitle,style:AppTypography.muted),
+    children:unlocked?[for(final lesson in track.lessons)ListTile(contentPadding:EdgeInsets.zero,title:Text(lesson.title),subtitle:Text(lesson.summary,maxLines:2,overflow:TextOverflow.ellipsis),trailing:const Icon(Icons.chevron_right),onTap:()=>Navigator.push(context,MaterialPageRoute(builder:(_)=>LessonDetailScreen(lesson:lesson))))]:[
+      const Padding(padding:EdgeInsets.only(bottom:12),child:Text('This track is included with Breakout Plus.')),
+    ],
+  ));
 }

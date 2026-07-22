@@ -4,6 +4,7 @@ import '../../../app/theme/app_spacing.dart';
 import '../../../app/theme/app_typography.dart';
 import '../../../core/widgets/info_card.dart';
 import '../../settings/data/feature_control_settings_repository.dart';
+import '../../faith/presentation/faith_reflection_card.dart';
 import '../data/active_recovery_program_repository.dart';
 import '../data/premium_progress_repository.dart';
 import '../data/recovery_program_repository.dart';
@@ -241,6 +242,10 @@ class _RecoveryProgramsScreenState extends State<RecoveryProgramsScreen> {
                 ),
               ],
             ),
+          ],
+          if (program.faithSensitive && isActive && _faithLayerEnabled) ...[
+            const SizedBox(height: AppSpacing.md),
+            FaithReflectionCard(dayNumber: finished ? program.steps.length : count + 1),
           ],
           const SizedBox(height: AppSpacing.sm),
           Text(
