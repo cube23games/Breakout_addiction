@@ -77,14 +77,20 @@ if "route: RouteNames.aiTools" not in premium:
     raise SystemExit('BA-70A5 AI Personalization Tools does not open the AI tools screen')
 
 if "return const Scaffold(" in premium:
-    raise SystemExit('BA-70A5 loading state still calls a non-const AppBar from a const Scaffold')
-if "return Scaffold(" not in premium or "appBar: const AppBar" not in premium:
-    raise SystemExit('BA-70A5 loading state analyzer repair is missing')
+    raise SystemExit('BA-70A5 loading state still wraps AppBar in a const Scaffold')
+if "appBar: const AppBar" in premium:
+    raise SystemExit('BA-70A5 incorrectly calls the non-const AppBar constructor with const')
+if "appBar: AppBar(title: const Text('Premium Tools'))" not in premium:
+    raise SystemExit('BA-70A5 loading-state AppBar analyzer repair is missing')
+if "Widget _standardView(BuildContext context, PremiumStatus status)" in premium:
+    raise SystemExit('BA-70A5 Standard helper retains an unused status parameter')
+if "body: _standardView(context, status)" in premium:
+    raise SystemExit('BA-70A5 still passes the unused status argument')
 if 'status.plan.label' in home_tier and 'premium_plan.dart' not in home_tier:
     raise SystemExit('BA-70A5 QA tier label is missing the PremiumPlan extension import')
 
 print(
     'BA-70A5 verifier passed: Standard shows one compact Plus preview, '
     'Plus keeps every established local paid tool, and Plus AI keeps its '
-    'separate AI Personalization Tools entry point, and the analyzer repair is present.'
+    'separate AI Personalization Tools entry point, and both analyzer repairs are present.'
 )

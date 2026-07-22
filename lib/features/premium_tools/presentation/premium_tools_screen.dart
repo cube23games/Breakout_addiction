@@ -35,7 +35,7 @@ class PremiumToolsScreen extends StatelessWidget {
     );
   }
 
-  Widget _standardView(BuildContext context, PremiumStatus status) {
+  Widget _standardView(BuildContext context) {
     return ListView(
       padding: const EdgeInsets.all(AppSpacing.lg),
       children: [
@@ -83,7 +83,7 @@ class PremiumToolsScreen extends StatelessWidget {
         final status = snapshot.data;
         if (status == null) {
           return Scaffold(
-            appBar: const AppBar(title: Text('Premium Tools')),
+            appBar: AppBar(title: const Text('Premium Tools')),
             body: const Center(child: CircularProgressIndicator()),
           );
         }
@@ -91,7 +91,7 @@ class PremiumToolsScreen extends StatelessWidget {
         if (!status.hasPremium) {
           return Scaffold(
             appBar: AppBar(title: const Text('Premium Tools')),
-            body: _standardView(context, status),
+            body: _standardView(context),
           );
         }
 
