@@ -138,6 +138,19 @@ class WidgetPreviewScreen extends StatelessWidget {
               _riskWidgetPreview(data),
               const SizedBox(height: AppSpacing.md),
               FilledButton.icon(
+                onPressed: () async {
+                  await repository.syncToHomeScreenWidget();
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Home-screen widget updated.')),
+                    );
+                  }
+                },
+                icon: const Icon(Icons.widgets_outlined),
+                label: const Text('Update Real Home-Screen Widget'),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              FilledButton.icon(
                 onPressed: () => _simulateEntry(context, WidgetEntryAction.openHome),
                 icon: const Icon(Icons.home_outlined),
                 label: const Text('Simulate Widget → Open Breakout'),
