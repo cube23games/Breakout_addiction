@@ -1,3 +1,6 @@
+import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 import '../../../core/privacy/neutral_labels.dart';
 import '../../guidance/data/local_guidance_service.dart';
 import '../../log/data/mood_log_repository.dart';
@@ -76,5 +79,26 @@ class WidgetSnapshotRepository {
       dailyFocusSubtitle: focusSubtitle,
       riskLabel: riskLabel,
     );
+  }
+
+  Future<void> syncToHomeScreenWidget() async {
+    final snapshot = await buildSnapshot();
+    final prefs = await SharedPreferences.getInstance();
+    final title = snapshot.neutralMode
+        ? 'Your next step is ready'
+        : snapshot.dailyFocusTitle;
+    final subtitle = snapshot.neutralMode
+        ? 'Open when you are ready'
+        : snapshot.dailyFocusSubtitle;
+    await prefs.setString('breakout_widget_title', title);
+    await prefs.setString('breakout_widget_subtitle', subtitle);
+    try {
+      const channel = MethodChannel('com.slimnation.breakoutaddiction/widget');
+      await channel.invokeMethod<bool>('refresh');
+    } on PlatformException {
+      // The app remains usable when the launcher has no widget instance.
+    } on MissingPluginException {
+      // Expected outside an Android release build.
+    }
   }
 }
