@@ -1,53 +1,38 @@
 import '../../insights/data/insights_repository.dart';
 import '../../risk/data/risk_window_repository.dart';
 import '../../support/data/recovery_plan_repository.dart';
-import '../domain/premium_preferences.dart';
-import 'premium_preferences_repository.dart';
+import '../domain/recovery_report_options.dart';
 import 'premium_trend_repository.dart';
 
 class PremiumReportRepository {
-  final InsightsRepository _insightsRepository;
-  final RiskWindowRepository _riskWindowRepository;
-  final RecoveryPlanRepository _recoveryPlanRepository;
-  final PremiumPreferencesRepository _preferencesRepository;
-  final PremiumTrendRepository _trendRepository;
-
   PremiumReportRepository({
     InsightsRepository? insightsRepository,
     RiskWindowRepository? riskWindowRepository,
     RecoveryPlanRepository? recoveryPlanRepository,
-    PremiumPreferencesRepository? preferencesRepository,
     PremiumTrendRepository? trendRepository,
-  })  : _insightsRepository =
-            insightsRepository ?? InsightsRepository(),
-        _riskWindowRepository =
-            riskWindowRepository ?? RiskWindowRepository(),
-        _recoveryPlanRepository =
-            recoveryPlanRepository ?? RecoveryPlanRepository(),
-        _preferencesRepository =
-            preferencesRepository ?? PremiumPreferencesRepository(),
-        _trendRepository =
-            trendRepository ?? PremiumTrendRepository();
+  })  : _insightsRepository = insightsRepository ?? InsightsRepository(),
+        _riskWindowRepository = riskWindowRepository ?? RiskWindowRepository(),
+        _recoveryPlanRepository = recoveryPlanRepository ?? RecoveryPlanRepository(),
+        _trendRepository = trendRepository ?? PremiumTrendRepository();
 
-  Future<String> buildReport() async {
+  final InsightsRepository _insightsRepository;
+  final RiskWindowRepository _riskWindowRepository;
+  final RecoveryPlanRepository _recoveryPlanRepository;
+  final PremiumTrendRepository _trendRepository;
+
+  Future<String> buildReport({
+    RecoveryReportOptions options = const RecoveryReportOptions(),
+  }) async {
     final insights = await _insightsRepository.buildSummary();
     final windows = await _riskWindowRepository.getRiskWindows();
     final plan = await _recoveryPlanRepository.getPlan();
-    final preferences = await _preferencesRepository.getPreferences();
     final trends = await _trendRepository.buildSummary();
     final generated = DateTime.now().toLocal();
-
-    final enabledWindows =
-        windows.where((window) => window.isEnabled).toList();
-    final riskyPlaces = plan.riskyPlaces.isEmpty
-        ? 'Not set'
-        : plan.riskyPlaces.join(', ');
-
     final report = <String>[
       'BREAKOUT ADDICTION RECOVERY REPORT',
       'Generated: ${generated.month}/${generated.day}/${generated.year}',
       '',
-      'PRIVATE RECOVERY SUMMARY',
+      'RECOVERY SUMMARY',
       insights.summaryLine,
       '',
       'RECENT PATTERN',
@@ -72,46 +57,35 @@ class PremiumReportRepository {
       insights.recommendationLine,
       insights.nextBestAction,
     ];
-
-    if (preferences.reportDetail == PremiumReportDetail.detailed) {
+    if (options.includeDetailedPlan) {
       report.addAll(<String>[
-        '',
-        'LOGGED ACTIVITY',
-        'Mood check-ins: ${insights.moodLogCount}',
-        'Cycle-stage logs: ${insights.stageLogCount}',
-        'Urges logged: ${insights.urgeCount}',
-        'Victories logged: ${insights.victoryCount}',
-        'Slips or relapses logged: ${insights.relapseCount}',
-        'Most common mood: ${insights.mostCommonMoodLabel}',
-        '',
-        'RECOVERY PLAN',
-        'Risky places: $riskyPlaces',
+        '', 'SELECTED RECOVERY PLAN DETAILS',
+        'Risky places: ${plan.riskyPlaces.isEmpty ? 'Not set' : plan.riskyPlaces.join(', ')}',
         'First action: ${plan.firstAction.isEmpty ? 'Not set' : plan.firstAction}',
         'Backup action: ${plan.secondAction.isEmpty ? 'Not set' : plan.secondAction}',
         'Grounding action: ${plan.groundingAction.isEmpty ? 'Not set' : plan.groundingAction}',
-        'Support person: ${plan.supportPerson.isEmpty ? 'Not set' : plan.supportPerson}',
-        'Fallback plan: ${plan.fallbackPlan.isEmpty ? 'Not set' : plan.fallbackPlan}',
         'Warning signs: ${plan.warningSigns.isEmpty ? 'Not set' : plan.warningSigns.join(', ')}',
         'Primary triggers: ${plan.triggers.isEmpty ? 'Not set' : plan.triggers.join(', ')}',
         'High-risk times: ${plan.highRiskTimes.isEmpty ? 'Not set' : plan.highRiskTimes.join(', ')}',
         'Morning commitment: ${plan.morningCommitment.isEmpty ? 'Not set' : plan.morningCommitment}',
         'Evening commitment: ${plan.eveningCommitment.isEmpty ? 'Not set' : plan.eveningCommitment}',
         'Post-slip rebuild: ${plan.postSlipPlan.isEmpty ? 'Not set' : plan.postSlipPlan}',
-        'Plan readiness: ${plan.completedSections}/${plan.totalSections} sections',
-        '',
-        'RISK WINDOWS',
-        enabledWindows.isEmpty
-            ? 'No enabled risk windows.'
-            : '${enabledWindows.length} enabled risk window(s).',
+        'Plan readiness: ${(plan.completion * 100).round()}%',
       ]);
     }
-
+    if (options.includeRiskWindows) {
+      final enabled = windows.where((item) => item.isEnabled).toList();
+      report.addAll(<String>[
+        '', 'SELECTED RISK WINDOWS',
+        if (enabled.isEmpty) 'No enabled risk windows.',
+        for (final window in enabled) '${window.label}: ${window.timeRange}',
+      ]);
+    }
     report.addAll(const <String>[
-      '',
-      'SHARING NOTE',
-      'This report contains private recovery information. Review it before copying or sharing.',
+      '', 'PRIVACY REVIEW',
+      'Private notes, faith content, media, and contact details are not included automatically.',
+      'Review every line before sharing.',
     ]);
-
     return report.join('\n');
   }
 }

@@ -40,6 +40,9 @@ class _AccountabilityCenterScreenState
   DateTime? _nextCheckIn;
   bool _loading = true;
   bool _saving = false;
+  bool _refreshing = false;
+  DateTime? _lastRefreshed;
+  String? _refreshMessage;
 
   @override
   void initState() {
@@ -58,23 +61,51 @@ class _AccountabilityCenterScreenState
     super.dispose();
   }
 
-  Future<void> _load() async {
-    final plan = await _repository.getPlan();
-    final scorecard = await _scorecardRepository.build();
-    if (!mounted) {
-      return;
+  Future<void> _load({bool showFeedback = false}) async {
+    if (_refreshing) return;
+    if (mounted) {
+      setState(() {
+        _refreshing = true;
+        _refreshMessage = showFeedback ? 'Refreshing current data…' : null;
+      });
     }
-    _partnerController.text = plan.partnerName;
-    _goalController.text = plan.currentGoal;
-    _winController.text = plan.winToShare;
-    _riskController.text = plan.riskToDiscuss;
-    _supportController.text = plan.supportRequest;
-    _commitmentController.text = plan.nextCommitment;
-    setState(() {
-      _nextCheckIn = plan.nextCheckIn;
-      _scorecard = scorecard;
-      _loading = false;
-    });
+    try {
+      final plan = await _repository.getPlan();
+      final scorecard = await _scorecardRepository.build();
+      if (!mounted) return;
+      _partnerController.text = plan.partnerName;
+      _goalController.text = plan.currentGoal;
+      _winController.text = plan.winToShare;
+      _riskController.text = plan.riskToDiscuss;
+      _supportController.text = plan.supportRequest;
+      _commitmentController.text = plan.nextCommitment;
+      final refreshedAt = DateTime.now();
+      setState(() {
+        _nextCheckIn = plan.nextCheckIn;
+        _scorecard = scorecard;
+        _loading = false;
+        _refreshing = false;
+        _lastRefreshed = refreshedAt;
+        _refreshMessage = showFeedback ? 'Scorecard refreshed.' : null;
+      });
+      if (showFeedback) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Accountability scorecard refreshed.')),
+        );
+      }
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _refreshing = false;
+        _refreshMessage = 'Refresh failed. Your saved data was not changed.';
+      });
+      if (showFeedback) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not refresh right now. Try again.')),
+        );
+      }
+    }
   }
 
   AccountabilityCheckInPlan _currentPlan() {
@@ -271,9 +302,14 @@ class _AccountabilityCenterScreenState
         title: const Text('Accountability Center'),
         actions: [
           IconButton(
-            onPressed: _load,
-            tooltip: 'Refresh scorecard',
-            icon: const Icon(Icons.refresh),
+            onPressed: _refreshing ? null : () => _load(showFeedback: true),
+            tooltip: _refreshing ? 'Refreshing scorecard' : 'Refresh scorecard',
+            icon: _refreshing
+                ? const SizedBox.square(
+                    dimension: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.refresh),
           ),
         ],
       ),
@@ -286,6 +322,17 @@ class _AccountabilityCenterScreenState
           const Text(
             'You control what is prepared, copied, and shared. Accountability should support recovery, not become surveillance.',
             style: AppTypography.muted,
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Semantics(
+            liveRegion: true,
+            child: Text(
+              _refreshMessage ??
+                  (_lastRefreshed == null
+                      ? 'Loaded from your current saved recovery data.'
+                      : 'Last updated ${_lastRefreshed!.hour.toString().padLeft(2, '0')}:${_lastRefreshed!.minute.toString().padLeft(2, '0')}.'),
+              style: AppTypography.muted,
+            ),
           ),
           const SizedBox(height: AppSpacing.lg),
           _scorecardView(scorecard),
