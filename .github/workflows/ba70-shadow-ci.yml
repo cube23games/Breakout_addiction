@@ -1,0 +1,52 @@
+name: BA70 Shadow CI
+
+on:
+  push:
+    branches:
+      - validation/ba70-shadow-a5r3-a13-v4
+
+permissions:
+  contents: read
+
+jobs:
+  shadow-matrix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - name: Checkout full shadow history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Run every incremental tree and final combined tree
+        id: shadow
+        continue-on-error: true
+        run: python3 tools/ba70_shadow_ci.py
+
+      - name: Upload consolidated shadow results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: BA70_SHADOW_CI_RESULTS
+          path: ${{ runner.temp }}/ba70-shadow-results
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Set final shadow result
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f "$RUNNER_TEMP/ba70-shadow-results/PASS"
