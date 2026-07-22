@@ -89,8 +89,16 @@ if "body: _standardView(context, status)" in premium:
 if 'status.plan.label' in home_tier and 'premium_plan.dart' not in home_tier:
     raise SystemExit('BA-70A5 QA tier label is missing the PremiumPlan extension import')
 
+widget_test = require(
+    'test/widget_test.dart',
+    "expect(find.text('Get through the next moment.'), findsOneWidget);",
+    "expect(find.text('Break the cycle earlier.'), findsNothing);",
+)
+if "expect(find.text('Break the cycle earlier.'), findsOneWidget);" in widget_test:
+    raise SystemExit('BA-70A5 widget test still expects the superseded Home headline')
+
 print(
     'BA-70A5 verifier passed: Standard shows one compact Plus preview, '
     'Plus keeps every established local paid tool, and Plus AI keeps its '
-    'separate AI Personalization Tools entry point, and both analyzer repairs are present.'
+    'separate AI Personalization Tools entry point, analyzer repairs are present, and the Home widget test matches the approved simpler wording.'
 )

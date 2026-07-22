@@ -65,7 +65,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Breakout Addiction'), findsOneWidget);
-    expect(find.text('Break the cycle earlier.'), findsOneWidget);
+    expect(find.text('Get through the next moment.'), findsOneWidget);
+    expect(find.text('Break the cycle earlier.'), findsNothing);
     expect(find.text('Demo Readiness'), findsNothing);
     expect(find.byType(BottomNavigationBar), findsOneWidget);
   });
