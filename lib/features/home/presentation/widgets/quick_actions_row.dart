@@ -8,43 +8,52 @@ import '../../../privacy/data/privacy_label_repository.dart';
 class QuickActionsRow extends StatelessWidget {
   const QuickActionsRow({super.key});
 
-  Widget _fullButton({
-    required Widget child,
-  }) {
-    return SizedBox(
-      width: double.infinity,
-      child: child,
-    );
+  Widget _button({required Widget child}) {
+    return SizedBox(width: double.infinity, child: child);
   }
 
   @override
   Widget build(BuildContext context) {
-    final repository = PrivacyLabelRepository();
-
     return FutureBuilder<bool>(
-      future: repository.isNeutralModeEnabled(),
+      future: PrivacyLabelRepository().isNeutralModeEnabled(),
       builder: (context, snapshot) {
         final neutralMode = snapshot.data ?? true;
-
         return InfoCard(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text('Quick Actions'),
               const SizedBox(height: 12),
-              _fullButton(
+              _button(
                 child: OutlinedButton.icon(
-                  onPressed: () => Navigator.pushNamed(context, RouteNames.moodLog),
+                  onPressed: () => Navigator.pushNamed(
+                    context,
+                    RouteNames.moodLog,
+                  ),
                   icon: const Icon(Icons.mood_outlined),
                   label: Text(NeutralLabels.moodLog(neutralMode)),
                 ),
               ),
-              const SizedBox(height: 12),
-              _fullButton(
+              const SizedBox(height: 10),
+              _button(
                 child: OutlinedButton.icon(
-                  onPressed: () => Navigator.pushNamed(context, RouteNames.support),
-                  icon: const Icon(Icons.support_agent_outlined),
-                  label: Text(NeutralLabels.supportAction(neutralMode)),
+                  onPressed: () => Navigator.pushNamed(
+                    context,
+                    RouteNames.recoveryPlan,
+                  ),
+                  icon: const Icon(Icons.assignment_outlined),
+                  label: const Text('Recovery Plan'),
+                ),
+              ),
+              const SizedBox(height: 10),
+              _button(
+                child: OutlinedButton.icon(
+                  onPressed: () => Navigator.pushNamed(
+                    context,
+                    RouteNames.educate,
+                  ),
+                  icon: const Icon(Icons.menu_book_outlined),
+                  label: const Text('Learn'),
                 ),
               ),
             ],

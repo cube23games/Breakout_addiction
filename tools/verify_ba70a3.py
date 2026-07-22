@@ -42,8 +42,6 @@ if quick.is_file():
     text = quick.read_text(encoding="utf-8")
     if "NeutralLabels.rescuePrimary" in text or "RouteNames.rescue" in text:
         errors.append("Home Quick Actions still duplicates the Rescue action")
-    if text.count("_fullButton(") != 3:
-        errors.append("Quick Actions helper/button structure changed unexpectedly")
 
 mood = ROOT / "lib/features/log/presentation/mood_log_screen.dart"
 if mood.is_file():

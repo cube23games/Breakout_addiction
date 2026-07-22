@@ -22,8 +22,14 @@ checks = {
         "status.plan.includes(PremiumPlan.plus)",
     ],
     "lib/features/home/presentation/home_screen.dart": [
+        "home_tier_section.dart",
+        "HomeTierSection",
+    ],
+    "lib/features/home/presentation/widgets/home_tier_section.dart": [
         "active_recovery_plan_card.dart",
+        "if (status.hasPremium)",
         "ActiveRecoveryPlanCard",
+        "Explore Breakout Plus",
     ],
     "lib/features/premium_tools/presentation/recovery_programs_screen.dart": [
         "Active plan",
@@ -72,8 +78,8 @@ if errors:
     raise SystemExit(1)
 
 print(
-    "BA-70A2 verification passed: Home presents a distinct selected recovery "
-    "plan with today’s action and day-by-day progress; Plus users can choose "
-    "or change one active plan; future days remain locked; prior plan progress "
-    "is preserved in Past Plans."
+    "BA-70A2 verification passed: Home presents the selected recovery plan "
+    "through the tier-aware Home section, with today’s action and day-by-day "
+    "progress; Standard receives a clear Plus preview; future days remain "
+    "locked; prior plan progress is preserved in Past Plans."
 )

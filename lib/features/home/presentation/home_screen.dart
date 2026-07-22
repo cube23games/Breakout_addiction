@@ -1,18 +1,11 @@
 import 'package:flutter/material.dart';
 
-import '../../../app/config/internal_surface_gate.dart';
-
 import '../../../app/theme/app_spacing.dart';
 import '../../../core/constants/route_names.dart';
-import '../../../core/widgets/info_card.dart';
-import '../../../core/widgets/primary_button.dart';
 import '../../settings/data/feature_control_settings_repository.dart';
 import 'widgets/daily_quote_card.dart';
-import 'widgets/demo_readiness_card.dart';
-import 'widgets/entry_status_card.dart';
 import 'widgets/home_hero_card.dart';
-import 'widgets/active_recovery_plan_card.dart';
-import 'widgets/progress_snapshot_card.dart';
+import 'widgets/home_tier_section.dart';
 import 'widgets/quick_actions_row.dart';
 import 'widgets/risk_status_card.dart';
 import 'widgets/startup_notice_sheet.dart';
@@ -68,7 +61,6 @@ class _HomeScreenState extends State<HomeScreen> {
       }
 
       var currentSettings = settings;
-
       showModalBottomSheet<void>(
         context: context,
         isScrollControlled: true,
@@ -84,9 +76,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   await _settingsRepository.saveSettings(currentSettings);
                   setSheetState(() {});
                 },
-                onContinue: () {
-                  Navigator.pop(sheetContext);
-                },
+                onContinue: () => Navigator.pop(sheetContext),
                 onOpenFeatureChoices: () {
                   Navigator.pop(sheetContext);
                   Navigator.pushNamed(context, RouteNames.featureControls);
@@ -101,9 +91,9 @@ class _HomeScreenState extends State<HomeScreen> {
         },
       );
 
-      // The modal route is now in the root Navigator overlay. Notify the
-      // entry screen so it can insert the welcome banner afterward, keeping
-      // the smaller banner visually above the startup notice.
+      // The welcome banner is inserted in the root overlay after the modal
+      // route exists, so it remains above the startup sheet and times out
+      // independently.
       _notifyStartupNoticeReady();
     });
   }
@@ -127,69 +117,13 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             const HomeHeroCard(),
             const SizedBox(height: AppSpacing.md),
-            const EntryStatusCard(),
+            const HomeTierSection(),
             const SizedBox(height: AppSpacing.md),
-            if (InternalSurfaceGate.showDevSurfaces) ...[
-              const DemoReadinessCard(),
-              const SizedBox(height: AppSpacing.md),
-            ],
             const DailyQuoteCard(),
-            const SizedBox(height: AppSpacing.md),
-            const ActiveRecoveryPlanCard(),
             const SizedBox(height: AppSpacing.md),
             const RiskStatusCard(),
             const SizedBox(height: AppSpacing.md),
             const QuickActionsRow(),
-            const SizedBox(height: AppSpacing.md),
-            const ProgressSnapshotCard(),
-            const SizedBox(height: AppSpacing.md),
-            InfoCard(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('Keep Moving Forward'),
-                  const SizedBox(height: AppSpacing.sm),
-                  const Text(
-                    'Use Learn for deeper understanding, Support for your plan, and About Breakout for app details.',
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-                  PrimaryButton(
-                    label: 'Open Learn',
-                    icon: Icons.menu_book_outlined,
-                    onPressed: () => Navigator.pushNamed(
-                      context,
-                      RouteNames.educate,
-                    ),
-                  ),
-                  if (InternalSurfaceGate.showDevSurfaces) ...[
-                    const SizedBox(height: AppSpacing.sm),
-                    SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton.icon(
-                        onPressed: () => Navigator.pushNamed(
-                          context,
-                          RouteNames.widgetPreview,
-                        ),
-                        icon: const Icon(Icons.widgets_outlined),
-                        label: const Text('Open Widget Preview'),
-                      ),
-                    ),
-                  ],
-                  const SizedBox(height: AppSpacing.sm),
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton.icon(
-                      onPressed: () => Navigator.pushNamed(
-                        context,
-                        RouteNames.aboutBreakout,
-                      ),
-                      icon: const Icon(Icons.info_outline),
-                      label: const Text('About Breakout'),
-                    ),
-                  ),
-                ],
-              ),
-            ),
           ],
         ),
       ),
