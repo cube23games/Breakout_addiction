@@ -18,8 +18,9 @@ require(
     'const HomeHeroCard()',
     'const QuickActionsRow()',
 )
-require(
+home_tier = require(
     'lib/features/home/presentation/widgets/home_tier_section.dart',
+    "import '../../../premium/domain/premium_plan.dart';",
     'if (status.hasPremium)',
     'Explore Breakout Plus',
     'QA access:',
@@ -75,8 +76,15 @@ for paid_card in (
 if "route: RouteNames.aiTools" not in premium:
     raise SystemExit('BA-70A5 AI Personalization Tools does not open the AI tools screen')
 
+if "return const Scaffold(" in premium:
+    raise SystemExit('BA-70A5 loading state still calls a non-const AppBar from a const Scaffold')
+if "return Scaffold(" not in premium or "appBar: const AppBar" not in premium:
+    raise SystemExit('BA-70A5 loading state analyzer repair is missing')
+if 'status.plan.label' in home_tier and 'premium_plan.dart' not in home_tier:
+    raise SystemExit('BA-70A5 QA tier label is missing the PremiumPlan extension import')
+
 print(
     'BA-70A5 verifier passed: Standard shows one compact Plus preview, '
     'Plus keeps every established local paid tool, and Plus AI keeps its '
-    'separate AI Personalization Tools entry point.'
+    'separate AI Personalization Tools entry point, and the analyzer repair is present.'
 )

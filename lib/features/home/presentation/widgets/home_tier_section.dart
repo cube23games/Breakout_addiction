@@ -7,6 +7,7 @@ import '../../../../app/theme/app_typography.dart';
 import '../../../../core/constants/route_names.dart';
 import '../../../../core/widgets/info_card.dart';
 import '../../../premium/data/premium_access_repository.dart';
+import '../../../premium/domain/premium_plan.dart';
 import '../../../premium/domain/premium_status.dart';
 import 'active_recovery_plan_card.dart';
 

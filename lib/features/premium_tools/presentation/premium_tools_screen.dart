@@ -82,9 +82,9 @@ class PremiumToolsScreen extends StatelessWidget {
       builder: (context, snapshot) {
         final status = snapshot.data;
         if (status == null) {
-          return const Scaffold(
-            appBar: AppBar(title: Text('Premium Tools')),
-            body: Center(child: CircularProgressIndicator()),
+          return Scaffold(
+            appBar: const AppBar(title: Text('Premium Tools')),
+            body: const Center(child: CircularProgressIndicator()),
           );
         }
 
