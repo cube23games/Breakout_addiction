@@ -1,0 +1,61 @@
+{
+  "baseline": "685285cd6cd0cfaa82b047cc6f4fdece2c64bf1a",
+  "shadow_branch": "validation/ba70-shadow-a5r3-a13-v3",
+  "generated_utc": "2026-07-22T02:47:51.300376+00:00",
+  "stages": [
+    {
+      "stage_id": "BA70A5R3",
+      "number": 5,
+      "title": "Align the Home widget test with BA-70A5 simpler wording",
+      "commit_sha": "e3580661aac2dd5a398d65bf7c518cef2895a664"
+    },
+    {
+      "stage_id": "BA70A6",
+      "number": 6,
+      "title": "My Reasons Standard foundation and broken-button repair",
+      "commit_sha": "638848e2c39d46a3dede2f9e7d833c779c6ae93e"
+    },
+    {
+      "stage_id": "BA70A7",
+      "number": 7,
+      "title": "Plus Reasons photos, one-minute video, captions, ordering, cover",
+      "commit_sha": "83133227cc1f818ecdfdefb8c168b3480b8ff1d8"
+    },
+    {
+      "stage_id": "BA70A8",
+      "number": 8,
+      "title": "Accountability refresh feedback and private-report sharing",
+      "commit_sha": "3eb9f1f5b54a14e01be23e35eefef979429714ce"
+    },
+    {
+      "stage_id": "BA70A9",
+      "number": 9,
+      "title": "Risk-window early-warning workflow and Recovery Plan chips",
+      "commit_sha": "beb08bff09b01b74aa7d65b4cd3011ca18bee1cb"
+    },
+    {
+      "stage_id": "BA70A10",
+      "number": 10,
+      "title": "Screenshot and recent-app-preview protection",
+      "commit_sha": "3c2eb5afff388d0afc969026078cf2289a40f8a5"
+    },
+    {
+      "stage_id": "BA70A11",
+      "number": 11,
+      "title": "Public-domain WEB verses, faith layout, and Learn cleanup",
+      "commit_sha": "f746e82945f7ccaaddf79b4e6d094eb2c721bf27"
+    },
+    {
+      "stage_id": "BA70A12",
+      "number": 12,
+      "title": "Real Android Premium home-screen widget",
+      "commit_sha": "799b0cc28d54dc9c8e541618ad12a486426bf8cb"
+    },
+    {
+      "stage_id": "BA70A13",
+      "number": 13,
+      "title": "Explicit-consent note-aware Plus AI foundation",
+      "commit_sha": "4b06447e3dce6d9007fd1292ac5c7fdbdaf87bfc"
+    }
+  ]
+}
