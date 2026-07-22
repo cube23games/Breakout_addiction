@@ -6,6 +6,7 @@ import '../../settings/data/feature_control_settings_repository.dart';
 import 'widgets/daily_quote_card.dart';
 import 'widgets/home_hero_card.dart';
 import 'widgets/home_tier_section.dart';
+import 'widgets/my_reasons_home_card.dart';
 import 'widgets/quick_actions_row.dart';
 import 'widgets/risk_status_card.dart';
 import 'widgets/startup_notice_sheet.dart';
@@ -118,6 +119,8 @@ class _HomeScreenState extends State<HomeScreen> {
             const HomeHeroCard(),
             const SizedBox(height: AppSpacing.md),
             const HomeTierSection(),
+            const SizedBox(height: AppSpacing.md),
+            const MyReasonsHomeCard(),
             const SizedBox(height: AppSpacing.md),
             const DailyQuoteCard(),
             const SizedBox(height: AppSpacing.md),
