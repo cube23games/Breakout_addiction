@@ -16,11 +16,14 @@ import '../data/ai_backend_preflight_service.dart';
 import '../data/ai_chat_repository.dart';
 import '../data/ai_chat_settings_repository.dart';
 import '../data/ai_input_guardrail_service.dart';
+import '../data/ai_personalization_repository.dart';
+import '../data/ai_recovery_context_builder.dart';
 import '../data/ai_usage_repository.dart';
 import '../data/chat_provider_factory.dart';
 import '../domain/ai_chat_settings.dart';
 import '../domain/ai_fair_use_policy.dart';
 import '../domain/ai_preflight_status.dart';
+import '../domain/ai_personalization_settings.dart';
 import '../domain/ai_usage_snapshot.dart';
 import '../domain/chat_message.dart';
 import '../domain/chat_provider_mode.dart';
@@ -52,6 +55,9 @@ class _AiChatScreenState extends State<AiChatScreen> {
   final AiBackendPreflightService _preflightService =
       AiBackendPreflightService();
   final AiUsageRepository _usageRepository = AiUsageRepository();
+  final AiPersonalizationRepository _personalizationRepository =
+      const AiPersonalizationRepository();
+  final AiRecoveryContextBuilder _contextBuilder = AiRecoveryContextBuilder();
   final TextEditingController _controller = TextEditingController();
 
   PremiumStatus _premiumStatus = PremiumStatus.defaults();
@@ -60,6 +66,8 @@ class _AiChatScreenState extends State<AiChatScreen> {
   AiChatSettings _settings = AiChatSettings.defaults();
   AiPreflightStatus _preflightStatus = AiPreflightStatus.initial();
   AiUsageSnapshot _usageSnapshot = AiUsageSnapshot.empty();
+  AiPersonalizationSettings _personalization =
+      AiPersonalizationSettings.defaults();
   List<ChatMessage> _messages = <ChatMessage>[];
   bool _loading = true;
   bool _sending = false;
@@ -114,6 +122,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
     final settings = await _settingsRepository.getSettings();
     final preflight = await _preflightService.run();
     final usage = await _usageRepository.getSnapshot();
+    final personalization = await _personalizationRepository.getSettings();
 
     if (!mounted) {
       return;
@@ -131,6 +140,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
       _settings = settings;
       _preflightStatus = preflight;
       _usageSnapshot = usage;
+      _personalization = personalization;
       _messages = loadedMessages;
       _loading = false;
     });
@@ -316,9 +326,15 @@ class _AiChatScreenState extends State<AiChatScreen> {
     await _chatRepository.saveMessages(updated);
 
     final provider = ChatProviderFactory.create(_settings.providerMode);
+    final approvedContext = _premiumStatus.hasAiPremium
+        ? await _contextBuilder.build(_personalization)
+        : '';
+    final providerInput = approvedContext.isEmpty
+        ? review.sanitizedText
+        : '$approvedContext\n\nCurrent user message: ${review.sanitizedText}';
     final reply = await provider.generateReply(
       messages: updated,
-      userInput: review.sanitizedText,
+      userInput: providerInput,
     );
 
     final finalMessages = <ChatMessage>[...updated, reply];
@@ -377,6 +393,63 @@ class _AiChatScreenState extends State<AiChatScreen> {
     return ActionChip(
       label: Text(text),
       onPressed: () => _send(text),
+    );
+  }
+
+  Future<void> _updatePersonalization(AiPersonalizationSettings value) async {
+    await _personalizationRepository.save(value);
+    if (mounted) setState(() => _personalization = value);
+  }
+
+  Future<void> _reviewPersonalization() async {
+    final preview = await _contextBuilder.build(_personalization);
+    if (!mounted) return;
+    await showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('What AI will receive'),
+        content: SingleChildScrollView(
+          child: SelectableText(preview.isEmpty ? 'No saved recovery context will be added.' : preview),
+        ),
+        actions: [FilledButton(onPressed: () => Navigator.pop(context), child: const Text('Done'))],
+      ),
+    );
+  }
+
+  Future<void> _clearAiRecoveryMemory() async {
+    await _personalizationRepository.clear();
+    if (!mounted) return;
+    setState(() => _personalization = AiPersonalizationSettings.defaults());
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('AI Recovery Memory cleared and turned off.')),
+    );
+  }
+
+  Widget _personalizationCard() {
+    return InfoCard(
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text('AI Recovery Memory', style: AppTypography.section),
+        const SizedBox(height: AppSpacing.xs),
+        const Text('Off by default. Turn it on only for the saved information you want included with an AI request.', style: AppTypography.muted),
+        SwitchListTile.adaptive(
+          contentPadding: EdgeInsets.zero,
+          value: _personalization.enabled,
+          title: const Text('Personalize AI with selected recovery data'),
+          onChanged: (value) => _updatePersonalization(_personalization.copyWith(enabled: value)),
+        ),
+        if (_personalization.enabled) ...[
+          CheckboxListTile(contentPadding: EdgeInsets.zero,value:_personalization.includeCurrentGoal,title:const Text('Current accountability goal'),onChanged:(v)=>_updatePersonalization(_personalization.copyWith(includeCurrentGoal:v??false))),
+          CheckboxListTile(contentPadding: EdgeInsets.zero,value:_personalization.includeRecoveryPlan,title:const Text('Recovery plan, warning signs, and triggers'),onChanged:(v)=>_updatePersonalization(_personalization.copyWith(includeRecoveryPlan:v??false))),
+          CheckboxListTile(contentPadding: EdgeInsets.zero,value:_personalization.includeRiskWindows,title:const Text('Enabled risk windows and preparation actions'),onChanged:(v)=>_updatePersonalization(_personalization.copyWith(includeRiskWindows:v??false))),
+          CheckboxListTile(contentPadding: EdgeInsets.zero,value:_personalization.includeMoodNotes,title:const Text('Up to three recent check-in notes'),onChanged:(v)=>_updatePersonalization(_personalization.copyWith(includeMoodNotes:v??false))),
+          CheckboxListTile(contentPadding: EdgeInsets.zero,value:_personalization.includeRecoveryNotes,title:const Text('Up to three recent recovery-event notes'),onChanged:(v)=>_updatePersonalization(_personalization.copyWith(includeRecoveryNotes:v??false))),
+          CheckboxListTile(contentPadding: EdgeInsets.zero,value:_personalization.includeFaithPreference,title:const Text('Faith or secular language preference'),onChanged:(v)=>_updatePersonalization(_personalization.copyWith(includeFaithPreference:v??false))),
+          const Text('Names, phone numbers, and email-like text are reduced before context is prepared. Always review the preview.', style: AppTypography.muted),
+          const SizedBox(height: AppSpacing.sm),
+          OutlinedButton.icon(onPressed:_reviewPersonalization,icon:const Icon(Icons.visibility_outlined),label:const Text('Review What AI Will Receive')),
+          TextButton.icon(onPressed:_clearAiRecoveryMemory,icon:const Icon(Icons.delete_outline),label:const Text('Clear AI Recovery Memory')),
+        ],
+      ]),
     );
   }
 
@@ -500,6 +573,8 @@ class _AiChatScreenState extends State<AiChatScreen> {
               ),
               const SizedBox(height: AppSpacing.md),
               _guardrailCard(),
+              const SizedBox(height: AppSpacing.md),
+              _personalizationCard(),
               const SizedBox(height: AppSpacing.md),
               EmergencyFallbackCard(
                 onCall988: _call988,
