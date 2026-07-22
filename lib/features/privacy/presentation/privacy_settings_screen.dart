@@ -299,6 +299,20 @@ class _PrivacySettingsScreenState
         children: [
           const PrivacyStatusCard(),
           const SizedBox(height: AppSpacing.md),
+          const InfoCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Screen Capture Protection', style: AppTypography.section),
+                SizedBox(height: AppSpacing.sm),
+                Text(
+                  'Screenshots, screen recording, and the recent-app preview are blocked for this release. Sharing tools still require your explicit confirmation.',
+                  style: AppTypography.muted,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: AppSpacing.md),
           NeutralModePreviewCard(
             neutralMode: _settings.neutralPrivacyMode,
           ),

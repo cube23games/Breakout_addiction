@@ -133,6 +133,7 @@ jobs:
           python3 tools/verify_ba70a7.py
           python3 tools/verify_ba70a8.py
           python3 tools/verify_ba70a9.py
+          python3 tools/verify_ba70a10.py
 
       - name: Configure isolated QA Android release
         shell: bash
@@ -144,6 +145,7 @@ jobs:
           # Configure Android scheduled notifications.
           python3 tools/patch_android_notifications.py
           python3 tools/patch_android_release_security.py --channel qa
+          python3 tools/patch_android_screen_protection.py
           dart run flutter_launcher_icons
 
       - name: Build isolated QA APK
@@ -181,6 +183,7 @@ jobs:
           # Configure Android scheduled notifications.
           python3 tools/patch_android_notifications.py
           python3 tools/patch_android_release_security.py --channel public
+          python3 tools/patch_android_screen_protection.py
           dart run flutter_launcher_icons
 
       - name: Build public baseline APK
